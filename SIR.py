@@ -1,33 +1,36 @@
-from numpy import zeros
+import numpy as np
 
 def SIROperator(FMi,Agg): #Takes a flag mask ( COLUMN vector) and aggression param. (number) as input
 
     N = len(FMi)
 
-    Psi = Fmi + Agg - 1 #Initialize psi (this is a temp. array)
-    M = zeros([N,1],float) #Initialize M (this is also temp.)
+    Psi = FMi.astype(float) + Agg - 1 #Initialize psi (this is a temp. array)
+    M = np.zeros(N,float) #Initialize M (this is also temp.)
 
-    for n in range(0,N): #Define M as in AOFlagger paper
-        M[n+1,0] = M[n,0] + Psi[n,0]
+    for n in range(0,N-1): #Define M as in AOFlagger paper
+        M[n+1] = M[n] + Psi[n]
 
-    P = zeros([N,1],int) #Initialize P - this is a temp. array which is to be constructed so that M(P(n)) = min M(i), 0 <= i <= n (perhaps to be called the "latest min")
+    P = np.zeros(N,int) #Initialize P - this is a temp. array which is to be constructed so that M(P(n)) = min M(i), 0 <= i <= n (perhaps to be called the "latest min index")
 
     for n in range(1,N): #This loop is really clever - I probably wouldn't have come up with it
-        P[n,0] = P[n-1,0] #RHS is the last minima
-        if M[P[n,0],0] > M[n,0]: #Satisfaction of this is to say a new latest min has been found
-            P[n,0] = n
+        P[n] = P[n-1] #RHS is the latest minimum
+        if M[P[n]] > M[n]: #Satisfaction of this is to say a new latest min has been found
+            P[n] = n
 
-    Q = zeros([N,1],int) #Similar to P, but looks for max M(j) x <= j <= N-1
-
+    Q = np.zeros(N,int) #Similar to P, but looks for max M(j) x <= j <= N-1 (perhaps "earliest max index")
+    Q[N-1] = N-1
+    
     for n in range(1,N): #Similar loop as before - but has to count backwards
-        Q[N-1-n,0] = Q[N-n,0]
-        if M[Q[N-1-n,0],0] < M[N-n,0]:
-            Q[N-1-n,0] = N-n
+        Q[N-1-n] = Q[N-n]
+        if M[Q[N-1-n]] < M[N-n]:
+            Q[N-1-n] = N-n
 
-    FMf = zeros([N,1],int) #Initialize output flag mask
+    FMf = np.zeros(N,int) #Initialize output flag mask
 
     for n in range(0,N): #Ask important flagging question
-        if M[Q[n,0],0] - M[P[n,0],0] >= 0:
-           Fmf[n,0] = 1
+        if M[Q[n]] - M[P[n]] >= 0:
+           FMf[n] = 1
+        else:
+            FMf[n] = 0
        
-    return(Fmf)
+    return(FMf)

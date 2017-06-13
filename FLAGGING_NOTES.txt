@@ -1,0 +1,30 @@
+Yo dude - chi = mean+5*sigma w/M = 10 worked pretty well (a little underflagged)
+
+Consider feeding this into SIR
+
+Tried M=20, eta > 0.05 ended with massive overflagging
+eta = 0.05 extended the flag mask in lower frequency a little too far but nailed the higher frequency end of the flag
+
+iterating seems to make overflagging worse?  Maybe should change chi/eta on iteration???
+
+MAKE SURE TO ASK: Are coarse band edges flagged AFTER or BEFORE SumThreshold??  THERE IS A COMMUTATOTOR
+
+Baseline 1 or 2 has an interesting fringe pattern over in the far right??
+
+All lines same plot (log-lin)
+Sep inside/outside coarse band lines (do this with EMO??)
+compare to good obs id
+2d time/freq histogram of flags
+
+single baseline waterfall with fringe (real & amp)
+explore where flag expansion is happening in freq relative to spectrum/coarse band lines)
+
+get even times
+get odd times
+subtract
+Histogram
+Find AND(Even,Odd)
+Find AND(Not Even, Not Odd) = Neither(Even, Odd)
+Find XOR(Even, Odd)
+Histogram
+Make into pretty plots
