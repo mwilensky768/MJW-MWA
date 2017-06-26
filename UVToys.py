@@ -170,7 +170,7 @@ def NECompare(filepath1,filepath2, OBSID1, OBSID2, BEFilter,TEFilter):#('string'
     plt.ticklabel_format(axis = 'x', style = 'sci', scilimits = [-1,1])
     plt.legend()
 
-def TimeFreqHist(filepath, OBSID, BEFilter, TEFilter):
+def WaterfallHist(filepath, BEFilter, TEFilter):
 
     emo = EMO(filepath, BEFilter, TEFilter)
     data = emo[0]
@@ -184,27 +184,33 @@ def TimeFreqHist(filepath, OBSID, BEFilter, TEFilter):
     F = np.reshape(ind, shape)
     G = np.zeros([Nfreqs,Ntimes])
 
-    s = 0
-    M = 0
+    bandminguess = 0.24*10**4
+    bandmaxguess = 1.9*10**4
 
-    while bins[s] <= 0.25:
-        M = s - 1
+    band = [k for k in range(nbins+1) if bandminguess <= bins[k] <= bandmaxguess]
     
     for p in range(shape[0]):
         for q in range(Nfreqs):
              for r in range(4):
-                 if F[p,0,q,r] >= M:
+                 if min(band) <= F[p,0,q,r] <= max(band):
                      G[q,p/8128] += 1
 
-    plt.imshow(G, cmap = cm.coolwarm, interpolation = 'none')
-    plt.set_title('Time-Freq RFI Histogram ' + str(OBSID)+Opt(BEFilter,TEFilter))
-    plt.xticks([0,5,10,15,20,25])
-    plt.axes(aspect = 0.067)
+    return(G)
 
-    AVG = np.mean(G)
-    MAX = np.amax(G)
 
-    plt.colorbar(ticks = [0, AVG, MAX]).ax.set_yticklabels(['0', str(AVG), str(MAX)])
+def WaterfallHistPlot(G,OBSID,BEFilter,TEFilter): #Array,int,bool,bool,int=>figure
+
+    stats = UVstats(G)
+
+
+    fig, ax = plt.subplots()
+    cax = ax.imshow(G, cmap = cm.coolwarm, interpolation = 'none')
+    ax.set_title('Time-Freq RFI Histogram ' + str(OBSID)+Opt(BEFilter,TEFilter))
+    ax.set_xticks([2*k for k in range(15)])
+    ax.set_yticks([20*k for k in range(20)])
+    ax.set_aspect(0.067)
+    cbar = fig.colorbar(cax, ticks = [stats[2]*0.1*k for k in range(11)])
+    cbar.set_ticklabels([str(stats[2]*k) for k in range(11)])    
 
     plt.show()
 
