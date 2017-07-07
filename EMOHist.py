@@ -1,21 +1,9 @@
-import pyuvdata as pyuv
-import numpy as np
-import matplotlib.pyplot as plt
-import UVToys as UVT
+import EvenMinusOdd as emo
 
-def EMOHist(UV,OBSID,BEFilter,TEFilter):#(UVData(),int,bool,bool)   
+UV = emo.EvenMinusOdd()
 
-    HData = UVT.EMO(UV, BEFilter, TEFilter)
+UV.read_even_odd(False,True,'/Users/mike_e_dubs/python_stuff/uvfits/1061313128.uvfits')
 
-    #construct the histograms
-    plt.hist(HData, bins = 1000, range = (0,max(HData[0])), histtype = 'step', label = ('ALL','AND','NEITHER','XOR'))
-    plt.title('EMO Visibility Amplitude ObsID '+str(OBSID)+'[no band/time edge]')
-    plt.yscale('log', nonposy = 'clip')
-    plt.xlabel('|Veven-Vodd| (uncalib)')
-    plt.ylabel('Counts')
-    plt.xticks([10000*k for k in range(9)])
-    plt.legend()
-
-    plt.show()
+UV.one_d_hist_plot(UV.one_d_hist_prepare, 1000, ('All','And','Neither','XOR'), '1061313128 EMO UV Amp. No Time Edge')
 
 
