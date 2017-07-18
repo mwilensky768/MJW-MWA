@@ -1,9 +1,10 @@
 import EvenMinusOdd as emo
+import numpy as np
 
 UV = emo.EvenMinusOdd()
-UV.read_even_odd('/Users/mike_e_dubs/python_stuff/uvfits/1061313008.uvfits')
+UV.read_even_odd(False,True,'/Users/mike_e_dubs/python_stuff/uvfits/1061313128.uvfits')
 
-H = UV.waterfall_hist_prepare((2000,19000))
+H = UV.waterfall_hist_prepare((7000,19000))
 
 #How many measurements are made per t-f??
 
@@ -14,5 +15,7 @@ N = float(N)
 
 H = H/N
 
+H = np.sum(H, axis = 2)
 
-UV.waterfall_hist_plot(H[:,:,3],'Fractional RFI Waterfall Histogram OBSID 1061313008 YX')
+
+UV.waterfall_hist_plot(H,'Fractional RFI Waterfall Histogram OBSID 1061313128, No Time Edge')
