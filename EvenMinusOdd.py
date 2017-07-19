@@ -4,6 +4,7 @@ import pyuvdata as pyuv
 from matplotlib import cm
 from math import floor, log10
 from matplotlib.gridspec import GridSpec
+import time
 
 class EvenMinusOdd:
 
@@ -25,14 +26,14 @@ class EvenMinusOdd:
             LEdges = [16*p for p in range(24)]
             REdges = [15+16*p for p in range(24)]
 
-            self.UV.select(freq_chans = [n for n in range(self.dummy.Nfreqs) if n not in LEdges and n not in REdges])
+            self.UV.select(freq_chans = [n for n in range(self.UV.Nfreqs) if n not in LEdges and n not in REdges])
 
         if self.TEF:
 
             self.UV.select(times = [self.UV.time_array[k*self.UV.Nbls] for k in range(1,55)])
             
-        self.even = self.UV.select(times = [self.dummy.time_array[(2*k+1)*self.UV.Nbls] for k in range(28-self.TEF)], inplace = False)
-        self.odd = self.UV.select(times = [self.dummy.time_array[2*k*self.UV.Nbls] for k in range(28-self.TEF)], inplace = False)
+        self.even = self.UV.select(times = [self.UV.time_array[(2*k+1)*self.UV.Nbls] for k in range(28-self.TEF)], inplace = False)
+        self.odd = self.UV.select(times = [self.UV.time_array[2*k*self.UV.Nbls] for k in range(28-self.TEF)], inplace = False)
 
         
         self.EMO.data_array = self.even.data_array-self.odd.data_array
@@ -129,18 +130,27 @@ class EvenMinusOdd:
 
         plt.show()
 
-    def rfi_catalog(self, obslist, main_title, thresh_min = 2000, flag_slice = 'Neither'): #obslist should be a list of integers (OBSID's)
+    def rfi_catalog(self, obslist, thresh_min = 2000, fs = 'Neither'): #obslist should be a list of integers (OBSID's)
 
         Nobs = len(obslist)
         
         for m in range(Nobs):
-            self.read_even_odd('/nfs/eor-11/r1/EoRuvfits/jd2456528v4_1/'+str(obslist[m])+'/'+str(obslist[m])+'.uvfits')
+            if m%1 == 0:
+                print('Iteration '+str(m)+' started at '+time.strftime('%H:%M:%S'))
 
+            self.read_even_odd('/Users/mike_e_dubs/python_stuff/uvfits/'+str(obslist[m])+'.uvfits')
+            if m%1 == 0:
+                print('Finished reading at '+time.strftime('%H:%M:%S'))
+            
             H = self.one_d_hist_prepare()
             MAXH = max(H[0])
+            if m%1 == 0:
+                print('Finished preparing amplitude hist at '+time.strftime('%H:%M:%S'))
 
-            W = self.waterfall_hist_prepare((thresh_min, MAXH), flag_slice = flag_slice)
+            W = self.waterfall_hist_prepare((thresh_min, MAXH))
             MAXWlist = [np.amax(W[k]) for k in range(len(W))]
+            if m%1 == 0:
+                print('Finished preparing the waterfall hist at '+time.strftime('%H:%M:%S'))
 
             
             fig = plt.figure(figsize = (14,8))
@@ -148,7 +158,7 @@ class EvenMinusOdd:
             pol_titles = ['XX','YY','XY','YX']
             axes = [plt.subplot(gs[1,0]),plt.subplot(gs[1,1]), plt.subplot(gs[2,0]),plt.subplot(gs[2,1]),plt.subplot(gs[0,:])]
             plt.subplots_adjust(left = 0.13, bottom = 0.11, right = 0.90, top = 0.88, wspace = 0.20, hspace = 0.46)
-            colormax = [max(MAXWlist[0:2]), max(MAXWlist[2:4])]
+            
 
             def colormax(p):
                 if p in [0,1]:
@@ -172,35 +182,37 @@ class EvenMinusOdd:
                 axis.set_aspect(6)
                 y_ticks = [7*k for k in range(5)]
                 x_ticks = [64*k for k in range(7)]
-                color_ticks = [0.2*vmax*k for k in range(6)]
+                color_ticks = [0.2*colormax(p)*k for k in range(6)]
                 axis.set_yticks(y_ticks)
                 axis.set_xticks(x_ticks)
                 cbar = fig.colorbar(cax, ax = axis, ticks = color_ticks)
                 cbar.set_ticklabels([str(sigfig(color_ticks[k])) for k in range(6)])
+                cbar.set_label('Fraction RFI')
 
             for n in range(5):
                 if n < 4:
-                    waterfall_settings(fig,axes[n],pol_titles[n]+' '+flag_slice,W[:,:,n],n) #Common Waterfall Settings
+                    waterfall_settings(fig,axes[n],pol_titles[n]+' '+fs,W[:,:,n],n) #Common Waterfall Settings
                     if n in [0,2]: #Some get axis labels others do not
                         axes[n].set_ylabel('Time Pair')
                     if n in [2,3]:
                         axes[n].set_xlabel('Frequency (Mhz)')
                         x_ticks_labels = [str(sigfig(self.UV.freq_array[0,64*k]*10**(-6))) for k in range(6)]
                         x_ticks_labels.append(str(sigfig((self.UV.freq_array[0,-1]+self.UV.channel_width)*10**(-6))))
-                        axes[n].set_xtickslabels(x_ticks_labels)
+                        axes[n].set_xticklabels(x_ticks_labels)
                     if n in [0,1]:
-                        axes[n].set_xtickslabels([])
+                        axes[n].set_xticklabels([])
                     if n in [1,3]:
                         axes[n].set_yticklabels([])
                 else:
                     axes[n].hist((H[2],H[0],H[1],H[3]),bins = 1000, range = (0,MAXH), histtype = 'step', label = ('Neither','All','And','XOR'))
                     axes[n].set_title('RFI Catalog '+str(obslist[m]))
                     axes[n].set_yscale('log',nonposy = 'clip')
-                    axes[n].set_xscale('log',nonposy='clip')
-                    axes[n].set_xlabel('Amplitude (UNCALIB)')
+                    axes[n].set_xscale('log',nonposy = 'clip')
+                    axes[n].set_xlabel('Amplitude ('+self.UV.vis_units+')')
                     axes[n].set_ylabel('Counts')
                     axes[n].set_xticks([10**(k-10)*MAXH for k in range(11)])
-                    axes[n].ticklabel_format(style = 'sci', scilimits = (-1,1), axis = 'x')
+                    axes[n].set_xticklabels([str(10**(k-10)*MAXH) for k in range(11)])
+                    axes[n].axvline(x = thresh_min)
                     axes[n].legend()
 
-            plt.savefig('/nfs/eor-00/h1/mwilensk/RFI_Diagnostic/'+str(obslist[m])+'_RFI_Diagnostic.png')
+            plt.savefig('/Users/mike_e_dubs/python_stuff/MJW-MWA/RFI_Diagnostic/'+str(obslist[m])+'_RFI_Diagnostic.png')

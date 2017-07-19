@@ -5,9 +5,9 @@ import numpy as np
 from matplotlib.gridspec import GridSpec
 from math import floor, log10
 
-EMO = emo.EvenMinusOdd() #Make EMO instance
+EMO = emo.EvenMinusOdd(False,True) #Make EMO instance
 
-EMO.read_even_odd(False,False,'/Users/mike_e_dubs/python_stuff/uvfits/1061313008.uvfits') #Read data in
+EMO.read_even_odd('/Users/mike_e_dubs/python_stuff/uvfits/1061313008.uvfits') #Read data in
 
 Q = EMO.one_d_hist_prepare() #Prepare 1d hist data
 MAXQ = max(Q[0])
