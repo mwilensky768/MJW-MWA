@@ -2,9 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pyuvdata as pyuv
 from matplotlib import cm
-from math import floor, log10
+from math import floor, ceil, log10
 from matplotlib.gridspec import GridSpec
 import time
+import os
+
 
 class EvenMinusOdd:
 
@@ -17,202 +19,218 @@ class EvenMinusOdd:
 
         self.BEF = BEF
         self.TEF = TEF
-    
+
     def read_even_odd(self, filepath):
-    
+
         self.UV.read_uvfits(filepath)
 
+        self.even = self.UV.select(times=[self.UV.time_array[(2 * k + 1) * self.UV.Nbls]
+                                   for k in range(self.UV.Ntimes / 2 - self.TEF)], inplace=False)
+        self.odd = self.UV.select(times=[self.UV.time_array[2 * k * self.UV.Nbls]
+                                  for k in range(self.TEF, self.UV.Ntimes / 2)], inplace=False)
+
         if self.BEF:
-            LEdges = [16*p for p in range(24)]
-            REdges = [15+16*p for p in range(24)]
+            coarse_width = 1.28 * 10**(6)  # coarse band width of MWA in hz
+            Ncoarse = (self.UV.freq_array[0, -1] - self.UV.freq_array[0, 0]) / coarse_width
+            Mcoarse = coarse_width / self.UV.channel_width  # Number of fine channels per coarse channel
+            LEdges = [Mcoarse * p for p in range(Ncoarse)]
+            REdges = [Mcoarse - 1 + Mcoarse * p for p in range(Ncoarse)]
 
-            self.UV.select(freq_chans = [n for n in range(self.UV.Nfreqs) if n not in LEdges and n not in REdges])
+            self.even.select(freq_chans=[x for x in range(self.UV.Nfreqs) if x not in
+                             LEdges and x not in REdges])
+            self.odd.select(freq_chans=[x for x in range(self.UV.Nfreqs) if x not in
+                            LEdges and x not in REdges])
 
-        if self.TEF:
+        self.EMO.data_array = self.even.data_array - self.odd.data_array
 
-            self.UV.select(times = [self.UV.time_array[k*self.UV.Nbls] for k in range(1,55)])
-            
-        self.even = self.UV.select(times = [self.UV.time_array[(2*k+1)*self.UV.Nbls] for k in range(28-self.TEF)], inplace = False)
-        self.odd = self.UV.select(times = [self.UV.time_array[2*k*self.UV.Nbls] for k in range(28-self.TEF)], inplace = False)
+    def flag_operations(self, flag_slice='Unflagged'):
 
-        
-        self.EMO.data_array = self.even.data_array-self.odd.data_array
+        if flag_slice is 'Unflagged':
+            A = np.logical_and(np.logical_not(self.even.flag_array),
+                               np.logical_not(self.odd.flag_array))
+        elif flag_slice is 'And':
+            A = np.logical_and(self.even.flag_array, self.odd.flag_array)
+        elif flag_slice is 'XOR':
+            A = np.logical_xor(self.even.flag_array, self.odd.flag_array)
+        elif flag_slice is 'All':
+            A = np.ones(self.even.flag_array.shape, dtype=bool)
 
-    def one_d_hist_prepare(self, comp = 'amplitude', s = (0,4)): 
+        return(A)
 
+    def one_d_hist_prepare(self, flag_slice='Unflagged'):
         N = np.prod(self.EMO.data_array.shape)
-        EMOV = np.reshape(self.EMO.data_array, N)
-        evenFV = np.reshape(self.even.flag_array, N)
-        oddFV = np.reshape(self.odd.flag_array, N)
+        data = np.reshape(self.EMO.data_array, N)
+        flags = np.reshape(self.flag_operations(flag_slice=flag_slice), N)
 
-        if comp is 'amplitude': #Find the amplitude of the difference
-            EMOV = np.absolute(EMOV)
-        elif comp is 'phase': #Find the phase of the difference
-            EMOV = np.angle(EMOV)
+        data = np.absolute(data)
 
-        EMOVand = [EMOV[k] for k in range(N) if evenFV[k] and oddFV[k]]
-        EMOVneither = [EMOV[k] for k in range(N) if not evenFV[k] and not oddFV[k]]
-        EMOVXOR = [EMOV[k] for k in range(N) if evenFV[k]^oddFV[k]]
+        data = data[flags > 0]
 
-        H = (EMOV, EMOVand, EMOVneither, EMOVXOR)[s[0]:s[1]] #Pick a slice for the histogram
+        return(data)
 
-        return(H)
+    def one_d_hist_plot(self, fig, ax, data, bins, label, title, ylog=True, xlog=True):  # Data/title are tuples if multiple hists
 
-    def one_d_hist_plot(self, H, Nbins, labels, title, comp = 'amplitude'): #Data/title are tuples if multiple hists
+        ax.hist(data, bins=bins, histtype='step', label=label)
+        ax.set_title(title)
 
-        MAXlist = [max(H[k]) for k in range(len(H))]
-        MAX = max(MAXlist)
-        if comp is 'amplitude':
-            units = self.even.vis_units
-        elif comp is 'phase':
-            units = 'rad'
-
-            
-        plt.hist(H, bins = Nbins, range = (0,MAX), histtype = 'step', label = labels)
-        plt.title(title)
-        plt.yscale('log', nonposy = 'clip')
-        plt.xlabel(comp+' ('+units+')')
-        plt.ylabel('Counts')
-        plt.xticks([0.1*MAX*k for k in range(11)])
-        plt.ticklabel_format(axis = 'x', style = 'sci', scilimits = [-1,1])
-        plt.legend()
-
-        plt.show()
-
-    def waterfall_hist_prepare(self, band, comp = 'amplitude', fraction = True, flag_slice = 'Neither'): #band is a tuple (min,max)
-
-        
-        if comp is 'amplitude':
-            data = np.absolute(self.EMO.data_array)
-        elif comp is 'phase':
-            data = np.angle(self.EMO.data_array)
-
-
-        H = np.zeros([self.even.Ntimes,self.even.Nfreqs,self.even.Npols])
-
-        if flag_slice is 'Neither':
-            for p in range(data.shape[0]):
-                for q in range(data.shape[2]):
-                    for r in range(data.shape[3]):
-                        if min(band) < data[p,0,q,r] < max(band) and not self.even.flag_array[p,0,q,r] and not self.odd.flag_array[p,0,q,r]:
-                            H[p/self.UV.Nbls,q,r] += 1
+        if ylog:
+            ax.set_yscale('log', nonposy='clip')
         else:
-            for p in range(data.shape[0]):#Nblts/2
-                for q in range(data.shape[2]):#Nfreqs
-                    for r in range(data.shape[3]):#Npols
-                        if min(band) < data[p,0,q,r] < max(band):
-                            H[p/self.UV.Nbls,q,r] += 1
+            ax.set_yscale('linear')
+
+        if xlog:
+            ax.set_xscale('log', nonposy='clip')
+        else:
+            ax.set_xscale('linear')
+
+        ax.set_xlabel('Amplitude (' + self.even.vis_units + ')')
+        ax.set_ylabel('Counts')
+        ax.legend()
+
+    def waterfall_hist_prepare(self, band, fraction=True, flag_slice='Unflagged'):  # band is a tuple (min,max)
+
+        data = np.absolute(self.EMO.data_array)
+        H = np.zeros([self.even.Ntimes, self.even.Nfreqs, self.even.Npols])
+
+        flags = self.flag_operations(flag_slice=flag_slice)
+
+        ind = np.where((min(band) < data) & (data < max(band)) & (flags > 0))  # Returns list of four-index combos
+        IND0 = np.copy(ind[0])  # Following steps are to collapse blt into t (tuples cannot be assigned element-wise)
+        IND0 = IND0 / self.UV.Nbls
+        IND = (IND0, ind[2], ind[3])  # ind[1] contains only 0's (spectral window)
+        for p in range(len(IND[0])):
+            H[IND[0][p], IND[1][p], IND[2][p]] += 1
 
         if fraction is True:
-            N = float(self.UV.Nbls*self.UV.Npols)
-            H = H/N
-        
+            N = float(self.UV.Nbls * self.UV.Npols)
+            H = H / N
+
         return(H)
 
+    def waterfall_hist_plot(self, fig, ax, H, title, vmax, aspect_ratio=6, fraction=True):
 
-    def waterfall_hist_plot(self, H, title):
+        H = np.ma.masked_equal(H, 0)
+        cmap = cm.plasma
+        cmap.set_bad(color='white')
 
-
-        MAX = np.amax(H)
-        AVG = np.mean(H)
-        
-        fig,ax = plt.subplots()
-        cax = ax.imshow(H,cmap = cm.coolwarm, interpolation = 'none')
+        cax = ax.imshow(H, cmap=cmap, vmin=0, vmax=vmax)
         ax.set_title(title)
-        ax.set_xticks([16*k for k in range(25)])
-        ax.set_yticks([2*k for k in range(15)])
-        ax.set_xlabel('Time Pair')
-        ax.set_ylabel('Frequency (channel #)')        
-        ax.set_aspect(15)
-        cbar = fig.colorbar(cax, ticks = [MAX*0.1*k for k in range(11)])
-        cbar.set_ticklabels([str(MAX*0.1*k) for k in range(11)])
-        
 
-        plt.show()
+        y_ticks = [self.even.Ntimes * k / 4 for k in range(5)]
+        x_ticks = [self.even.Nfreqs * k / 6 for k in range(7)]
+        ax.set_xticks(x_ticks)
+        ax.set_yticks(y_ticks)
+        ax.set_aspect(aspect_ratio)
+        cbar = fig.colorbar(cax, ax=ax)
+        if fraction:
+            cbar.set_label('Fraction RFI')
+        else:
+            cbar.set_label('Counts RFI')
 
-    def rfi_catalog(self, obslist, thresh_min = 2000, fs = 'Neither'): #obslist should be a list of integers (OBSID's)
+    def rfi_catalog(self, obslist, inpath, outpath, thresh_min=2000):  # obslist should be a list of integers (OBSID's)
 
         Nobs = len(obslist)
-        
-        for m in range(Nobs):
-            if m%1 == 0:
-                print('Iteration '+str(m)+' started at '+time.strftime('%H:%M:%S'))
 
-            self.read_even_odd('/Users/mike_e_dubs/python_stuff/uvfits/'+str(obslist[m])+'.uvfits')
-            if m%1 == 0:
-                print('Finished reading at '+time.strftime('%H:%M:%S'))
-            
-            H = self.one_d_hist_prepare()
-            MAXH = max(H[0])
-            if m%1 == 0:
-                print('Finished preparing amplitude hist at '+time.strftime('%H:%M:%S'))
+        for l in range(Nobs):
+            if l % 1 == 0:
+                print('Iteration ' + str(l) + ' started at ' + time.strftime('%H:%M:%S'))
 
-            W = self.waterfall_hist_prepare((thresh_min, MAXH))
-            MAXWlist = [np.amax(W[k]) for k in range(len(W))]
-            if m%1 == 0:
-                print('Finished preparing the waterfall hist at '+time.strftime('%H:%M:%S'))
+            self.read_even_odd(inpath + str(obslist[l]) + '.uvfits')
 
-            
-            fig = plt.figure(figsize = (14,8))
-            gs = GridSpec(3,2)
-            pol_titles = ['XX','YY','XY','YX']
-            axes = [plt.subplot(gs[1,0]),plt.subplot(gs[1,1]), plt.subplot(gs[2,0]),plt.subplot(gs[2,1]),plt.subplot(gs[0,:])]
-            plt.subplots_adjust(left = 0.13, bottom = 0.11, right = 0.90, top = 0.88, wspace = 0.20, hspace = 0.46)
-            
+            if l % 10 == 0:
+                print('Finished reading at ' + time.strftime('%H:%M:%S'))
 
-            def colormax(p):
-                if p in [0,1]:
-                    return(max(MAXWlist[0:2]))
-                else:
-                    return(max(MAXWlist[2:4]))
-                    
+            AMPall = self.one_d_hist_prepare(flag_slice='All')
+            AMPunflagged = self.one_d_hist_prepare(flag_slice='Unflagged')
+            MAXAMP = max(AMPall)
+            MINAMP = min(AMPall[np.nonzero(AMPall)])
+            N_all = len(AMPall)
+            N_unflagged = len(AMPunflagged)
+            N0_all = N_all - np.count_nonzero(AMPall)
+            N0_unflagged = N_unflagged - np.count_nonzero(AMPunflagged)
 
-            def sigfig(x,s = 4): #s is number of sig-figs
+            AMPdata = [AMPunflagged, AMPall]
+            AMPlabel = ['Unflagged', 'All']
+
+            if l % 10 == 0:
+                print('Finished preparing amplitude hist at ' + time.strftime('%H:%M:%S'))
+
+            Wall = self.waterfall_hist_prepare((thresh_min, MAXAMP), flag_slice='All')
+            Wunflagged = self.waterfall_hist_prepare((thresh_min, MAXAMP), flag_slice='Unflagged')
+
+            W = [Wunflagged, Wall]
+
+            MAXW_all_list = [np.amax(Wall[:, :, k]) for k in range(Wall.shape[2])]
+            MAXW_all_auto = max(MAXW_all_list[0:2])
+            MAXW_all_cross = max(MAXW_all_list[2:4])
+            MAXW_all_list = [MAXW_all_auto, MAXW_all_auto, MAXW_all_cross, MAXW_all_cross]
+
+            MAXW_unflagged_list = [np.amax(Wunflagged[:, :, k]) for k in range(Wunflagged.shape[2])]
+            MAXW_unflagged_auto = max(MAXW_unflagged_list[0:2])
+            MAXW_unflagged_cross = max(MAXW_unflagged_list[2:4])
+            MAXW_unflagged_list = [MAXW_unflagged_auto, MAXW_unflagged_auto,
+                                   MAXW_unflagged_cross, MAXW_unflagged_cross]
+
+            MAXW_list = [MAXW_unflagged_list, MAXW_all_list]
+
+            if l % 10 == 0:
+                print('Finished preparing the waterfall hist at ' + time.strftime('%H:%M:%S'))
+
+            figs = [plt.figure(figsize=(14, 8)), plt.figure(figsize=(14, 8))]
+            gs = GridSpec(3, 2)
+            axes = [[figs[0].add_subplot(gs[1, 0]), figs[0].add_subplot(gs[1, 1]), figs[0].add_subplot(gs[2, 0]),
+                    figs[0].add_subplot(gs[2, 1]), figs[0].add_subplot(gs[0, :])],
+                    [figs[1].add_subplot(gs[1, 0]), figs[1].add_subplot(gs[1, 1]), figs[1].add_subplot(gs[2, 0]),
+                     figs[1].add_subplot(gs[2, 1]), figs[1].add_subplot(gs[0, :])]]
+
+            for x in figs:
+                x.subplots_adjust(left=0.13, bottom=0.11, right=0.90, top=0.88,
+                                  wspace=0.20, hspace=0.46)
+
+            keys = [-8 + k for k in range(13)]
+            keys.remove(0)
+            values = ['YX', 'XY', 'YY', 'XX', 'LR', 'RL', 'LL', 'RR', 'I', 'Q', 'U', 'V']
+
+            pol_titles = dict(zip(keys, values))
+            flag_titles = ['Unflagged', 'All']
+
+            def sigfig(x, s=4):  # s is number of sig-figs
                 if x == 0:
                     return(0)
                 else:
                     n = int(floor(log10(abs(x))))
-                    y = 10**n*round(10**(-n)*x, s-1)
+                    y = 10**n * round(10**(-n) * x, s - 1)
                     return(y)
 
-            def waterfall_settings(fig, axis, pol_title, W, p):
-                
-                axis.set_title(pol_title)
-                cax = axis.imshow(W, cmap = cm.binary, interpolation = 'none', vmin = 0, vmax = colormax(p))
-                axis.set_aspect(6)
-                y_ticks = [7*k for k in range(5)]
-                x_ticks = [64*k for k in range(7)]
-                color_ticks = [0.2*colormax(p)*k for k in range(6)]
-                axis.set_yticks(y_ticks)
-                axis.set_xticks(x_ticks)
-                cbar = fig.colorbar(cax, ax = axis, ticks = color_ticks)
-                cbar.set_ticklabels([str(sigfig(color_ticks[k])) for k in range(6)])
-                cbar.set_label('Fraction RFI')
+            for m in range(2):
+                for n in range(5):
+                    if n < 4:
+                        self.waterfall_hist_plot(figs[m], axes[m][n], W[m][:, :, n],
+                                                 pol_titles[self.UV.polarization_array[n]] +
+                                                 ' ' + flag_titles[m], MAXW_list[m][n])
+                        if n in [0, 2]:  # Some get axis labels others do not
+                            axes[m][n].set_ylabel('Time Pair')
+                        if n in [2, 3]:
+                            axes[m][n].set_xlabel('Frequency (Mhz)')
+                            x_ticks_labels = [str(sigfig(self.UV.freq_array[0,
+                                              self.even.Nfreqs * k / 6] *
+                                              10**(-6))) for k in range(6)]
+                            x_ticks_labels.append(str(sigfig((self.UV.freq_array[0, -1] +
+                                                  self.UV.channel_width) * 10**(-6))))
+                            axes[m][n].set_xticklabels(x_ticks_labels)
+                        if n in [0, 1]:
+                            axes[m][n].set_xticklabels([])
+                        if n in [1, 3]:
+                            axes[m][n].set_yticklabels([])
+                    else:
+                        bins = np.logspace(log10(MINAMP), log10(MAXAMP), num=1001)
+                        self.one_d_hist_plot(figs[m], axes[m][n], AMPdata,
+                                             bins, AMPlabel, 'RFI Catalog ' +
+                                             str(obslist[l]))
+                        axes[m][n].axvline(x=thresh_min, color='r')
 
-            for n in range(5):
-                if n < 4:
-                    waterfall_settings(fig,axes[n],pol_titles[n]+' '+fs,W[:,:,n],n) #Common Waterfall Settings
-                    if n in [0,2]: #Some get axis labels others do not
-                        axes[n].set_ylabel('Time Pair')
-                    if n in [2,3]:
-                        axes[n].set_xlabel('Frequency (Mhz)')
-                        x_ticks_labels = [str(sigfig(self.UV.freq_array[0,64*k]*10**(-6))) for k in range(6)]
-                        x_ticks_labels.append(str(sigfig((self.UV.freq_array[0,-1]+self.UV.channel_width)*10**(-6))))
-                        axes[n].set_xticklabels(x_ticks_labels)
-                    if n in [0,1]:
-                        axes[n].set_xticklabels([])
-                    if n in [1,3]:
-                        axes[n].set_yticklabels([])
-                else:
-                    axes[n].hist((H[2],H[0],H[1],H[3]),bins = 1000, range = (0,MAXH), histtype = 'step', label = ('Neither','All','And','XOR'))
-                    axes[n].set_title('RFI Catalog '+str(obslist[m]))
-                    axes[n].set_yscale('log',nonposy = 'clip')
-                    axes[n].set_xscale('log',nonposy = 'clip')
-                    axes[n].set_xlabel('Amplitude ('+self.UV.vis_units+')')
-                    axes[n].set_ylabel('Counts')
-                    axes[n].set_xticks([10**(k-10)*MAXH for k in range(11)])
-                    axes[n].set_xticklabels([str(10**(k-10)*MAXH) for k in range(11)])
-                    axes[n].axvline(x = thresh_min)
-                    axes[n].legend()
+                figs[m].savefig(outpath + str(obslist[l]) + '_RFI_Diagnostic_' +
+                                flag_titles[m] + '.png')
 
-            plt.savefig('/Users/mike_e_dubs/python_stuff/MJW-MWA/RFI_Diagnostic/'+str(obslist[m])+'_RFI_Diagnostic.png')
+            if l % 10 == 0:
+                print('Figure saved! ' + time.strftime('%H:%M:%S'))

@@ -1,8 +1,11 @@
 import pyuvdata as pyuv
-import UVToys as UVT
+import EvenMinusOdd as EMO
+import numpy as np
+import matplotlib.pyplot as plt
 
-UVT.EMOHist('/Users/radcosgroup/UVFITS/1061313008.uvfits',1061313008,False,False)
-UVT.EMOHist('/Users/radcosgroup/UVFITS/1061313008.uvfits',1061313008,True,False)
-UVT.EMOHist('/Users/radcosgroup/UVFITS/1061313008.uvfits',1061313008,False,True)
-UVT.EMOHist('/Users/radcosgroup/UVFITS/1061313008.uvfits',1061313008,True,True)
+emo = EMO.EvenMinusOdd(False, False)
 
+emo.read_even_odd('/Users/mike_e_dubs/python_stuff/uvfits/1061313008.uvfits')
+
+W = emo.waterfall_hist_prepare((2000, 19000))
+emo.waterfall_hist_plot()
