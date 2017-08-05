@@ -10,10 +10,8 @@ import os
 
 class EvenMinusOdd:
 
-    UV = pyuv.UVData()
     even = pyuv.UVData()
     odd = pyuv.UVData()
-    EMO = pyuv.UVData()
 
     def __init__(self, BEF, TEF):
 
@@ -22,26 +20,24 @@ class EvenMinusOdd:
 
     def read_even_odd(self, filepath):
 
-        self.UV.read_uvfits(filepath)
+        self.odd.read_uvfits(filepath)
 
-        self.even = self.UV.select(times=[self.UV.time_array[(2 * k + 1) * self.UV.Nbls]
-                                   for k in range(self.UV.Ntimes / 2 - self.TEF)], inplace=False)
-        self.odd = self.UV.select(times=[self.UV.time_array[2 * k * self.UV.Nbls]
-                                  for k in range(self.TEF, self.UV.Ntimes / 2)], inplace=False)
+        self.even = self.odd.select(times=[self.odd.time_array[(2 * k + 1) * self.odd.Nbls]
+                                    for k in range(self.odd.Ntimes / 2 - self.TEF)], inplace=False)
+        self.odd.select(times=[self.odd.time_array[2 * k * self.odd.Nbls]
+                               for k in range(self.TEF, self.odd.Ntimes / 2)], inplace=True)
 
         if self.BEF:
             coarse_width = 1.28 * 10**(6)  # coarse band width of MWA in hz
-            Ncoarse = (self.UV.freq_array[0, -1] - self.UV.freq_array[0, 0]) / coarse_width
-            Mcoarse = coarse_width / self.UV.channel_width  # Number of fine channels per coarse channel
+            Ncoarse = (self.odd.freq_array[0, -1] - self.odd.freq_array[0, 0]) / coarse_width
+            Mcoarse = coarse_width / self.odd.channel_width  # Number of fine channels per coarse channel
             LEdges = [Mcoarse * p for p in range(Ncoarse)]
             REdges = [Mcoarse - 1 + Mcoarse * p for p in range(Ncoarse)]
 
-            self.even.select(freq_chans=[x for x in range(self.UV.Nfreqs) if x not in
+            self.even.select(freq_chans=[x for x in range(self.odd.Nfreqs) if x not in
                              LEdges and x not in REdges])
-            self.odd.select(freq_chans=[x for x in range(self.UV.Nfreqs) if x not in
+            self.odd.select(freq_chans=[x for x in range(self.odd.Nfreqs) if x not in
                             LEdges and x not in REdges])
-
-        self.EMO.data_array = self.even.data_array - self.odd.data_array
 
     def flag_operations(self, flag_slice='Unflagged'):
 
@@ -58,11 +54,9 @@ class EvenMinusOdd:
         return(A)
 
     def one_d_hist_prepare(self, flag_slice='Unflagged'):
-        N = np.prod(self.EMO.data_array.shape)
-        data = np.reshape(self.EMO.data_array, N)
+        N = np.prod(self.odd.data_array.shape)
+        data = np.absolute(np.reshape(self.even.data_array - self.odd.data_array, N))
         flags = np.reshape(self.flag_operations(flag_slice=flag_slice), N)
-
-        data = np.absolute(data)
 
         data = data[flags > 0]
 
@@ -89,20 +83,20 @@ class EvenMinusOdd:
 
     def waterfall_hist_prepare(self, band, fraction=True, flag_slice='Unflagged'):  # band is a tuple (min,max)
 
-        data = np.absolute(self.EMO.data_array)
+        data = np.absolute(self.even.data_array - self.odd.data_array)
         H = np.zeros([self.even.Ntimes, self.even.Nfreqs, self.even.Npols])
 
         flags = self.flag_operations(flag_slice=flag_slice)
 
         ind = np.where((min(band) < data) & (data < max(band)) & (flags > 0))  # Returns list of four-index combos
         IND0 = np.copy(ind[0])  # Following steps are to collapse blt into t (tuples cannot be assigned element-wise)
-        IND0 = IND0 / self.UV.Nbls
+        IND0 = IND0 / self.odd.Nbls
         IND = (IND0, ind[2], ind[3])  # ind[1] contains only 0's (spectral window)
         for p in range(len(IND[0])):
             H[IND[0][p], IND[1][p], IND[2][p]] += 1
 
         if fraction is True:
-            N = float(self.UV.Nbls * self.UV.Npols)
+            N = float(self.odd.Nbls * self.odd.Npols)
             H = H / N
 
         return(H)
@@ -140,32 +134,25 @@ class EvenMinusOdd:
             if l % 10 == 0:
                 print('Finished reading at ' + time.strftime('%H:%M:%S'))
 
-            AMPall = self.one_d_hist_prepare(flag_slice='All')
-            AMPunflagged = self.one_d_hist_prepare(flag_slice='Unflagged')
-            MAXAMP = max(AMPall)
-            MINAMP = min(AMPall[np.nonzero(AMPall)])
-            N_all = len(AMPall)
-            N_unflagged = len(AMPunflagged)
-            N0_all = N_all - np.count_nonzero(AMPall)
-            N0_unflagged = N_unflagged - np.count_nonzero(AMPunflagged)
+            AMPdata = [self.one_d_hist_prepare(flag_slice='Unflagged'),
+                       self.one_d_hist_prepare(flag_slice='All')]
+            MAXAMP = max(AMPdata[1])
+            MINAMP = min(AMPdata[1][np.nonzero(AMPdata[1])])
 
-            AMPdata = [AMPunflagged, AMPall]
             AMPlabel = ['Unflagged', 'All']
 
             if l % 10 == 0:
                 print('Finished preparing amplitude hist at ' + time.strftime('%H:%M:%S'))
 
-            Wall = self.waterfall_hist_prepare((thresh_min, MAXAMP), flag_slice='All')
-            Wunflagged = self.waterfall_hist_prepare((thresh_min, MAXAMP), flag_slice='Unflagged')
+            W = [self.waterfall_hist_prepare((thresh_min, MAXAMP), flag_slice='Unflagged'),
+                 self.waterfall_hist_prepare((thresh_min, MAXAMP), flag_slice='All')]
 
-            W = [Wunflagged, Wall]
-
-            MAXW_all_list = [np.amax(Wall[:, :, k]) for k in range(Wall.shape[2])]
+            MAXW_all_list = [np.amax(W[1][:, :, k]) for k in range(W[1].shape[2])]
             MAXW_all_auto = max(MAXW_all_list[0:2])
             MAXW_all_cross = max(MAXW_all_list[2:4])
             MAXW_all_list = [MAXW_all_auto, MAXW_all_auto, MAXW_all_cross, MAXW_all_cross]
 
-            MAXW_unflagged_list = [np.amax(Wunflagged[:, :, k]) for k in range(Wunflagged.shape[2])]
+            MAXW_unflagged_list = [np.amax(W[0][:, :, k]) for k in range(W[0].shape[2])]
             MAXW_unflagged_auto = max(MAXW_unflagged_list[0:2])
             MAXW_unflagged_cross = max(MAXW_unflagged_list[2:4])
             MAXW_unflagged_list = [MAXW_unflagged_auto, MAXW_unflagged_auto,
@@ -206,17 +193,17 @@ class EvenMinusOdd:
                 for n in range(5):
                     if n < 4:
                         self.waterfall_hist_plot(figs[m], axes[m][n], W[m][:, :, n],
-                                                 pol_titles[self.UV.polarization_array[n]] +
+                                                 pol_titles[self.even.polarization_array[n]] +
                                                  ' ' + flag_titles[m], MAXW_list[m][n])
                         if n in [0, 2]:  # Some get axis labels others do not
                             axes[m][n].set_ylabel('Time Pair')
                         if n in [2, 3]:
                             axes[m][n].set_xlabel('Frequency (Mhz)')
-                            x_ticks_labels = [str(sigfig(self.UV.freq_array[0,
+                            x_ticks_labels = [str(sigfig(self.even.freq_array[0,
                                               self.even.Nfreqs * k / 6] *
                                               10**(-6))) for k in range(6)]
-                            x_ticks_labels.append(str(sigfig((self.UV.freq_array[0, -1] +
-                                                  self.UV.channel_width) * 10**(-6))))
+                            x_ticks_labels.append(str(sigfig((self.even.freq_array[0, -1] +
+                                                  self.even.channel_width) * 10**(-6))))
                             axes[m][n].set_xticklabels(x_ticks_labels)
                         if n in [0, 1]:
                             axes[m][n].set_xticklabels([])
