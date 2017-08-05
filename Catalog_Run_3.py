@@ -5,5 +5,5 @@ with open('/nfs/eor-00/h1/mwilensk/FHD/obs_list/Aug23.txt') as f:
 
 EMO = emo.EvenMinusOdd(False, False)
 
-EMO.rfi_catalog(obslist, '/nfs/eor-11/r1/EoRuvfits/jd2456528v4_1/',
+EMO.rfi_catalog(obslist[30:40], '/nfs/eor-11/r1/EoRuvfits/jd2456528v4_1/',
                 '/nfs/eor-00/h1/mwilensk/RFI_Diagnostic/')

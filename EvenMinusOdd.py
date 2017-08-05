@@ -135,7 +135,7 @@ class EvenMinusOdd:
             if l % 1 == 0:
                 print('Iteration ' + str(l) + ' started at ' + time.strftime('%H:%M:%S'))
 
-            self.read_even_odd(inpath + str(obslist[l]) + '.uvfits')
+            self.read_even_odd(inpath + str(obslist[l]) + '/' + str(obslist[l]) + '.uvfits')
 
             if l % 10 == 0:
                 print('Finished reading at ' + time.strftime('%H:%M:%S'))
