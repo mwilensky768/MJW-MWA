@@ -1,7 +1,8 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import pyuvdata as pyuv
-from matplotlib import cm
+from matplotlib import cm, use
+use('Agg')
+import matplotlib.pyplot as plt
 from math import floor, ceil, log10
 from matplotlib.gridspec import GridSpec
 import time
@@ -122,7 +123,6 @@ class EvenMinusOdd:
             cbar.set_label('Counts RFI')
 
     def rfi_catalog(self, obslist, inpath, outpath, thresh_min=2000):  # obslist should be a list of integers (OBSID's)
-
         Nobs = len(obslist)
 
         for l in range(Nobs):
@@ -164,15 +164,18 @@ class EvenMinusOdd:
                 print('Finished preparing the waterfall hist at ' + time.strftime('%H:%M:%S'))
 
             figs = [plt.figure(figsize=(14, 8)), plt.figure(figsize=(14, 8))]
+            print('figs were successfully made')
             gs = GridSpec(3, 2)
             axes = [[figs[0].add_subplot(gs[1, 0]), figs[0].add_subplot(gs[1, 1]), figs[0].add_subplot(gs[2, 0]),
                     figs[0].add_subplot(gs[2, 1]), figs[0].add_subplot(gs[0, :])],
                     [figs[1].add_subplot(gs[1, 0]), figs[1].add_subplot(gs[1, 1]), figs[1].add_subplot(gs[2, 0]),
                      figs[1].add_subplot(gs[2, 1]), figs[1].add_subplot(gs[0, :])]]
+            print('axes were successfully added to the figs')
 
             for x in figs:
                 x.subplots_adjust(left=0.13, bottom=0.11, right=0.90, top=0.88,
                                   wspace=0.20, hspace=0.46)
+            print('subplot parameters were adjusted')
 
             keys = [-8 + k for k in range(13)]
             keys.remove(0)
