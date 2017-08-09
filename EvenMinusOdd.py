@@ -5,6 +5,7 @@ use('Agg')
 import matplotlib.pyplot as plt
 from math import floor, ceil, log10
 from matplotlib.gridspec import GridSpec
+from matplotlib.ticker import AutoMinorLocator
 import time
 import os
 
@@ -111,11 +112,17 @@ class EvenMinusOdd:
         cax = ax.imshow(H, cmap=cmap, vmin=0, vmax=vmax)
         ax.set_title(title)
 
-        y_ticks = [self.even.Ntimes * k / 4 for k in range(5)]
-        x_ticks = [self.even.Nfreqs * k / 6 for k in range(7)]
+        y_ticks = [self.even.Ntimes * k / 4 for k in range(4)]
+        y_ticks.append(self.even.Ntimes - 1)
+        y_minor_locator = AutoMinorLocator(7)
+        x_ticks = [self.even.Nfreqs * k / 6 for k in range(6)]
+        x_ticks.append(self.even.Nfreqs - 1)
+        x_minor_locator = AutoMinorLocator(4)
         ax.set_xticks(x_ticks)
+        ax.xaxis.set_minor_locator(x_minor_locator)
         ax.set_yticks(y_ticks)
         ax.set_aspect(aspect_ratio)
+        ax.yaxis.set_minor_locator(y_minor_locator)
         cbar = fig.colorbar(cax, ax=ax)
         if fraction:
             cbar.set_label('Fraction RFI')
@@ -129,7 +136,7 @@ class EvenMinusOdd:
             if l % 1 == 0:
                 print('Iteration ' + str(l) + ' started at ' + time.strftime('%H:%M:%S'))
 
-            self.read_even_odd(inpath + str(obslist[l]) + '/' + str(obslist[l]) + '.uvfits')
+            self.read_even_odd(inpath)
 
             if l % 10 == 0:
                 print('Finished reading at ' + time.strftime('%H:%M:%S'))
@@ -205,8 +212,7 @@ class EvenMinusOdd:
                             x_ticks_labels = [str(sigfig(self.even.freq_array[0,
                                               self.even.Nfreqs * k / 6] *
                                               10**(-6))) for k in range(6)]
-                            x_ticks_labels.append(str(sigfig((self.even.freq_array[0, -1] +
-                                                  self.even.channel_width) * 10**(-6))))
+                            x_ticks_labels.append(str(sigfig((self.even.freq_array[0, -1] * 10**(-6)))))
                             axes[m][n].set_xticklabels(x_ticks_labels)
                         if n in [0, 1]:
                             axes[m][n].set_xticklabels([])
