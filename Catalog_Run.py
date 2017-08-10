@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("id", type=int)
 args = parser.parse_args()
 
-EMO = emo.EvenMinusOdd(False, False)
+EMO = emo.EvenMinusOdd(False, True)
 
 EMO.rfi_catalog([obslist[args.id - 1], ], pathlist[args.id - 1],
                 '/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Long_Run/')
