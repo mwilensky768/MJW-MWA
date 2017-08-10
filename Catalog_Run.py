@@ -3,7 +3,7 @@ import argparse
 
 with open('/nfs/eor-00/h1/mwilensk/FHD/obs_list/beardsley_thesis_list.txt') as f:
     obslist = f.read().split("\n")
-with open('/nfs/eor-00/hi/mwilensk/FHD/obs_list/beardsley_thesis_list_paths.txt') as g:
+with open('/nfs/eor-00/h1/mwilensk/FHD/obs_list/beardsley_thesis_list_paths.txt') as g:
     pathlist = g.read().split("\n")
 
 parser = argparse.ArgumentParser()

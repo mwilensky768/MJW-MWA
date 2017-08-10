@@ -5,9 +5,10 @@ use('Agg')
 import matplotlib.pyplot as plt
 from math import floor, ceil, log10
 from matplotlib.gridspec import GridSpec
-from matplotlib.ticker import AutoMinorLocator
+from matplotlib.ticker import FixedLocator, AutoMinorLocator
 import time
 import os
+from scipy.stats import rayleigh
 
 
 class EvenMinusOdd:
@@ -64,9 +65,12 @@ class EvenMinusOdd:
 
         return(data)
 
-    def one_d_hist_plot(self, fig, ax, data, bins, label, title, ylog=True, xlog=True):  # Data/title are tuples if multiple hists
+    def one_d_hist_plot(self, fig, ax, data, bins, label, title, writepath='',
+                        ylog=True, xlog=True, write=False):  # Data/title are tuples if multiple hists
 
-        ax.hist(data, bins=bins, histtype='step', label=label)
+        n, bins, patches = ax.hist(data, bins=bins, histtype='step', label=label)
+        if write:
+            numpy.save(writepath, n[0])
         ax.set_title(title)
 
         if ylog:
@@ -114,7 +118,10 @@ class EvenMinusOdd:
 
         y_ticks = [self.even.Ntimes * k / 4 for k in range(4)]
         y_ticks.append(self.even.Ntimes - 1)
-        y_minor_locator = AutoMinorLocator(7)
+        y_minors = range(self.even.Ntimes)
+        for y in y_ticks:
+            y_minors.remove(y)
+        y_minor_locator = FixedLocator(y_minors)
         x_ticks = [self.even.Nfreqs * k / 6 for k in range(6)]
         x_ticks.append(self.even.Nfreqs - 1)
         x_minor_locator = AutoMinorLocator(4)
@@ -219,10 +226,11 @@ class EvenMinusOdd:
                         if n in [1, 3]:
                             axes[m][n].set_yticklabels([])
                     else:
-                        bins = np.logspace(log10(MINAMP), log10(MAXAMP), num=1001)
+                        bins = np.logspace(-3, 5, num=1001)
                         self.one_d_hist_plot(figs[m], axes[m][n], AMPdata,
                                              bins, AMPlabel, 'RFI Catalog ' +
-                                             str(obslist[l]))
+                                             str(obslist[l]), write=True,
+                                             writepath='/nfs/eor-00/mwilensk/long_run_hist/' + str(obslist[l]) + '_hist')
                         axes[m][n].axvline(x=thresh_min, color='r')
 
                 figs[m].savefig(outpath + str(obslist[l]) + '_RFI_Diagnostic_' +
