@@ -70,7 +70,7 @@ class EvenMinusOdd:
 
         n, bins, patches = ax.hist(data, bins=bins, histtype='step', label=label)
         if write:
-            numpy.save(writepath, n[0])
+            np.save(writepath, n[0])
         ax.set_title(title)
 
         if ylog:
@@ -230,7 +230,7 @@ class EvenMinusOdd:
                         self.one_d_hist_plot(figs[m], axes[m][n], AMPdata,
                                              bins, AMPlabel, 'RFI Catalog ' +
                                              str(obslist[l]), write=True,
-                                             writepath='/nfs/eor-00/mwilensk/long_run_hist/' + str(obslist[l]) + '_hist')
+                                             writepath='/nfs/eor-00/h1/mwilensk/long_run_hist/' + str(obslist[l]) + '_hist.npy')
                         axes[m][n].axvline(x=thresh_min, color='r')
 
                 figs[m].savefig(outpath + str(obslist[l]) + '_RFI_Diagnostic_' +
