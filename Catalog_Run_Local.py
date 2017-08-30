@@ -1,7 +1,7 @@
-import EvenMinusOdd as emo
+import rfipy as rfi
 
-EMO = emo.EvenMinusOdd(False, False)
+RFI = rfi.RFI()
 
-EMO.rfi_catalog([1061313008, ],
-                '/Users/mike_e_dubs/python_stuff/smaller_uvfits/s1061313008.uvfits',
+RFI.rfi_catalog([1061313008, ],
+                '/Users/mike_e_dubs/python_stuff/uvfits/1061313008.uvfits',
                 '/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/')
