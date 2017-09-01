@@ -21,7 +21,7 @@ class RFI:
         times = [self.UV.time_array[k * self.UV.Nbls] for k in range(self.UV.Ntimes)]
         bad_times = []
         for k in bad_time_indices:
-            bad_times.append(times(k))
+            bad_times.append(times[k])
         for bad_time in bad_times:
             times.remove(bad_time)
         self.UV.select(times=times)

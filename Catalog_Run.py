@@ -11,14 +11,14 @@ parser = argparse.ArgumentParser()
 parser.add_argument("id", type=int)
 args = parser.parse_args()
 
-if not os.path.exists('/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Long_Run_8s/' +
-                      str(obslist[args.id - 1]) + '_RFI_Diagnostic_All.png'):
+if not os.path.exists('/nfs/eor-00/h1/mwilensk/long_run_hist_8s/'
+                        + str(obslist[args.id - 1]) + '_hist.npy'):
 
     RFI = rfi.RFI()
 
     RFI.rfi_catalog([obslist[args.id - 1], ], pathlist[args.id - 1],
                     '/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Long_Run_8s/',
                     bad_time_indices=[0, 53, 54, 55], hist_write=True,
-                    hist_write_path='/nfs/eor-00/h1/mwilensk/long_run_hist_8s')
+                    hist_write_path='/nfs/eor-00/h1/mwilensk/long_run_hist_8s/')
 else:
     print('I already processed obs ' + str(obslist[args.id - 1]))
