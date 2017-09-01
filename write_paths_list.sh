@@ -1,7 +1,7 @@
 #!/bin/bash
 
 obs_file_name='/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Diffuse_2015/sidelobe_survey_obsIDs.txt'
-obs_path_file_name='/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Diffuse_2015/sidelove_survey_obsIDs_paths.txt'
+obs_path_file_name='/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Diffuse_2015/sidelobe_survey_obsIDs_paths.txt'
 
 for i in {1..934}
 do

@@ -4,7 +4,7 @@ import os
 
 with open('/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Diffuse_2015/sidelobe_survey_obsIDs.txt') as f:
     obslist = f.read().split("\n")
-with open('/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Diffuse_2015/sidelove_survey_obsIDs_paths.txt') as g:
+with open('/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Diffuse_2015/sidelobe_survey_obsIDs_paths.txt') as g:
     pathlist = g.read().split("\n")
 
 parser = argparse.ArgumentParser()
