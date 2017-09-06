@@ -89,18 +89,54 @@ class RFI:
         ax.set_ylabel('Counts')
         ax.legend()
 
-    def waterfall_hist_prepare(self, band, fraction=True, flag_slice='Unflagged'):  # band is a tuple (min,max)
+    def waterfall_hist_prepare(self, band, type='time-frequency', fraction=True,
+                               flag_slice='Unflagged'):  # band is a tuple (min,max)
 
         data = np.absolute(np.diff(np.reshape(self.UV.data_array,
                            [self.UV.Ntimes, self.UV.Nbls, self.UV.Nspws,
                             self.UV.Nfreqs, self.UV.Npols]), axis=0))
-        H = np.zeros([self.UV.Ntimes - 1, self.UV.Nfreqs, self.UV.Npols])
 
         flags = np.reshape(self.flag_operations(flag_slice=flag_slice), data.shape)
 
         ind = np.where((min(band) < data) & (data < max(band)) & (flags > 0))  # Returns list of five-index combos
-        for p in range(len(ind[0])):
-            H[ind[0][p], ind[3][p], ind[4][p]] += 1
+
+        if type is 'time-frequency':
+            H = np.zeros([self.UV.Ntimes - 1, self.UV.Nfreqs, self.UV.Npols])
+            for p in range(len(ind[0])):
+                H[ind[0][p], ind[3][p], ind[4][p]] += 1
+            N = float(self.UV.Nbls * self.UV.Npols)
+        elif type is 'ant-frequency':
+            unique_times = np.unique(ind[0])
+            N_unique_times = len(unique_times)
+            H = np.zeros([self.UV.Nants_data, self.UV.Nfreqs, self.UV.Npols,
+                          N_unique_times, 2])
+            ant1_ind = []
+            ant2_ind = []
+            for inds in ind[1]:
+                ant1_ind.append(self.UV.ant_1_array[inds])
+                ant2_ind.append(self.UV.ant_2_array[inds])
+            ant_ind = [np.array(ant1_ind), np.array(ant2_ind)]
+            for p in range(2):
+                for q in range(len(ind[0])):
+                    H[ant_ind[p, q], ind[3][q], ind[4][q],
+                      np.where(unique_times == ind[0][q])[0][0], p] += 1
+            H = np.sum(axis=4)
+        elif type is 'ant-time':
+            unique_freqs = np.unique(ind[3])
+            N_unique_freqs = len(unique_freqs)
+            H = np.zeros([self.UV.Nants_data, self.UV.Ntimes - 1, self.UV.Npols,
+                          N_unique_freqs, 2])
+            ant1_ind = []
+            ant2_ind = []
+            for inds in ind[1]:
+                ant1_ind.append(self.UV.ant_1_array[inds])
+                ant2_ind.append(self.UV.ant_2_array[inds])
+            ant_ind = [np.array(ant1_ind), np.array(ant2_ind)]
+            for p in range(2):
+                for q in range(len(ind[3])):
+                    H[ant_ind[p, q], ind[0][q], ind[4][q],
+                      np.where(unique_freqs == ind[3][q])[0][0], p] += 1
+            H = np.sum(axis=4)
 
         if fraction is True:
             N = float(self.UV.Nbls * self.UV.Npols)
@@ -140,6 +176,7 @@ class RFI:
     def rfi_catalog(self, obslist, inpath, outpath, bad_time_indices=[],
                     coarse_band_remove=False, thresh_min=2000, hist_write=False,
                     hist_write_path=''):  # obslist should be a list of integers (OBSID's)
+
         Nobs = len(obslist)
 
         for l in range(Nobs):
