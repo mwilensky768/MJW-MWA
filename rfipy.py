@@ -279,7 +279,7 @@ class RFI:
     def catalog_drill(self, obs, inpath, outpath, plot_type, bad_time_indices=[],
                       coarse_band_remove=False, band=(2000, 100000)):
 
-        self.read_even_odd(inpath + str(obs) + '.uvfits', bad_time_indices=bad_time_indices,
+        self.read_even_odd(inpath, bad_time_indices=bad_time_indices,
                            coarse_band_remove=coarse_band_remove)
 
         flag_slices = ['All', 'Unflagged']

@@ -16,8 +16,9 @@ if not os.path.exists('/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Diffuse_2015/' +
 
     RFI = rfi.RFI()
 
-    RFI.rfi_catalog([obslist[args.id - 1], ], pathlist[args.id - 1],
-                    '/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Diffuse_2015/', hist_write=True,
+    RFI.rfi_catalog(obslist[args.id - 1], pathlist[args.id - 1],
+                    '/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Diffuse_2015/',
+                    thresh_min=3000, hist_write=True,
                     hist_write_path='/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Diffuse_2015/Diffuse_2015_Hists/')
 else:
     print('I already processed obs ' + str(obslist[args.id - 1]))
