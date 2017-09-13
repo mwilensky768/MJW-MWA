@@ -64,6 +64,7 @@ class RFI:
                            time_slice=[], freq_slice=[]):
 
         flags = self.flag_operations(flag_slice=flag_slice)
+        values = self.data
 
         if time_drill:
             values = self.data[time_drill, :, :, :, :]
@@ -187,7 +188,7 @@ class RFI:
             cbar.set_label('Counts RFI')
 
     def rfi_catalog(self, obs, inpath, outpath, bad_time_indices=[],
-                    coarse_band_remove=False, thresh_min=2000, hist_write=False,
+                    coarse_band_remove=False, band=(2000, 10**5), hist_write=False,
                     hist_write_path=''):
 
         print('Started at ' + time.strftime('%H:%M:%S'))
@@ -198,51 +199,20 @@ class RFI:
 
         print('Finished reading at ' + time.strftime('%H:%M:%S'))
 
-        AMPdata = [self.one_d_hist_prepare(flag_slice='Unflagged'),
-                   self.one_d_hist_prepare(flag_slice='All')]
-        MAXAMP = max(AMPdata[1])
-        MINAMP = min(AMPdata[1][np.nonzero(AMPdata[1])])
+        AMP = [self.one_d_hist_prepare(flag_slice='Unflagged'),
+               self.one_d_hist_prepare(flag_slice='All')]
 
         print('Finished preparing amplitude hist at ' + time.strftime('%H:%M:%S'))
 
-        W = [self.waterfall_hist_prepare((thresh_min, MAXAMP), flag_slice='Unflagged'),
-             self.waterfall_hist_prepare((thresh_min, MAXAMP), flag_slice='All')]
-
-        MAXW_all_list = [np.amax(W[1][:, :, k]) for k in range(W[1].shape[2])]
-        MAXW_all_auto = max(MAXW_all_list[0:2])
-        MAXW_all_cross = max(MAXW_all_list[2:4])
-        MAXW_all_list = [MAXW_all_auto, MAXW_all_auto, MAXW_all_cross, MAXW_all_cross]
-
-        MAXW_unflagged_list = [np.amax(W[0][:, :, k]) for k in range(W[0].shape[2])]
-        MAXW_unflagged_auto = max(MAXW_unflagged_list[0:2])
-        MAXW_unflagged_cross = max(MAXW_unflagged_list[2:4])
-        MAXW_unflagged_list = [MAXW_unflagged_auto, MAXW_unflagged_auto,
-                               MAXW_unflagged_cross, MAXW_unflagged_cross]
-
-        MAXW_list = [MAXW_unflagged_list, MAXW_all_list]
-
-        print('Finished preparing the waterfall hist at ' + time.strftime('%H:%M:%S'))
-
-        figs = [plt.figure(figsize=(14, 8)), plt.figure(figsize=(14, 8))]
-        print('figs were successfully made')
         gs = GridSpec(3, 2)
-        axes = [[figs[0].add_subplot(gs[1, 0]), figs[0].add_subplot(gs[1, 1]), figs[0].add_subplot(gs[2, 0]),
-                figs[0].add_subplot(gs[2, 1]), figs[0].add_subplot(gs[0, :])],
-                [figs[1].add_subplot(gs[1, 0]), figs[1].add_subplot(gs[1, 1]), figs[1].add_subplot(gs[2, 0]),
-                figs[1].add_subplot(gs[2, 1]), figs[1].add_subplot(gs[0, :])]]
-        print('axes were successfully added to the figs')
+        gs_loc = [[1, 0], [1, 1], [2, 0], [2, 1]]
 
-        for x in figs:
-            x.subplots_adjust(left=0.13, bottom=0.11, right=0.90, top=0.88,
-                              wspace=0.20, hspace=0.46)
-        print('subplot parameters were adjusted')
+        pol_keys = [-8 + k for k in range(13)]
+        pol_keys.remove(0)
+        pol_values = ['YX', 'XY', 'YY', 'XX', 'LR', 'RL', 'LL', 'RR', 'I', 'Q', 'U', 'V']
 
-        keys = [-8 + k for k in range(13)]
-        keys.remove(0)
-        values = ['YX', 'XY', 'YY', 'XX', 'LR', 'RL', 'LL', 'RR', 'I', 'Q', 'U', 'V']
-
-        pol_titles = dict(zip(keys, values))
-        flag_titles = ['Unflagged', 'All']
+        pol_titles = dict(zip(pol_keys, pol_values))
+        flag_slices = ['Unflagged', 'All']
 
         def sigfig(x, s=4):  # s is number of sig-figs
             if x == 0:
@@ -252,37 +222,35 @@ class RFI:
                 y = 10**n * round(10**(-n) * x, s - 1)
                 return(y)
 
-        for m in range(2):
-            for n in range(5):
-                if n < 4:
-                    self.waterfall_hist_plot(figs[m], axes[m][n], W[m][:, :, n],
-                                             pol_titles[self.UV.polarization_array[n]] +
-                                             ' ' + flag_titles[m], MAXW_list[m][n])
-                    if n in [0, 2]:  # Some get axis labels others do not
-                        axes[m][n].set_ylabel('Time Pair')
-                    if n in [2, 3]:
-                        axes[m][n].set_xlabel('Frequency (Mhz)')
-                        x_ticks_labels = [str(sigfig(self.UV.freq_array[0,
-                                          self.UV.Nfreqs * k / 6] *
-                                          10**(-6))) for k in range(6)]
-                        x_ticks_labels.append(str(sigfig((self.UV.freq_array[0, -1] * 10**(-6)))))
-                        axes[m][n].set_xticklabels(x_ticks_labels)
-                    if n in [0, 1]:
-                        axes[m][n].set_xticklabels([])
-                    if n in [1, 3]:
-                        axes[m][n].set_yticklabels([])
-                else:
-                    bins = np.logspace(-3, 5, num=1001)
-                    self.one_d_hist_plot(figs[m], axes[m][n], AMPdata,
-                                         bins, flag_titles, 'RFI Catalog ' +
-                                         str(obs), write=hist_write,
-                                         writepath=hist_write_path + str(obs) + '_hist.npy')
-                    axes[m][n].axvline(x=thresh_min, color='r')
+        for flag_slice in flag_slices:
+            W = self.waterfall_hist_prepare(band, plot_type='time-freq',
+                                            fraction=True, flag_slice=flag_slice)
 
-            figs[m].savefig(outpath + str(obs) + '_RFI_Diagnostic_' +
-                            flag_titles[m] + '.png')
+            MAXW_list = [np.amax(W[:, :, k]) for k in range(W.shape[2])]
+            MAXW_auto = max(MAXW_list[0:2])
+            MAXW_cross = max(MAXW_list[2:4])
+            MAXW_list = [MAXW_auto, MAXW_auto, MAXW_cross, MAXW_cross]
 
-            print('Figure saved! ' + time.strftime('%H:%M:%S'))
+            fig = plt.figure(figsize=(14, 8))
+            ax = fig.add_subplot(gs[0, :])
+            self.one_d_hist_plot(fig, ax, AMP, ['Unflagged', 'All'], ' RFI Catalog ' + str(obs))
+            ax.axvline(x=min(band), color='r')
+            for n in range(self.UV.Npols):
+                ax = fig.add_subplot(gs[gs_loc[n][0], gs_loc[n][1]])
+                self.waterfall_hist_plot(fig, ax, W[:, :, n],
+                                         pol_titles[self.UV.polarization_array[n]] +
+                                         ' ' + flag_slice, MAXW_list[n])
+
+                ax.set_ylabel('Time Pair')
+                ax.set_xlabel('Frequency (Mhz)')
+                x_ticks_labels = [str(sigfig(self.UV.freq_array[0, self.UV.Nfreqs * k / 6] *
+                                  10**(-6))) for k in range(6)]
+                x_ticks_labels.append(str(sigfig((self.UV.freq_array[0, -1] * 10**(-6)))))
+                ax.set_xticklabels(x_ticks_labels)
+
+            plt.tight_layout()
+            fig.savefig(outpath + str(obs) + '_RFI_Diagnostic_' + flag_slice + '.png')
+            plt.close(fig)
 
     def catalog_drill(self, obs, inpath, outpath, plot_type, bad_time_indices=[],
                       coarse_band_remove=False, band=(2000, 100000)):
@@ -320,7 +288,7 @@ class RFI:
             W, uniques = self.waterfall_hist_prepare(band, plot_type=plot_type,
                                                      fraction=False, flag_slice=flag_slice)
             if plot_type == 'ant-time':
-                uniques = [self.UV.freq_array[0, m] for m in uniques]
+                unique_freqs = [self.UV.freq_array[0, m] for m in uniques]
             N_events = W.shape[3]
             for k in range(N_events):
                 fig = plt.figure(figsize=(14, 8))
@@ -332,8 +300,8 @@ class RFI:
                     AMP = [self.one_d_hist_prepare(flag_slice='Unflagged', freq_drill=uniques[k]),
                            self.one_d_hist_prepare(flag_slice='All', freq_drill=uniques[k])]
                 self.one_d_hist_plot(fig, ax, AMP, ['Unflagged', 'All'], str(obs) + ' Drill ' +
-                                     plot_type_titles[plot_type] + str(uniques[k]))
-                ax.axvline(x=mind(band), color='r')
+                                     plot_type_titles[plot_type] + str(unique_freqs[k]))
+                ax.axvline(x=min(band), color='r')
                 for l in range(self.UV.Npols):
                     vmax = np.amax(W[:, :, l, k])
                     ax = fig.add_subplot(gs[gs_loc[l][0], gs_loc[l][1]])
@@ -342,13 +310,12 @@ class RFI:
                                              ' ' + flag_slice,
                                              vmax, aspect_ratio=1, fraction=False)
                     ax.set_ylabel('Antenna #')
+                    ax.set_xlabel(x_labels[plot_type])
                     if plot_type == 'ant-freq':
                         x_tick_labels = [str(sigfig(self.UV.freq_array[0, self.UV.Nfreqs * m / 6] *
                                              10**(-6))) for m in range(6)]  # for 'ant-freq' only
                         x_tick_labels.append(str(sigfig((self.UV.freq_array[0, -1] * 10**(-6)))))
                         ax.set_xticklabels(x_tick_labels)
-                    if l > (self.UV.Npols - 2):
-                        ax.set_xlabel(x_labels[plot_type])
                 plt.tight_layout()
                 fig.savefig(outpath + str(obs) + '_Drill_' + flag_slice + '_' +
                             str(uniques[k]) + '.png')
