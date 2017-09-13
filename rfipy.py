@@ -67,17 +67,17 @@ class RFI:
         values = self.data
 
         if time_drill:
-            values = self.data[time_drill, :, :, :, :]
+            values = values[time_drill, :, :, :, :]
             flags = flags[time_drill, :, :, :, :]
         if time_slice:
-            values = self.data[min(time_slice):max(time_slice) + 1, :, :, :, :]
-            flags = flags[min(time_slice):max(time_slice) + 1, :, :, :, :]
+            values = values[min(time_slice):max(time_slice), :, :, :, :]
+            flags = flags[min(time_slice):max(time_slice), :, :, :, :]
         if freq_drill:
-            values = self.data[:, :, :, freq_drill, :]
+            values = values[:, :, :, freq_drill, :]
             flags = flags[:, :, :, freq_drill, :]
         if freq_slice:
-            values = self.data[:, :, :, min(freq_slice):max(freq_slice) + 1, :]
-            flags - flags[:, :, :, min(freq_slice):max(freq_slice) + 1, :]
+            values = values[:, :, :, min(freq_slice):max(freq_slice), :]
+            flags = flags[:, :, :, min(freq_slice):max(freq_slice), :]
 
         N = np.prod(values.shape)
         values = np.reshape(values, N)
@@ -320,3 +320,23 @@ class RFI:
                 fig.savefig(outpath + str(obs) + '_Drill_' + flag_slice + '_' +
                             str(uniques[k]) + '.png')
                 plt.close(fig)
+
+    def digital_gain_compare(self, obs, inpath, outpath):
+
+        self.read_even_odd(inpath)
+        self.data_prepare()
+
+        flag_slices = ['Unflagged', 'All']
+        freq_slices = [[0, 256], [256, 384]]  # Unfortunate hard-coding, but this is where the dig. gain jump happens
+        AMP = []
+        label = ['Unflagged Below', 'Unflagged Above', 'All Below', 'All Above']
+
+        for flag_slice in flag_slices:
+            for freq_slice in freq_slices:
+                AMP.append(self.one_d_hist_prepare(flag_slice=flag_slice, freq_slice=freq_slice))
+
+        fig, ax = plt.subplots(figsize=(14, 8))
+
+        self.one_d_hist_plot(fig, ax, AMP, label, str(obs) + ' Digital Gain Comparison')
+        plt.tight_layout()
+        fig.savefig(outpath + str(obs) + '_DGC.png')
