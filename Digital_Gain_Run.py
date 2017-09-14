@@ -11,12 +11,14 @@ parser = argparse.ArgumentParser()
 parser.add_argument("id", type=int)
 args = parser.parse_args()
 
-if not os.path.exists('/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Golden_Set/Digital_Gain_Comparison/' +
-                      str(obslist[args.id - 1]) + '_Normed_DGC.png'):
+obs = obslist[args.id - 1]
+inpath = pathlist[agrs.id - 1]
+outpath = '/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Golden_Set/Digital_Gain_Comparison/'
 
-    RFI = rfi.RFI()
+if not os.path.exists(outpath + str(obs) + '_Normed_DGC.png'):
 
-    RFI.digital_gain_compare(obslist[args.id - 1], pathlist[args.id - 1],
-                             '/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Golden_Set/Digital_Gain_Comparison/')
+    RFI = rfi.RFI(obs, inpath)
+
+    RFI.digital_gain_compare(outpath)
 else:
-    print('I already processed obs ' + str(obslist[args.id - 1]))
+    print('I already processed obs ' + str(obs))

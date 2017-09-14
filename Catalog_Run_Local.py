@@ -1,7 +1,5 @@
 import rfipy as rfi
 
-RFI = rfi.RFI()
+RFI = rfi.RFI(1061313008, '/Users/mike_e_dubs/python_stuff/smaller_uvfits/s1061313008.uvfits')
 
-RFI.rfi_catalog(1061313008,
-                '/Users/mike_e_dubs/python_stuff/smaller_uvfits/s1061313008.uvfits',
-                '/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/')
+RFI.rfi_catalog('/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/')

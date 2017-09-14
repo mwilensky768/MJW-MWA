@@ -13,11 +13,9 @@ from scipy.stats import rayleigh
 
 class RFI:
 
-    UV = pyuv.UVData()
-    data = []
-
-    def read_even_odd(self, filepath, bad_time_indices=[], coarse_band_remove=False):  # specify time indices to remove and filepath
-
+    def __init__(self, obs, filepath, bad_time_indices=[], coarse_band_remove=False):
+        self.obs = obs
+        self.UV = pyuv.UVData()
         self.UV.read_uvfits(filepath)
         times = [self.UV.time_array[k * self.UV.Nbls] for k in range(self.UV.Ntimes)]
         bad_times = []
@@ -37,10 +35,9 @@ class RFI:
             self.UV.select(freq_chans=[x for x in range(self.UV.Nfreqs) if x not in
                                        LEdges and x not in REdges])
 
-    def data_prepare(self):
-        self.data = np.absolute(np.diff(np.reshape(self.UV.data_array,
-                                [self.UV.Ntimes, self.UV.Nbls, self.UV.Nspws,
-                                 self.UV.Nfreqs, self.UV.Npols]), axis=0))
+        self.data_array = np.absolute(np.diff(np.reshape(self.UV.data_array,
+                                      [self.UV.Ntimes, self.UV.Nbls, self.UV.Nspws,
+                                       self.UV.Nfreqs, self.UV.Npols]), axis=0))
 
     def flag_operations(self, flag_slice='Unflagged'):
 
@@ -64,7 +61,7 @@ class RFI:
                            time_slice=[], freq_slice=[]):
 
         flags = self.flag_operations(flag_slice=flag_slice)
-        values = self.data
+        values = self.data_array
 
         if time_drill:
             values = values[time_drill, :, :, :, :]
@@ -114,9 +111,9 @@ class RFI:
     def waterfall_hist_prepare(self, band, plot_type='time-freq', fraction=True,
                                flag_slice='Unflagged'):  # band is a tuple (min,max)
 
-        flags = np.reshape(self.flag_operations(flag_slice=flag_slice), self.data.shape)
+        flags = np.reshape(self.flag_operations(flag_slice=flag_slice), self.data_array.shape)
 
-        ind = np.where((min(band) < self.data) & (self.data < max(band)) & (flags > 0))  # Returns list of five-index combos
+        ind = np.where((min(band) < self.data_array) & (self.data_array < max(band)) & (flags > 0))  # Returns list of five-index combos
 
         if plot_type == 'time-freq':
             H = np.zeros([self.UV.Ntimes - 1, self.UV.Nfreqs, self.UV.Npols])
@@ -189,22 +186,11 @@ class RFI:
         else:
             cbar.set_label('Counts RFI')
 
-    def rfi_catalog(self, obs, inpath, outpath, bad_time_indices=[],
-                    coarse_band_remove=False, band=(2000, 10**5), hist_write=False,
+    def rfi_catalog(self, outpath, band=(2000, 10**5), hist_write=False,
                     hist_write_path=''):
-
-        print('Started at ' + time.strftime('%H:%M:%S'))
-
-        self.read_even_odd(inpath, bad_time_indices=bad_time_indices,
-                           coarse_band_remove=coarse_band_remove)
-        self.data_prepare()
-
-        print('Finished reading at ' + time.strftime('%H:%M:%S'))
 
         AMP = [self.one_d_hist_prepare(flag_slice='Unflagged'),
                self.one_d_hist_prepare(flag_slice='All')]
-
-        print('Finished preparing amplitude hist at ' + time.strftime('%H:%M:%S'))
 
         gs = GridSpec(3, 2)
         gs_loc = [[1, 0], [1, 1], [2, 0], [2, 1]]
@@ -235,7 +221,7 @@ class RFI:
 
             fig = plt.figure(figsize=(14, 8))
             ax = fig.add_subplot(gs[0, :])
-            self.one_d_hist_plot(fig, ax, AMP, ['Unflagged', 'All'], ' RFI Catalog ' + str(obs))
+            self.one_d_hist_plot(fig, ax, AMP, ['Unflagged', 'All'], ' RFI Catalog ' + str(self.obs))
             ax.axvline(x=min(band), color='r')
             for n in range(self.UV.Npols):
                 ax = fig.add_subplot(gs[gs_loc[n][0], gs_loc[n][1]])
@@ -251,15 +237,10 @@ class RFI:
                 ax.set_xticklabels(x_ticks_labels)
 
             plt.tight_layout()
-            fig.savefig(outpath + str(obs) + '_RFI_Diagnostic_' + flag_slice + '.png')
+            fig.savefig(outpath + str(self.obs) + '_RFI_Diagnostic_' + flag_slice + '.png')
             plt.close(fig)
 
-    def catalog_drill(self, obs, inpath, outpath, plot_type='ant-freq', bad_time_indices=[],
-                      coarse_band_remove=False, band=(2000, 100000)):
-
-        self.read_even_odd(inpath, bad_time_indices=bad_time_indices,
-                           coarse_band_remove=coarse_band_remove)
-        self.data_prepare()
+    def catalog_drill(self, outpath, plot_type='ant-freq', band=(2000, 100000)):
 
         flag_slices = ['All', 'Unflagged']
 
@@ -290,7 +271,7 @@ class RFI:
             W, uniques = self.waterfall_hist_prepare(band, plot_type=plot_type,
                                                      fraction=False, flag_slice=flag_slice)
             if plot_type == 'ant-time':
-                unique_freqs = [sigfig(self.UV.freq_array[0, m])*10**(-6) for m in uniques]
+                unique_freqs = [sigfig(self.UV.freq_array[0, m]) * 10**(-6) for m in uniques]
             N_events = W.shape[3]
             for k in range(N_events):
                 fig = plt.figure(figsize=(14, 8))
@@ -298,12 +279,12 @@ class RFI:
                 if plot_type == 'ant-freq':
                     AMP = [self.one_d_hist_prepare(flag_slice='Unflagged', time_drill=uniques[k]),
                            self.one_d_hist_prepare(flag_slice='All', time_drill=uniques[k])]
-                    self.one_d_hist_plot(fig, ax, AMP, ['Unflagged', 'All'], str(obs) + ' Drill ' +
+                    self.one_d_hist_plot(fig, ax, AMP, ['Unflagged', 'All'], str(self.obs) + ' Drill ' +
                                          plot_type_titles[plot_type] + str(uniques[k]))
                 elif plot_type == 'ant-time':
                     AMP = [self.one_d_hist_prepare(flag_slice='Unflagged', freq_drill=uniques[k]),
                            self.one_d_hist_prepare(flag_slice='All', freq_drill=uniques[k])]
-                    self.one_d_hist_plot(fig, ax, AMP, ['Unflagged', 'All'], str(obs) + ' Drill ' +
+                    self.one_d_hist_plot(fig, ax, AMP, ['Unflagged', 'All'], str(self.obs) + ' Drill ' +
                                          plot_type_titles[plot_type] + str(unique_freqs[k]))
                 ax.axvline(x=min(band), color='r')
                 for l in range(self.UV.Npols):
@@ -321,14 +302,11 @@ class RFI:
                         x_tick_labels.append(str(sigfig((self.UV.freq_array[0, -1] * 10**(-6)))))
                         ax.set_xticklabels(x_tick_labels)
                 plt.tight_layout()
-                fig.savefig(outpath + str(obs) + '_Drill_' + flag_slice + '_' +
+                fig.savefig(outpath + str(self.obs) + '_Drill_' + flag_slice + '_' +
                             str(uniques[k]) + '.png')
                 plt.close(fig)
 
-    def digital_gain_compare(self, obs, inpath, outpath, normed=True):
-
-        self.read_even_odd(inpath)
-        self.data_prepare()
+    def digital_gain_compare(self, outpath, normed=True):
 
         flag_slices = ['Unflagged', 'All']
         freq_slices = [[0, 256], [256, 384]]  # Unfortunate hard-coding, but this is where the dig. gain jump happens
@@ -342,6 +320,6 @@ class RFI:
 
         fig, ax = plt.subplots(figsize=(14, 8))
 
-        self.one_d_hist_plot(fig, ax, AMP, label, str(obs) + ' Digital Gain Comparison', normed=normed)
+        self.one_d_hist_plot(fig, ax, AMP, label, str(self.obs) + ' Digital Gain Comparison', normed=normed)
         plt.tight_layout()
-        fig.savefig(outpath + str(obs) + '_' + ext[normed] + '_DGC.png')
+        fig.savefig(outpath + str(self.obs) + '_' + ext[normed] + '_DGC.png')
