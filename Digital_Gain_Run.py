@@ -12,7 +12,7 @@ parser.add_argument("id", type=int)
 args = parser.parse_args()
 
 if not os.path.exists('/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Golden_Set/Digital_Gain_Comparison/' +
-                      str(obslist[args.id - 1]) + '_DGC.png'):
+                      str(obslist[args.id - 1]) + '_Normed_DGC.png'):
 
     RFI = rfi.RFI()
 

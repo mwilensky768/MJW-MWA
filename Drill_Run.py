@@ -20,6 +20,6 @@ if len(outpaths) == 0:
     RFI = rfi.RFI()
 
     RFI.catalog_drill(obslist[args.id - 1], pathlist[args.id - 1],
-                      '/nfs/eor-00/h1/mwilensk/Drill_Plots_Golden_Set/', 'ant-freq')
+                      '/nfs/eor-00/h1/mwilensk/Drill_Plots_Golden_Set/')
 else:
     print('I already processed obs ' + str(obslist[args.id - 1]))

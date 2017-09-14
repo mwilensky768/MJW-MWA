@@ -88,9 +88,9 @@ class RFI:
         return(values)
 
     def one_d_hist_plot(self, fig, ax, data, label, title, bins=np.logspace(-3, 5, num=1001), writepath='',
-                        ylog=True, xlog=True, write=False):  # Data/title are tuples if multiple hists
+                        ylog=True, xlog=True, write=False, normed=False):  # Data/title are tuples if multiple hists
 
-        n, bins, patches = ax.hist(data, bins=bins, histtype='step', label=label)
+        n, bins, patches = ax.hist(data, bins=bins, histtype='step', label=label, normed=normed)
         if write:
             np.save(writepath, n[0])
         ax.set_title(title)
@@ -105,8 +105,10 @@ class RFI:
         else:
             ax.set_xscale('linear')
 
+        ylabels = {True: 'Fraction', False: 'Counts'}
+
         ax.set_xlabel('Amplitude (' + self.UV.vis_units + ')')
-        ax.set_ylabel('Counts')
+        ax.set_ylabel(ylabels[normed])
         ax.legend()
 
     def waterfall_hist_prepare(self, band, plot_type='time-freq', fraction=True,
@@ -252,7 +254,7 @@ class RFI:
             fig.savefig(outpath + str(obs) + '_RFI_Diagnostic_' + flag_slice + '.png')
             plt.close(fig)
 
-    def catalog_drill(self, obs, inpath, outpath, plot_type, bad_time_indices=[],
+    def catalog_drill(self, obs, inpath, outpath, plot_type='ant-freq', bad_time_indices=[],
                       coarse_band_remove=False, band=(2000, 100000)):
 
         self.read_even_odd(inpath, bad_time_indices=bad_time_indices,
@@ -288,7 +290,7 @@ class RFI:
             W, uniques = self.waterfall_hist_prepare(band, plot_type=plot_type,
                                                      fraction=False, flag_slice=flag_slice)
             if plot_type == 'ant-time':
-                unique_freqs = [self.UV.freq_array[0, m] for m in uniques]
+                unique_freqs = [sigfig(self.UV.freq_array[0, m])*10**(-6) for m in uniques]
             N_events = W.shape[3]
             for k in range(N_events):
                 fig = plt.figure(figsize=(14, 8))
@@ -296,11 +298,13 @@ class RFI:
                 if plot_type == 'ant-freq':
                     AMP = [self.one_d_hist_prepare(flag_slice='Unflagged', time_drill=uniques[k]),
                            self.one_d_hist_prepare(flag_slice='All', time_drill=uniques[k])]
-                else:
+                    self.one_d_hist_plot(fig, ax, AMP, ['Unflagged', 'All'], str(obs) + ' Drill ' +
+                                         plot_type_titles[plot_type] + str(uniques[k]))
+                elif plot_type == 'ant-time':
                     AMP = [self.one_d_hist_prepare(flag_slice='Unflagged', freq_drill=uniques[k]),
                            self.one_d_hist_prepare(flag_slice='All', freq_drill=uniques[k])]
-                self.one_d_hist_plot(fig, ax, AMP, ['Unflagged', 'All'], str(obs) + ' Drill ' +
-                                     plot_type_titles[plot_type] + str(unique_freqs[k]))
+                    self.one_d_hist_plot(fig, ax, AMP, ['Unflagged', 'All'], str(obs) + ' Drill ' +
+                                         plot_type_titles[plot_type] + str(unique_freqs[k]))
                 ax.axvline(x=min(band), color='r')
                 for l in range(self.UV.Npols):
                     vmax = np.amax(W[:, :, l, k])
@@ -321,7 +325,7 @@ class RFI:
                             str(uniques[k]) + '.png')
                 plt.close(fig)
 
-    def digital_gain_compare(self, obs, inpath, outpath):
+    def digital_gain_compare(self, obs, inpath, outpath, normed=True):
 
         self.read_even_odd(inpath)
         self.data_prepare()
@@ -330,6 +334,7 @@ class RFI:
         freq_slices = [[0, 256], [256, 384]]  # Unfortunate hard-coding, but this is where the dig. gain jump happens
         AMP = []
         label = ['Unflagged Below', 'Unflagged Above', 'All Below', 'All Above']
+        ext = {True: 'Normed', False: ''}
 
         for flag_slice in flag_slices:
             for freq_slice in freq_slices:
@@ -337,6 +342,6 @@ class RFI:
 
         fig, ax = plt.subplots(figsize=(14, 8))
 
-        self.one_d_hist_plot(fig, ax, AMP, label, str(obs) + ' Digital Gain Comparison')
+        self.one_d_hist_plot(fig, ax, AMP, label, str(obs) + ' Digital Gain Comparison', normed=normed)
         plt.tight_layout()
-        fig.savefig(outpath + str(obs) + '_DGC.png')
+        fig.savefig(outpath + str(obs) + '_' + ext[normed] + '_DGC.png')

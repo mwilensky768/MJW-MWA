@@ -1,6 +1,6 @@
 #!/bin/bash
 #$ -V
-#$ -N Broadband_Drill
+#$ -N DGC
 #$ -S /bin/bash
 
 echo JOBID ${JOB_ID}
