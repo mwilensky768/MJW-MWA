@@ -35,9 +35,9 @@ class RFI:
             self.UV.select(freq_chans=[x for x in range(self.UV.Nfreqs) if x not in
                                        LEdges and x not in REdges])
 
-        self.data_array = np.absolute(np.diff(np.reshape(self.UV.data_array,
-                                      [self.UV.Ntimes, self.UV.Nbls, self.UV.Nspws,
-                                       self.UV.Nfreqs, self.UV.Npols]), axis=0))
+        self.data_array = np.diff(np.reshape(self.UV.data_array,
+                                  [self.UV.Ntimes, self.UV.Nbls, self.UV.Nspws,
+                                   self.UV.Nfreqs, self.UV.Npols]), axis=0)
 
     def flag_operations(self, flag_slice='Unflagged'):
 
@@ -61,7 +61,7 @@ class RFI:
                            time_slice=[], freq_slice=[]):
 
         flags = self.flag_operations(flag_slice=flag_slice)
-        values = self.data_array
+        values = np.abs(self.data_array)
 
         if time_drill:
             values = values[time_drill, :, :, :, :]
@@ -113,7 +113,9 @@ class RFI:
 
         flags = np.reshape(self.flag_operations(flag_slice=flag_slice), self.data_array.shape)
 
-        ind = np.where((min(band) < self.data_array) & (self.data_array < max(band)) & (flags > 0))  # Returns list of five-index combos
+        values = np.absolute(self.data_array)
+
+        ind = np.where((min(band) < values) & (values < max(band)) & (flags > 0))  # Returns list of five-index combos
 
         if plot_type == 'time-freq':
             H = np.zeros([self.UV.Ntimes - 1, self.UV.Nfreqs, self.UV.Npols])
@@ -157,7 +159,16 @@ class RFI:
                       np.where(unique_freqs == ind[3][q])[0][0]] += 1
             return(H, unique_freqs)
 
-    def waterfall_hist_plot(self, fig, ax, H, title, vmax, aspect_ratio=3, fraction=True):
+    def waterfall_hist_plot(self, fig, ax, H, title, vmax, aspect_ratio=3,
+                            fraction=True, y_type='time', x_type='freq'):
+
+        def sigfig(x, s=4):  # s is number of sig-figs
+            if x == 0:
+                return(0)
+            else:
+                n = int(floor(log10(np.absolute(x))))
+                y = 10**n * round(10**(-n) * x, s - 1)
+                return(y)
 
         H = np.ma.masked_equal(H, 0)
         cmap = cm.cool
@@ -166,22 +177,52 @@ class RFI:
         cax = ax.imshow(H, cmap=cmap, vmin=0, vmax=vmax)
         ax.set_title(title)
 
-        y_ticks = [(H.shape[0]) * k / 5 for k in range(5)]
-        y_ticks.append(H.shape[0] - 1)
-        y_minors = range(H.shape[0])
-        for y in y_ticks:
-            y_minors.remove(y)
-        y_minor_locator = FixedLocator(y_minors)
-        x_ticks = [H.shape[1] * k / 6 for k in range(6)]
-        x_ticks.append(H.shape[1] - 1)
-        x_minor_locator = AutoMinorLocator(4)
-        ax.set_xticks(x_ticks)
-        ax.xaxis.set_minor_locator(x_minor_locator)
-        ax.set_yticks(y_ticks)
+        ticks = {'time': [(self.UV.Ntimes - 1) * k / 5 for k in range(5)],
+                 'freq': [self.UV.Nfreqs * k / 6 for k in range(6)],
+                 'ant': [self.UV.Nants_telescope * k / 4 for k in range(4)],
+                 'ant-pol': [self.UV.Nants_telescope * k / 4 for k in range(8)]}
+        ticks['time'].append(self.UV.Ntimes - 2)
+        ticks['freq'].append(self.UV.Nfreqs - 1)
+        ticks['ant'].append(self.UV.Nants_telescope - 1)
+        ticks['ant-pol'].append(2 * self.UV.Nants_telescope - 1)
+
+        minor_ticks = {'time': range(self.UV.Ntimes), 'freq': AutoMinorLocator(4),
+                       'ant': AutoMinorLocator(8), 'ant-pol': AutoMinorLocator(8)}
+        for tick in ticks['time']:
+            minor_ticks['time'].remove(tick)
+
+        ax.set_xticks(ticks[x_type])
+        ax.xaxis.set_minor_locator(minor_ticks[x_type])
+        ax.set_yticks(ticks[y_type])
+        ax.yaxis.set_minor_locator(minor_ticks[y_type])
+
+        if y_type == 'freq':
+            y_tick_labels = [str(sigfig(self.UV.freq_array[0, k]) * 10 ** (-6)) for k in ticks[y_type]]
+            ax.set_yticklabels(y_tick_labels)
+        elif y_type == 'ant-pol':
+            y_tick_labels = np.mod(ticks[y_type], self.UV.Nants_telescope)
+            ax.set_yticklabels(y_tick_labels)
+        if x_type == 'freq':
+            x_tick_labels = [str(sigfig(self.UV.freq_array[0, k]) * 10 ** (-6)) for k in ticks[x_type]]
+            ax.set_xticklabels(x_tick_labels)
+        elif x_type == 'ant-pol':
+            x_tick_labels = np.mod(ticks[x_type], self.UV.Nants_telescope)
+            ax.set_xticklabels(x_tick_labels)
+
+        x_labels = {'time': 'Time Pair', 'freq': 'Frequency (Mhz)', 'ant': 'Antenna Index',
+                    'ant-pol': 'Antenna 2 Index'}
+        y_labels = {'time': 'Time Pair', 'freq': 'Frequency (Mhz)', 'ant': 'Antenna Index',
+                    'ant-pol': 'Antenna 1 Index'}
+
+        ax.set_xlabel(x_labels[x_type])
+        ax.set_ylabel(y_labels[y_type])
+
         ax.set_aspect(aspect_ratio)
-        ax.yaxis.set_minor_locator(y_minor_locator)
+
         cbar = fig.colorbar(cax, ax=ax)
-        if fraction:
+        if y_type == 'ant-pol':
+            cbar.set_label(self.UV.vis_units)
+        elif fraction:
             cbar.set_label('Fraction RFI')
         else:
             cbar.set_label('Counts RFI')
@@ -302,8 +343,8 @@ class RFI:
                         x_tick_labels.append(str(sigfig((self.UV.freq_array[0, -1] * 10**(-6)))))
                         ax.set_xticklabels(x_tick_labels)
                 plt.tight_layout()
-                fig.savefig(outpath + str(self.obs) + '_Drill_' + flag_slice + '_' +
-                            str(uniques[k]) + '.png')
+                fig.savefig(outpath + str(self.obs) + '_Drill_' + flag_slice +
+                            '_' + str(uniques[k]) + '.png')
                 plt.close(fig)
 
     def digital_gain_compare(self, outpath, normed=True):
@@ -323,3 +364,21 @@ class RFI:
         self.one_d_hist_plot(fig, ax, AMP, label, str(self.obs) + ' Digital Gain Comparison', normed=normed)
         plt.tight_layout()
         fig.savefig(outpath + str(self.obs) + '_' + ext[normed] + '_DGC.png')
+
+    def ant_pol_prepare(self, time, freq):
+
+        dim = 2 * self.UV.Nants_telescope
+
+        T = np.zeros([dim, dim])
+
+        q = [[0, 0], [self.UV.Nants_telescope, self.UV.Nants_telescope],
+             [0, self.UV.Nants_telescope], [self.UV.Nants_telescope, 0]]
+
+        for m in range(self.UV.Nbls):
+            for n in range(self.UV.Npols):
+                T[self.UV.ant_1_array[m] + q[n][0], self.UV.ant_2_array[m] +
+                  q[n][1]] = np.imag(self.data_array[time, m, 0, freq, n])
+                T[self.UV.ant_2_array[m] + q[n][0], self.UV.ant_1_array[m] +
+                  q[n][1]] = np.real(self.data_array[time, m, 0, freq, n])
+
+        return(T)
