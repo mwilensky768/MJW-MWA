@@ -1,10 +1,16 @@
 import rfipy as rfi
 import argparse
-import os
+import glob
 
-with open('/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Diffuse_2015/sidelobe_survey_obsIDs.txt') as f:
+# Set these in the beginning every time! Also remember to pick the right type of catalog!
+
+obslist_path = '/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Diffuse_2015/sidelobe_survey_obsIDs.txt'
+pathlist_path = '/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Diffuse_2015/sidelobe_survey_obsIDs_paths.txt'
+outpath = '/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Diffuse_2015/'
+
+with open(obslist_path) as f:
     obslist = f.read().split("\n")
-with open('/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Diffuse_2015/sidelobe_survey_obsIDs_paths.txt') as g:
+with open(pathlist_path) as g:
     pathlist = g.read().split("\n")
 
 parser = argparse.ArgumentParser()
@@ -13,9 +19,10 @@ args = parser.parse_args()
 
 obs = obslist[args.id - 1]
 inpath = pathlist[args.id - 1]
-outpath = '/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Diffuse_2015/'
+output = outpath + str(obs) + '*.png'
+output_list = glob.glob(output)
 
-if not os.path.exists(outpath + str(obs) + '_RFI_Diagnostic_All.png'):
+if not output_list:
 
     RFI = rfi.RFI(obs, inpath)
 

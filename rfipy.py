@@ -159,8 +159,26 @@ class RFI:
                       np.where(unique_freqs == ind[3][q])[0][0]] += 1
             return(H, unique_freqs)
 
-    def waterfall_hist_plot(self, fig, ax, H, title, vmax, aspect_ratio=3,
-                            fraction=True, y_type='time', x_type='freq'):
+    def ant_pol_prepare(self, time, freq):
+
+        dim = 2 * self.UV.Nants_telescope
+
+        T = np.zeros([dim, dim])
+
+        q = [[0, 0], [self.UV.Nants_telescope, self.UV.Nants_telescope],
+             [0, self.UV.Nants_telescope], [self.UV.Nants_telescope, 0]]
+
+        for m in range(self.UV.Nbls):
+            for n in range(self.UV.Npols):
+                T[self.UV.ant_1_array[m] + q[n][0], self.UV.ant_2_array[m] +
+                  q[n][1]] = np.imag(self.data_array[time, m, 0, freq, n])
+                T[self.UV.ant_2_array[m] + q[n][0], self.UV.ant_1_array[m] +
+                  q[n][1]] = np.real(self.data_array[time, m, 0, freq, n])
+
+        return(T)
+
+    def image_plot(self, fig, ax, H, title, vmax, aspect_ratio=3,
+                   fraction=True, y_type='time', x_type='freq'):
 
         def sigfig(x, s=4):  # s is number of sig-figs
             if x == 0:
@@ -266,9 +284,9 @@ class RFI:
             ax.axvline(x=min(band), color='r')
             for n in range(self.UV.Npols):
                 ax = fig.add_subplot(gs[gs_loc[n][0], gs_loc[n][1]])
-                self.waterfall_hist_plot(fig, ax, W[:, :, n],
-                                         pol_titles[self.UV.polarization_array[n]] +
-                                         ' ' + flag_slice, MAXW_list[n])
+                self.image_plot(fig, ax, W[:, :, n],
+                                pol_titles[self.UV.polarization_array[n]] +
+                                ' ' + flag_slice, MAXW_list[n])
 
                 ax.set_ylabel('Time Pair')
                 ax.set_xlabel('Frequency (Mhz)')
@@ -315,8 +333,10 @@ class RFI:
                 unique_freqs = [sigfig(self.UV.freq_array[0, m]) * 10**(-6) for m in uniques]
             N_events = W.shape[3]
             for k in range(N_events):
+
                 fig = plt.figure(figsize=(14, 8))
                 ax = fig.add_subplot(gs[0, :])
+
                 if plot_type == 'ant-freq':
                     AMP = [self.one_d_hist_prepare(flag_slice='Unflagged', time_drill=uniques[k]),
                            self.one_d_hist_prepare(flag_slice='All', time_drill=uniques[k])]
@@ -328,20 +348,22 @@ class RFI:
                     self.one_d_hist_plot(fig, ax, AMP, ['Unflagged', 'All'], str(self.obs) + ' Drill ' +
                                          plot_type_titles[plot_type] + str(unique_freqs[k]))
                 ax.axvline(x=min(band), color='r')
+
                 for l in range(self.UV.Npols):
                     vmax = np.amax(W[:, :, l, k])
                     ax = fig.add_subplot(gs[gs_loc[l][0], gs_loc[l][1]])
-                    self.waterfall_hist_plot(fig, ax, W[:, :, l, k],
-                                             'Drill ' + pol_titles[self.UV.polarization_array[l]] +
-                                             ' ' + flag_slice,
-                                             vmax, aspect_ratio=1, fraction=False)
+                    self.image_plot(fig, ax, W[:, :, l, k],
+                                    'Drill ' + pol_titles[self.UV.polarization_array[l]] +
+                                    ' ' + flag_slice, vmax, aspect_ratio=1, fraction=False)
                     ax.set_ylabel('Antenna #')
                     ax.set_xlabel(x_labels[plot_type])
+
                     if plot_type == 'ant-freq':
                         x_tick_labels = [str(sigfig(self.UV.freq_array[0, self.UV.Nfreqs * m / 6] *
                                              10**(-6))) for m in range(6)]  # for 'ant-freq' only
                         x_tick_labels.append(str(sigfig((self.UV.freq_array[0, -1] * 10**(-6)))))
                         ax.set_xticklabels(x_tick_labels)
+
                 plt.tight_layout()
                 fig.savefig(outpath + str(self.obs) + '_Drill_' + flag_slice +
                             '_' + str(uniques[k]) + '.png')
@@ -365,20 +387,19 @@ class RFI:
         plt.tight_layout()
         fig.savefig(outpath + str(self.obs) + '_' + ext[normed] + '_DGC.png')
 
-    def ant_pol_prepare(self, time, freq):
+    def ant_pol_catalog(self, times, freqs, outpath):  # times and freqs should be of the same length
 
-        dim = 2 * self.UV.Nants_telescope
+        for time in times:
+            for freq in freqs:
 
-        T = np.zeros([dim, dim])
+                fig, ax = plt.subplots()
+                T = self.ant_pol_prepare(time, freq)
+                title = str(self.obs) + 'Ant-Pol Drill'
+                vmax = np.amax(T)
 
-        q = [[0, 0], [self.UV.Nants_telescope, self.UV.Nants_telescope],
-             [0, self.UV.Nants_telescope], [self.UV.Nants_telescope, 0]]
+                self.image_plot(fig, ax, T, vmax, aspect_ratio=1, fraction=False,
+                                y_type='ant-pol', x_type='ant-pol')
 
-        for m in range(self.UV.Nbls):
-            for n in range(self.UV.Npols):
-                T[self.UV.ant_1_array[m] + q[n][0], self.UV.ant_2_array[m] +
-                  q[n][1]] = np.imag(self.data_array[time, m, 0, freq, n])
-                T[self.UV.ant_2_array[m] + q[n][0], self.UV.ant_1_array[m] +
-                  q[n][1]] = np.real(self.data_array[time, m, 0, freq, n])
-
-        return(T)
+                plt.tight_layout()
+                fig.savefig(outpath + str(self.obs) + '_ant_pol_t' + str(time) +
+                            '_f' + str(freq))
