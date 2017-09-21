@@ -92,7 +92,7 @@ class RFI:
     def one_d_hist_plot(self, fig, ax, data, label, title, fit=False, fit_window=[],
                         writepath='', ylog=True, xlog=True, write=False, normed=False):  # Data/title are tuples if multiple hists
 
-        MIN = np.amin(data[0][np.where(data[0] > 0]))
+        MIN = np.amin(data[0][np.where(data[0] > 0)])
         MAX = np.amax(data[1])
 
         bins = np.logspace(floor(log10(MIN)), ceil(log10(MAX)), num=1001)
