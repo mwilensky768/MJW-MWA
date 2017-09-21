@@ -92,7 +92,7 @@ class RFI:
     def one_d_hist_plot(self, fig, ax, data, label, title, fit=False, fit_window=[],
                         writepath='', ylog=True, xlog=True, write=False, normed=False):  # Data/title are tuples if multiple hists
 
-        MIN = np.amin(data[0][data[0] > 0])
+        MIN = np.amin(data[0][np.where(data[0] > 0]))
         MAX = np.amax(data[1])
 
         bins = np.logspace(floor(log10(MIN)), ceil(log10(MAX)), num=1001)
@@ -173,7 +173,7 @@ class RFI:
             ant_ind = [np.array(ant1_ind), np.array(ant2_ind)]
             for p in range(2):
                 for q in range(len(ind[3])):
-                    H[ant_ind[p, q], ind[0][q], ind[4][q],
+                    H[ant_ind[p][q], ind[0][q], ind[4][q],
                       np.where(unique_freqs == ind[3][q])[0][0]] += 1
             return(H, unique_freqs)
 
