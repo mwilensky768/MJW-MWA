@@ -335,11 +335,13 @@ class RFI:
         pol_titles = dict(zip(pol_keys, pol_values))
 
         plot_type_keys = ['ant-freq', 'ant-time']
+        aspect_values = [1, 0.2]
         x_type_values = ['freq', 'time']
         plot_type_title_values = [' t = ', ' f = ']
         x_label_values = ['Frequency (Mhz)', 'Time-Pair']
         path_label_values = ['t', 'f']
 
+        aspect = dict(zip(plot_type_keys, aspect_values))
         x_type = dict(zip(plot_type_keys, x_type_values))
         plot_type_titles = dict(zip(plot_type_keys, plot_type_title_values))
         x_labels = dict(zip(plot_type_keys, x_label_values))
@@ -390,7 +392,7 @@ class RFI:
                     ax = fig.add_subplot(gs[gs_loc[l][0], gs_loc[l][1]])
                     self.image_plot(fig, ax, W[:, :, l, k],
                                     'Drill ' + pol_titles[self.UV.polarization_array[l]] +
-                                    ' ' + flag_slice, vmin, vmax, aspect_ratio=1, fraction=False,
+                                    ' ' + flag_slice, vmin, vmax, aspect_ratio=aspect[plot_type], fraction=False,
                                     y_type='ant', x_type=x_type[plot_type])
 
                 plt.tight_layout()
