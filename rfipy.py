@@ -320,13 +320,6 @@ class RFI:
                                 pol_titles[self.UV.polarization_array[n]] +
                                 ' ' + flag_slice, MINW_list[n], MAXW_list[n])
 
-                ax.set_ylabel('Time Pair')
-                ax.set_xlabel('Frequency (Mhz)')
-                x_ticks_labels = [str(sigfig(self.UV.freq_array[0, self.UV.Nfreqs * k / 6] *
-                                  10**(-6))) for k in range(6)]
-                x_ticks_labels.append(str(sigfig((self.UV.freq_array[0, -1] * 10**(-6)))))
-                ax.set_xticklabels(x_ticks_labels)
-
             plt.tight_layout()
             fig.savefig(outpath + self.obs + '_RFI_Diagnostic_' + flag_slice + '.png')
             plt.close(fig)
@@ -342,10 +335,12 @@ class RFI:
         pol_titles = dict(zip(pol_keys, pol_values))
 
         plot_type_keys = ['ant-freq', 'ant-time']
+        x_type_values = ['freq', 'time']
         plot_type_title_values = [' t = ', ' f = ']
         x_label_values = ['Frequency (Mhz)', 'Time-Pair']
         path_label_values = ['t', 'f']
 
+        x_type = dict(zip(plot_type_keys, x_type_values))
         plot_type_titles = dict(zip(plot_type_keys, plot_type_title_values))
         x_labels = dict(zip(plot_type_keys, x_label_values))
         path_labels = dict(zip(plot_type_keys, path_label_values))
@@ -395,15 +390,8 @@ class RFI:
                     ax = fig.add_subplot(gs[gs_loc[l][0], gs_loc[l][1]])
                     self.image_plot(fig, ax, W[:, :, l, k],
                                     'Drill ' + pol_titles[self.UV.polarization_array[l]] +
-                                    ' ' + flag_slice, vmin, vmax, aspect_ratio=1, fraction=False)
-                    ax.set_ylabel('Antenna #')
-                    ax.set_xlabel(x_labels[plot_type])
-
-                    if plot_type == 'ant-freq':
-                        x_tick_labels = [str(sigfig(self.UV.freq_array[0, self.UV.Nfreqs * m / 6] *
-                                             10**(-6))) for m in range(6)]  # for 'ant-freq' only
-                        x_tick_labels.append(str(sigfig((self.UV.freq_array[0, -1] * 10**(-6)))))
-                        ax.set_xticklabels(x_tick_labels)
+                                    ' ' + flag_slice, vmin, vmax, aspect_ratio=1, fraction=False,
+                                    y_type='ant', x_type=x_type[plot_type])
 
                 plt.tight_layout()
                 fig.savefig(outpath + self.obs + '_Drill_' + flag_slice +
