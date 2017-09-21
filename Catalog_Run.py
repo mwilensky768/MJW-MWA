@@ -4,9 +4,10 @@ import glob
 
 # Set these in the beginning every time! Also remember to pick the right type of catalog!
 
-obslist_path = '/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Diffuse_2015/sidelobe_survey_obsIDs.txt'
-pathlist_path = '/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Diffuse_2015/sidelobe_survey_obsIDs_paths.txt'
-outpath = '/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Diffuse_2015/'
+obslist_path = '/nfs/eor-00/h1/mwilensk/Golden_Set/Golden_Set_Narrowband_OBSIDS.txt'
+pathlist_path = '/nfs/eor-00/h1/mwilensk/Golden_Set/Golden_Set_Narrowband_OBSIDS_paths.txt'
+outpath = '/nfs/eor-00/h1/mwilensk/Golden_Set/Golden_Set_Drill_Plots/Golden_Set_Drill_Plots_Narrowband/'
+catalog_type = 'drill'
 
 with open(obslist_path) as f:
     obslist = f.read().split("\n")
@@ -24,9 +25,14 @@ output_list = glob.glob(output)
 
 if not output_list:
 
-    RFI = rfi.RFI(obs, inpath)
+    RFI = rfi.RFI(str(obs), inpath)
 
-    RFI.rfi_catalog(outpath, hist_write=True,
-                    hist_write_path='/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Diffuse_2015/Diffuse_2015_Hists/')
+    if catalog_type == 'waterfall':
+        RFI.rfi_catalog(outpath, hist_write=True,
+                        hist_write_path='/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Diffuse_2015/Diffuse_2015_Hists/')
+    elif catalog_type == 'drill':
+        RFI.catalog_drill(outpath, plot_type='ant-time')
+    elif catalog_type == 'ant-pol':
+        RFI.ant_pol_catalog(outpath, times=[], freqs=[])
 else:
     print('I already processed obs ' + str(obs))

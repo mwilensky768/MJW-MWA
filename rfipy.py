@@ -9,14 +9,19 @@ from matplotlib.ticker import FixedLocator, AutoMinorLocator
 import time
 import os
 from scipy.stats import rayleigh
+from scipy.optimize import curve_fit
 
 
 class RFI:
 
-    def __init__(self, obs, filepath, bad_time_indices=[], coarse_band_remove=False):
+    def __init__(self, obs, filepath, bad_time_indices=[], coarse_band_remove=False,
+                 filetype='uvfits'):
         self.obs = obs
         self.UV = pyuv.UVData()
-        self.UV.read_uvfits(filepath)
+        if filetype is 'uvfits':
+            self.UV.read_uvfits(filepath)
+        elif filetype is 'miriad':
+            self.UV.read_miriad(filepath)
         times = [self.UV.time_array[k * self.UV.Nbls] for k in range(self.UV.Ntimes)]
         bad_times = []
         for k in bad_time_indices:
@@ -84,10 +89,23 @@ class RFI:
 
         return(values)
 
-    def one_d_hist_plot(self, fig, ax, data, label, title, bins=np.logspace(-3, 5, num=1001), writepath='',
-                        ylog=True, xlog=True, write=False, normed=False):  # Data/title are tuples if multiple hists
+    def one_d_hist_plot(self, fig, ax, data, label, title, fit=False, fit_window=[],
+                        writepath='', ylog=True, xlog=True, write=False, normed=False):  # Data/title are tuples if multiple hists
+
+        MIN = np.amin(data[0][data[0] > 0])
+        MAX = np.amax(data[1])
+
+        bins = np.logspace(floor(log10(MIN)), ceil(log10(MAX)), num=1001)
 
         n, bins, patches = ax.hist(data, bins=bins, histtype='step', label=label, normed=normed)
+        bin_centers = bins[:-1] + 0.5 * np.diff(bins)
+        if fit:
+            def func(x, loc, scale):
+                return(rayleigh.pdf(x, loc, scale))
+            bin_centers = bins[:-1] + 0.5 * np.diff(bins)
+            max_loc = bin_centers[n[0] == np.amax(n[0])][0]
+            popt, pcov = curve_fit(func, bin_centers, n[0], p0=[0, max_loc**2])
+            ax.plot(bin_centers, func(bin_centers, popt[0], popt[1]), label='Fit')
         if write:
             np.save(writepath, n[0])
         ax.set_title(title)
@@ -161,7 +179,7 @@ class RFI:
 
     def ant_pol_prepare(self, time, freq):
 
-        dim = 2 * self.UV.Nants_telescope
+        dim = np.sqrt(self.UV.Npols) * self.UV.Nants_telescope
 
         T = np.zeros([dim, dim])
 
@@ -177,7 +195,7 @@ class RFI:
 
         return(T)
 
-    def image_plot(self, fig, ax, H, title, vmax, aspect_ratio=3,
+    def image_plot(self, fig, ax, H, title, vmin, vmax, aspect_ratio=3,
                    fraction=True, y_type='time', x_type='freq'):
 
         def sigfig(x, s=4):  # s is number of sig-figs
@@ -192,7 +210,7 @@ class RFI:
         cmap = cm.cool
         cmap.set_bad(color='white')
 
-        cax = ax.imshow(H, cmap=cmap, vmin=0, vmax=vmax)
+        cax = ax.imshow(H, cmap=cmap, vmin=vmin, vmax=vmax)
         ax.set_title(title)
 
         ticks = {'time': [(self.UV.Ntimes - 1) * k / 5 for k in range(5)],
@@ -208,6 +226,7 @@ class RFI:
                        'ant': AutoMinorLocator(8), 'ant-pol': AutoMinorLocator(8)}
         for tick in ticks['time']:
             minor_ticks['time'].remove(tick)
+        minor_ticks['time'] = FixedLocator(minor_ticks['time'])
 
         ax.set_xticks(ticks[x_type])
         ax.xaxis.set_minor_locator(minor_ticks[x_type])
@@ -246,20 +265,23 @@ class RFI:
             cbar.set_label('Counts RFI')
 
     def rfi_catalog(self, outpath, band=(2000, 10**5), hist_write=False,
-                    hist_write_path=''):
+                    hist_write_path='', fit=False):
 
-        AMP = [self.one_d_hist_prepare(flag_slice='Unflagged'),
-               self.one_d_hist_prepare(flag_slice='All')]
+        flag_slices = ['Unflagged', 'All']
+        Amp = [self.one_d_hist_prepare(flag_slice=flag_slices[k]) for k in range(2)]
 
-        gs = GridSpec(3, 2)
-        gs_loc = [[1, 0], [1, 1], [2, 0], [2, 1]]
+        if self.UV.Npols > 1:
+            gs = GridSpec(3, 2)
+            gs_loc = [[1, 0], [1, 1], [2, 0], [2, 1]]
+        else:
+            gs = GridSpec(2, 1)
+            gs_loc = [[1, 0], ]
 
         pol_keys = [-8 + k for k in range(13)]
         pol_keys.remove(0)
         pol_values = ['YX', 'XY', 'YY', 'XX', 'LR', 'RL', 'LL', 'RR', 'I', 'Q', 'U', 'V']
 
         pol_titles = dict(zip(pol_keys, pol_values))
-        flag_slices = ['Unflagged', 'All']
 
         def sigfig(x, s=4):  # s is number of sig-figs
             if x == 0:
@@ -273,20 +295,30 @@ class RFI:
             W = self.waterfall_hist_prepare(band, plot_type='time-freq',
                                             fraction=True, flag_slice=flag_slice)
 
-            MAXW_list = [np.amax(W[:, :, k]) for k in range(W.shape[2])]
-            MAXW_auto = max(MAXW_list[0:2])
-            MAXW_cross = max(MAXW_list[2:4])
-            MAXW_list = [MAXW_auto, MAXW_auto, MAXW_cross, MAXW_cross]
+            if self.UV.Npols > 1:
+                MAXW_list = [np.amax(W[:, :, k]) for k in range(W.shape[2])]
+                MAXW_auto = max(MAXW_list[0:2])
+                MAXW_cross = max(MAXW_list[2:4])
+                MAXW_list = [MAXW_auto, MAXW_auto, MAXW_cross, MAXW_cross]
+
+                MINW_list = [np.amin(W[:, :, k]) for k in range(W.shape[2])]
+                MINW_auto = min(MAXW_list[0:2])
+                MINW_cross = min(MAXW_list[2:4])
+                MINW_list = [MINW_auto, MINW_auto, MINW_cross, MINW_cross]
+            else:
+                MAXW_list = [np.amax(W[:, :, 0]), ]
+                MINW_list = [np.amin(W[:, :, 0]), ]
 
             fig = plt.figure(figsize=(14, 8))
             ax = fig.add_subplot(gs[0, :])
-            self.one_d_hist_plot(fig, ax, AMP, ['Unflagged', 'All'], ' RFI Catalog ' + str(self.obs))
+            self.one_d_hist_plot(fig, ax, Amp, flag_slices,
+                                 ' RFI Catalog ' + self.obs, fit=fit)
             ax.axvline(x=min(band), color='r')
             for n in range(self.UV.Npols):
                 ax = fig.add_subplot(gs[gs_loc[n][0], gs_loc[n][1]])
                 self.image_plot(fig, ax, W[:, :, n],
                                 pol_titles[self.UV.polarization_array[n]] +
-                                ' ' + flag_slice, MAXW_list[n])
+                                ' ' + flag_slice, MINW_list[n], MAXW_list[n])
 
                 ax.set_ylabel('Time Pair')
                 ax.set_xlabel('Frequency (Mhz)')
@@ -296,10 +328,11 @@ class RFI:
                 ax.set_xticklabels(x_ticks_labels)
 
             plt.tight_layout()
-            fig.savefig(outpath + str(self.obs) + '_RFI_Diagnostic_' + flag_slice + '.png')
+            fig.savefig(outpath + self.obs + '_RFI_Diagnostic_' + flag_slice + '.png')
             plt.close(fig)
 
-    def catalog_drill(self, outpath, plot_type='ant-freq', band=(2000, 100000)):
+    def catalog_drill(self, outpath, plot_type='ant-freq', band=(2000, 100000),
+                      fit=False):
 
         flag_slices = ['All', 'Unflagged']
 
@@ -311,9 +344,11 @@ class RFI:
         plot_type_keys = ['ant-freq', 'ant-time']
         plot_type_title_values = [' t = ', ' f = ']
         x_label_values = ['Frequency (Mhz)', 'Time-Pair']
+        path_label_values = ['t', 'f']
 
         plot_type_titles = dict(zip(plot_type_keys, plot_type_title_values))
         x_labels = dict(zip(plot_type_keys, x_label_values))
+        path_labels = dict(zip(plot_type_keys, path_label_values))
 
         def sigfig(x, s=4):  # s is number of sig-figs
             if x == 0:
@@ -322,9 +357,12 @@ class RFI:
                 n = int(floor(log10(np.absolute(x))))
                 y = 10**n * round(10**(-n) * x, s - 1)
                 return(y)
-
-        gs = GridSpec(3, 2)
-        gs_loc = [[1, 0], [1, 1], [2, 0], [2, 1]]
+        if self.UV.Npols > 1:
+            gs = GridSpec(3, 2)
+            gs_loc = [[1, 0], [1, 1], [2, 0], [2, 1]]
+        else:
+            gs = GridSpec(2, 1)
+            gs_loc = [[1, 0], ]
 
         for flag_slice in flag_slices:
             W, uniques = self.waterfall_hist_prepare(band, plot_type=plot_type,
@@ -338,23 +376,26 @@ class RFI:
                 ax = fig.add_subplot(gs[0, :])
 
                 if plot_type == 'ant-freq':
-                    AMP = [self.one_d_hist_prepare(flag_slice='Unflagged', time_drill=uniques[k]),
+                    Amp = [self.one_d_hist_prepare(flag_slice='Unflagged', time_drill=uniques[k]),
                            self.one_d_hist_prepare(flag_slice='All', time_drill=uniques[k])]
-                    self.one_d_hist_plot(fig, ax, AMP, ['Unflagged', 'All'], str(self.obs) + ' Drill ' +
-                                         plot_type_titles[plot_type] + str(uniques[k]))
+                    self.one_d_hist_plot(fig, ax, Amp, flag_slices,
+                                         self.obs + ' Drill ' + plot_type_titles[plot_type] + str(uniques[k]),
+                                         fit=fit)
                 elif plot_type == 'ant-time':
-                    AMP = [self.one_d_hist_prepare(flag_slice='Unflagged', freq_drill=uniques[k]),
+                    Amp = [self.one_d_hist_prepare(flag_slice='Unflagged', freq_drill=uniques[k]),
                            self.one_d_hist_prepare(flag_slice='All', freq_drill=uniques[k])]
-                    self.one_d_hist_plot(fig, ax, AMP, ['Unflagged', 'All'], str(self.obs) + ' Drill ' +
-                                         plot_type_titles[plot_type] + str(unique_freqs[k]))
+                    self.one_d_hist_plot(fig, ax, Amp, flag_slices,
+                                         self.obs + ' Drill ' + plot_type_titles[plot_type] + str(unique_freqs[k]),
+                                         fit=fit)
                 ax.axvline(x=min(band), color='r')
 
                 for l in range(self.UV.Npols):
                     vmax = np.amax(W[:, :, l, k])
+                    vmin = np.amin(W[:, :, l, k])
                     ax = fig.add_subplot(gs[gs_loc[l][0], gs_loc[l][1]])
                     self.image_plot(fig, ax, W[:, :, l, k],
                                     'Drill ' + pol_titles[self.UV.polarization_array[l]] +
-                                    ' ' + flag_slice, vmax, aspect_ratio=1, fraction=False)
+                                    ' ' + flag_slice, vmin, vmax, aspect_ratio=1, fraction=False)
                     ax.set_ylabel('Antenna #')
                     ax.set_xlabel(x_labels[plot_type])
 
@@ -365,8 +406,8 @@ class RFI:
                         ax.set_xticklabels(x_tick_labels)
 
                 plt.tight_layout()
-                fig.savefig(outpath + str(self.obs) + '_Drill_' + flag_slice +
-                            '_' + str(uniques[k]) + '.png')
+                fig.savefig(outpath + self.obs + '_Drill_' + flag_slice +
+                            '_' + path_labels[plot_type] + str(uniques[k]) + '.png')
                 plt.close(fig)
 
     def digital_gain_compare(self, outpath, normed=True):
@@ -383,23 +424,24 @@ class RFI:
 
         fig, ax = plt.subplots(figsize=(14, 8))
 
-        self.one_d_hist_plot(fig, ax, AMP, label, str(self.obs) + ' Digital Gain Comparison', normed=normed)
+        self.one_d_hist_plot(fig, ax, AMP, label, self.obs + ' Digital Gain Comparison', normed=normed)
         plt.tight_layout()
-        fig.savefig(outpath + str(self.obs) + '_' + ext[normed] + '_DGC.png')
+        fig.savefig(outpath + self.obs + '_' + ext[normed] + '_DGC.png')
 
     def ant_pol_catalog(self, times, freqs, outpath):  # times and freqs should be of the same length
 
         for time in times:
             for freq in freqs:
 
-                fig, ax = plt.subplots()
+                fig, ax = plt.subplots(figsize=(14, 8))
                 T = self.ant_pol_prepare(time, freq)
-                title = str(self.obs) + 'Ant-Pol Drill'
+                title = self.obs + 'Ant-Pol Drill'
                 vmax = np.amax(T)
+                vmin = np.amin(T)
 
-                self.image_plot(fig, ax, T, vmax, aspect_ratio=1, fraction=False,
+                self.image_plot(fig, ax, T, vmin, vmax, aspect_ratio=1, fraction=False,
                                 y_type='ant-pol', x_type='ant-pol')
 
                 plt.tight_layout()
-                fig.savefig(outpath + str(self.obs) + '_ant_pol_t' + str(time) +
+                fig.savefig(outpath + self.obs + '_ant_pol_t' + str(time) +
                             '_f' + str(freq))
