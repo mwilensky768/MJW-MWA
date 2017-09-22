@@ -6,8 +6,8 @@ import glob
 
 obslist_path = '/nfs/eor-00/h1/mwilensk/Golden_Set/Golden_Set_Narrowband_OBSIDS.txt'
 pathlist_path = '/nfs/eor-00/h1/mwilensk/Golden_Set/Golden_Set_Narrowband_OBSIDS_paths.txt'
-outpath = '/nfs/eor-00/h1/mwilensk/Golden_Set/Golden_Set_Drill_Plots/Golden_Set_Drill_Plots_Narrowband/'
-catalog_type = 'drill'
+outpath = '/nfs/eor-00/h1/mwilensk/Golden_Set/Golden_Set_Ant_Pol_Plots/Golden_Set_Ant_Pol_Plots_Narrowband/'
+catalog_type = 'ant-pol'
 
 with open(obslist_path) as f:
     obslist = f.read().split("\n")
@@ -35,6 +35,6 @@ if not output_list:
     elif catalog_type == 'drill':
         RFI.catalog_drill(outpath, plot_type='ant-time', band=(1500, 10**5))
     elif catalog_type == 'ant-pol':
-        RFI.ant_pol_catalog(outpath, times=[], freqs=[])
+        RFI.ant_pol_catalog(outpath, times=range(RFI.UV.Ntimes), freqs=[162])
 else:
     print('I already processed obs ' + str(obs))
