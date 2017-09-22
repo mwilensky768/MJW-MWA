@@ -92,7 +92,7 @@ class RFI:
     def one_d_hist_plot(self, fig, ax, data, label, title, fit=False, fit_window=[],
                         writepath='', ylog=True, xlog=True, write=False, normed=False):  # Data/title are tuples if multiple hists
 
-        MIN = np.amin(data[0][np.where(data[0] > 0)])
+        MIN = np.amin(data[1][np.where(data[1] > 0)])
         MAX = np.amax(data[1])
 
         bins = np.logspace(floor(log10(MIN)), ceil(log10(MAX)), num=1001)
@@ -324,10 +324,10 @@ class RFI:
             fig.savefig(outpath + self.obs + '_RFI_Diagnostic_' + flag_slice + '.png')
             plt.close(fig)
 
-    def catalog_drill(self, outpath, plot_type='ant-freq', band=(2000, 100000),
+    def catalog_drill(self, outpath, x_type='freq', band=(2000, 100000),
                       fit=False):
 
-        flag_slices = ['All', 'Unflagged']
+        flag_slices = ['Unflagged', 'All']
 
         pol_keys = [-8 + k for k in range(13)]
         pol_keys.remove(0)
