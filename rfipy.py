@@ -324,7 +324,7 @@ class RFI:
             fig.savefig(outpath + self.obs + '_RFI_Diagnostic_' + flag_slice + '.png')
             plt.close(fig)
 
-    def catalog_drill(self, outpath, x_type='freq', band=(2000, 100000),
+    def catalog_drill(self, outpath, plot_type='ant-freq', band=(2000, 10**5),
                       fit=False):
 
         flag_slices = ['Unflagged', 'All']
@@ -367,6 +367,7 @@ class RFI:
             if plot_type == 'ant-time':
                 unique_freqs = [sigfig(self.UV.freq_array[0, m]) * 10**(-6) for m in uniques]
             N_events = W.shape[3]
+            print('The number of events in the ' + flag + ' iteration is ' + str(N_events))
             for k in range(N_events):
 
                 fig = plt.figure(figsize=(14, 8))
@@ -375,12 +376,28 @@ class RFI:
                 if plot_type == 'ant-freq':
                     Amp = [self.one_d_hist_prepare(flag_slice='Unflagged', time_drill=uniques[k]),
                            self.one_d_hist_prepare(flag_slice='All', time_drill=uniques[k])]
+                    print('In event ' + str(k) + ' of the ' + flag +
+                          ' iteration, type(Amp) was ' + str(type(Amp)))
+                    if Amp:
+                        print('The length of Amp was ' + str(len(Amp)))
+                        print('The 0th element was of length ' +
+                              str(len(Amp[0])) + ' and type ' + str(type(Amp[0])))
+                        print('The 1st element was of length ' +
+                              str(len(Amp[1])) + ' and type ' + str(type(Amp[1])))
                     self.one_d_hist_plot(fig, ax, Amp, flag_slices,
                                          self.obs + ' Drill ' + plot_type_titles[plot_type] + str(uniques[k]),
                                          fit=fit)
                 elif plot_type == 'ant-time':
                     Amp = [self.one_d_hist_prepare(flag_slice='Unflagged', freq_drill=uniques[k]),
                            self.one_d_hist_prepare(flag_slice='All', freq_drill=uniques[k])]
+                    print('In event ' + str(k) + ' of the ' + flag +
+                          ' iteration, type(Amp) was ' + str(type(Amp)))
+                    if Amp:
+                        print('The length of Amp was ' + str(len(Amp)))
+                        print('The 0th element was of length ' +
+                              str(len(Amp[0])) + ' and type ' + str(type(Amp[0])))
+                        print('The 1st element was of length ' +
+                              str(len(Amp[1])) + ' and type ' + str(type(Amp[1])))
                     self.one_d_hist_plot(fig, ax, Amp, flag_slices,
                                          self.obs + ' Drill ' + plot_type_titles[plot_type] + str(unique_freqs[k]),
                                          fit=fit)
