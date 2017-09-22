@@ -35,6 +35,6 @@ if not output_list:
     elif catalog_type == 'drill':
         RFI.catalog_drill(outpath, plot_type='ant-time', band=(1500, 10**5))
     elif catalog_type == 'ant-pol':
-        RFI.ant_pol_catalog(outpath, times=range(RFI.UV.Ntimes), freqs=[162])
+        RFI.ant_pol_catalog(outpath, range(RFI.UV.Ntimes), [162, ])
 else:
     print('I already processed obs ' + str(obs))

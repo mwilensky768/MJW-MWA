@@ -29,6 +29,7 @@ class RFI:
         for bad_time in bad_times:
             times.remove(bad_time)
         self.UV.select(times=times)
+        del(times)
 
         if coarse_band_remove:
             coarse_width = 1.28 * 10**(6)  # coarse band width of MWA in hz
@@ -188,6 +189,10 @@ class RFI:
 
         for m in range(self.UV.Nbls):
             for n in range(self.UV.Npols):
+                print('m is of type ' + str(type(m)))
+                print('n is of type ' + str(type(n)))
+                print('time is of type ' + str(type(time)))
+                print('freq is of type ' + str(type(freq)))
                 T[self.UV.ant_1_array[m] + q[n][0], self.UV.ant_2_array[m] +
                   q[n][1]] = np.imag(self.data_array[time, m, 0, freq, n])
                 T[self.UV.ant_2_array[m] + q[n][0], self.UV.ant_1_array[m] +
@@ -435,18 +440,26 @@ class RFI:
         plt.tight_layout()
         fig.savefig(outpath + self.obs + '_' + ext[normed] + '_DGC.png')
 
-    def ant_pol_catalog(self, times, freqs, outpath):  # times and freqs should be of the same length
+    def ant_pol_catalog(self, outpath, times, freqs):  # times and freqs should be of the same length
+
+        def sigfig(x, s=4):  # s is number of sig-figs
+            if x == 0:
+                return(0)
+            else:
+                n = int(floor(log10(np.absolute(x))))
+                y = 10**n * round(10**(-n) * x, s - 1)
+                return(y)
 
         for time in times:
             for freq in freqs:
 
                 fig, ax = plt.subplots(figsize=(14, 8))
                 T = self.ant_pol_prepare(time, freq)
-                title = self.obs + 'Ant-Pol Drill'
+                title = self.obs + ' Ant-Pol Drill t = ' + str(time) + ' f = ' + str(sigfig(self.UV.freq_array[0, freq])*10**(-6)) + ' Mhz'
                 vmax = np.amax(T)
                 vmin = np.amin(T)
 
-                self.image_plot(fig, ax, T, vmin, vmax, aspect_ratio=1, fraction=False,
+                self.image_plot(fig, ax, T, title, vmin, vmax, aspect_ratio=1, fraction=False,
                                 y_type='ant-pol', x_type='ant-pol')
 
                 plt.tight_layout()
