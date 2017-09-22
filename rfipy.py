@@ -361,9 +361,9 @@ class RFI:
             gs = GridSpec(2, 1)
             gs_loc = [[1, 0], ]
 
-        for flag_slice in flag_slices:
+        for flag in flag_slices:
             W, uniques = self.waterfall_hist_prepare(band, plot_type=plot_type,
-                                                     fraction=False, flag_slice=flag_slice)
+                                                     fraction=False, flag_slice=flag)
             if plot_type == 'ant-time':
                 unique_freqs = [sigfig(self.UV.freq_array[0, m]) * 10**(-6) for m in uniques]
             N_events = W.shape[3]
@@ -392,11 +392,11 @@ class RFI:
                     ax = fig.add_subplot(gs[gs_loc[l][0], gs_loc[l][1]])
                     self.image_plot(fig, ax, W[:, :, l, k],
                                     'Drill ' + pol_titles[self.UV.polarization_array[l]] +
-                                    ' ' + flag_slice, vmin, vmax, aspect_ratio=aspect[plot_type], fraction=False,
+                                    ' ' + flag, vmin, vmax, aspect_ratio=aspect[plot_type], fraction=False,
                                     y_type='ant', x_type=x_type[plot_type])
 
                 plt.tight_layout()
-                fig.savefig(outpath + self.obs + '_Drill_' + flag_slice +
+                fig.savefig(outpath + self.obs + '_Drill_' + flag +
                             '_' + path_labels[plot_type] + str(uniques[k]) + '.png')
                 plt.close(fig)
 
