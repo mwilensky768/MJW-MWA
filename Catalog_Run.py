@@ -33,7 +33,7 @@ if not output_list:
         RFI.rfi_catalog(outpath, hist_write=True,
                         hist_write_path='/nfs/eor-00/h1/mwilensk/RFI_Diagnostic_Diffuse_2015/Diffuse_2015_Hists/')
     elif catalog_type == 'drill':
-        RFI.catalog_drill(outpath, plot_type='ant-time')
+        RFI.catalog_drill(outpath, plot_type='ant-time', band=(1500, 10**5))
     elif catalog_type == 'ant-pol':
         RFI.ant_pol_catalog(outpath, times=[], freqs=[])
 else:
