@@ -26,7 +26,7 @@ output_list = glob.glob(output)
 
 if not output_list:
 
-    RFI = rfi.RFI(str(obs), inpath, bad_time_indices=bad_time_indices, auto_remove=True)
+    RFI = rfi.RFI(str(obs), inpath, auto_remove=True)
 
     if catalog_type == 'waterfall':
         RFI.rfi_catalog(outpath, hist_write=True,

@@ -39,11 +39,11 @@ class RFI:
             self.UV.select(blt_inds=blt_inds)
 
         if auto_remove:
-            ant_pairs = ()
+            ant_pairs = []
             for m in range(1, self.UV.Nants_telescope):
                 for n in range(m):
-                    ant_pairs.append(m, n)
-            UV.select(ant_pairs_nums=ant_pairs)
+                    ant_pairs.append((m, n))
+            self.UV.select(ant_pairs_nums=ant_pairs)
 
         if coarse_band_remove:  # MWA specific
             coarse_width = 1.28 * 10**(6)  # coarse band width of MWA in hz
