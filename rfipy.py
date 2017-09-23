@@ -14,24 +14,38 @@ from scipy.optimize import curve_fit
 
 class RFI:
 
-    def __init__(self, obs, filepath, bad_time_indices=[], coarse_band_remove=False,
-                 filetype='uvfits'):
+    def __init__(self, obs, filepath, bad_time_indices=[0, 53, 54, 55], coarse_band_remove=False,
+                 bad_blt_inds=[], auto_remove=True, filetype='uvfits'):
         self.obs = obs
         self.UV = pyuv.UVData()
         if filetype is 'uvfits':
             self.UV.read_uvfits(filepath)
         elif filetype is 'miriad':
             self.UV.read_miriad(filepath)
-        times = [self.UV.time_array[k * self.UV.Nbls] for k in range(self.UV.Ntimes)]
-        bad_times = []
-        for k in bad_time_indices:
-            bad_times.append(times[k])
-        for bad_time in bad_times:
-            times.remove(bad_time)
-        self.UV.select(times=times)
-        del(times)
 
-        if coarse_band_remove:
+        if bad_time_indices:
+            times = [self.UV.time_array[k * self.UV.Nbls] for k in range(self.UV.Ntimes)]
+            bad_times = []
+            for k in bad_time_indices:
+                bad_times.append(times[k])
+            for bad_time in bad_times:
+                times.remove(bad_time)
+            self.UV.select(times=times)
+
+        if bad_blt_inds:
+            blt_inds = range(self.UV.Nblts)
+            for k in bad_blt_inds:
+                blt_inds.remove(k)
+            self.UV.select(blt_inds=blt_inds)
+
+        if auto_remove:
+            ant_pairs = ()
+            for m in range(1, self.UV.Nants_telescope):
+                for n in range(m):
+                    ant_pairs.append(m, n)
+            UV.select(ant_pairs_nums=ant_pairs)
+
+        if coarse_band_remove:  # MWA specific
             coarse_width = 1.28 * 10**(6)  # coarse band width of MWA in hz
             Ncoarse = (self.UV.freq_array[0, -1] - self.UV.freq_array[0, 0]) / coarse_width
             Mcoarse = coarse_width / self.UV.channel_width  # Number of fine channels per coarse channel

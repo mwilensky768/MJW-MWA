@@ -1,8 +1,15 @@
 import rfipy as rfi
+import numpy as np
 
-RFI = rfi.RFI('1065538888',
-              '/Users/mike_e_dubs/python_stuff/uvfits/1065538888.uvfits',
-              filetype='uvfits')
+# bad_blt_inds = np.load('/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/bad_blt_inds.npy')
+# bad_blt_inds = bad_blt_inds.tolist()
 
-RFI.rfi_catalog('/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/Waterfall_Plots/',
-                band=(2000, 10**5), fit=True)
+obslist = ['1061313008', '1061313128', '1065538888', '1061318864']
+
+for obs in obslist:
+    RFI = rfi.RFI('1061318864',
+                  '/Users/mike_e_dubs/python_stuff/uvfits/1061318864.uvfits',
+                  filetype='uvfits', auto_remove=True, )
+
+RFI.rfi_catalog('/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/Waterfall_Plots/MWA/',
+                band=(10**3, 10**5), fit=False)
