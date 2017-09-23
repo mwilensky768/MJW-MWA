@@ -32,17 +32,9 @@ class RFI:
                 times.remove(bad_time)
             self.UV.select(times=times)
 
-        if bad_blt_inds:
-            blt_inds = range(self.UV.Nblts)
-            for k in bad_blt_inds:
-                blt_inds.remove(k)
-            self.UV.select(blt_inds=blt_inds)
-
         if auto_remove:
-            ant_pairs = []
-            for m in range(1, self.UV.Nants_telescope):
-                for n in range(m):
-                    ant_pairs.append((m, n))
+            ant_pairs = np.array(zip(self.UV.ant_1_array, self.UV.ant_2_array))
+            ant_pairs = ant_pairs[self.UV.ant_1_array == self.UV.ant_2_array]
             self.UV.select(ant_pairs_nums=ant_pairs)
 
         if coarse_band_remove:  # MWA specific
