@@ -33,8 +33,10 @@ class RFI:
             self.UV.select(times=times)
 
         if auto_remove:
-            ant_pairs = np.array(zip(self.UV.ant_1_array, self.UV.ant_2_array))
-            ant_pairs = ant_pairs[self.UV.ant_1_array == self.UV.ant_2_array]
+            ant_pairs = []
+            for m in range(self.UV.Nbls):
+                if self.UV.ant_1_array[m] != self.UV.ant_2_array[m]:
+                    ant_pairs.append((self.UV.ant_1_array[m], self.UV.ant_2_array[m]))
             self.UV.select(ant_pairs_nums=ant_pairs)
 
         if coarse_band_remove:  # MWA specific
