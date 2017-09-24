@@ -33,11 +33,9 @@ class RFI:
             self.UV.select(times=times)
 
         if auto_remove:
-            ant_pairs = []
-            for m in range(self.UV.Nbls):
-                if self.UV.ant_1_array[m] != self.UV.ant_2_array[m]:
-                    ant_pairs.append((self.UV.ant_1_array[m], self.UV.ant_2_array[m]))
-            self.UV.select(ant_pairs_nums=ant_pairs)
+            blt_inds = [k for k in range(self.UV.Nblts) if
+                        self.UV.ant_1_array[k] != self.UV.ant_2_array[k]]
+            self.UV.select(blt_inds=blt_inds)
 
         if coarse_band_remove:  # MWA specific
             coarse_width = 1.28 * 10**(6)  # coarse band width of MWA in hz
