@@ -8,6 +8,7 @@ obslist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_OBSI
 pathlist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_OBSIDS_paths.txt'
 outpath = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Waterfall_Plots/'
 hist_write_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Hists/'
+bins = np.logspace(-3, 5, num=1001)
 catalog_type = 'waterfall'
 
 with open(obslist_path) as f:
@@ -30,9 +31,10 @@ if not output_list:
 
     if catalog_type == 'waterfall':
         RFI.rfi_catalog(outpath, hist_write=True,
-                        hist_write_path=hist_write_path)
+                        hist_write_path=hist_write_path, bins=bins)
     elif catalog_type == 'drill':
-        RFI.catalog_drill(outpath, plot_type='ant-time', band=(2000, 10**5))
+        RFI.catalog_drill(outpath, plot_type='ant-time', band=(2000, 10**5),
+                          bins=bins)
     elif catalog_type == 'ant-pol':
         RFI.ant_pol_catalog(outpath, range(RFI.UV.Ntimes), [162, ])
 else:

@@ -97,12 +97,16 @@ class RFI:
         return(values)
 
     def one_d_hist_plot(self, fig, ax, data, label, title, fit=False, fit_window=[],
-                        writepath='', ylog=True, xlog=True, write=False, normed=False):  # Data/title are tuples if multiple hists
+                        writepath='', ylog=True, xlog=True, write=False, normed=False,
+                        bins='auto'):  # Data/title are tuples if multiple hists
 
-        MIN = np.amin(data[1][np.where(data[1] > 0)])
-        MAX = np.amax(data[1])
+        if bins == 'auto':
+            MIN = np.amin(data[1][np.where(data[1] > 0)])
+            MAX = np.amax(data[1])
 
-        bins = np.logspace(floor(log10(MIN)), ceil(log10(MAX)), num=1001)
+            bins = np.logspace(floor(log10(MIN)), ceil(log10(MAX)), num=1001)
+        else:
+            bins = bins
 
         n, bins, patches = ax.hist(data, bins=bins, histtype='step', label=label, normed=normed)
         bin_centers = bins[:-1] + 0.5 * np.diff(bins)
@@ -276,7 +280,7 @@ class RFI:
             cbar.set_label('Counts RFI')
 
     def rfi_catalog(self, outpath, band=(2000, 10**5), hist_write=False,
-                    hist_write_path='', fit=False):
+                    hist_write_path='', fit=False, bins='auto'):
 
         flag_slices = ['Unflagged', 'All']
         Amp = [self.one_d_hist_prepare(flag_slice=flag_slices[k]) for k in range(2)]
@@ -323,7 +327,7 @@ class RFI:
             fig = plt.figure(figsize=(14, 8))
             ax = fig.add_subplot(gs[0, :])
             self.one_d_hist_plot(fig, ax, Amp, flag_slices,
-                                 ' RFI Catalog ' + self.obs, fit=fit)
+                                 ' RFI Catalog ' + self.obs, fit=fit, bins=bins)
             ax.axvline(x=min(band), color='r')
             for n in range(self.UV.Npols):
                 ax = fig.add_subplot(gs[gs_loc[n][0], gs_loc[n][1]])
@@ -336,7 +340,7 @@ class RFI:
             plt.close(fig)
 
     def catalog_drill(self, outpath, plot_type='ant-freq', band=(2000, 10**5),
-                      fit=False):
+                      fit=False, bins='auto'):
 
         flag_slices = ['Unflagged', 'All']
 
@@ -397,7 +401,7 @@ class RFI:
                               str(len(Amp[1])) + ' and type ' + str(type(Amp[1])))
                     self.one_d_hist_plot(fig, ax, Amp, flag_slices,
                                          self.obs + ' Drill ' + plot_type_titles[plot_type] + str(uniques[k]),
-                                         fit=fit)
+                                         fit=fit, bins=bins)
                 elif plot_type == 'ant-time':
                     Amp = [self.one_d_hist_prepare(flag_slice='Unflagged', freq_drill=uniques[k]),
                            self.one_d_hist_prepare(flag_slice='All', freq_drill=uniques[k])]
@@ -411,7 +415,7 @@ class RFI:
                               str(len(Amp[1])) + ' and type ' + str(type(Amp[1])))
                     self.one_d_hist_plot(fig, ax, Amp, flag_slices,
                                          self.obs + ' Drill ' + plot_type_titles[plot_type] + str(unique_freqs[k]),
-                                         fit=fit)
+                                         fit=fit, bins=bins)
                 ax.axvline(x=min(band), color='r')
 
                 for l in range(self.UV.Npols):
@@ -428,7 +432,7 @@ class RFI:
                             '_' + path_labels[plot_type] + str(uniques[k]) + '.png')
                 plt.close(fig)
 
-    def digital_gain_compare(self, outpath, normed=True):
+    def digital_gain_compare(self, outpath, normed=True, bins='auto'):
 
         flag_slices = ['Unflagged', 'All']
         freq_slices = [[0, 256], [256, 384]]  # Unfortunate hard-coding, but this is where the dig. gain jump happens
@@ -442,7 +446,8 @@ class RFI:
 
         fig, ax = plt.subplots(figsize=(14, 8))
 
-        self.one_d_hist_plot(fig, ax, AMP, label, self.obs + ' Digital Gain Comparison', normed=normed)
+        self.one_d_hist_plot(fig, ax, AMP, label, self.obs + ' Digital Gain Comparison',
+                             normed=normed, bins=bins)
         plt.tight_layout()
         fig.savefig(outpath + self.obs + '_' + ext[normed] + '_DGC.png')
 
@@ -461,7 +466,8 @@ class RFI:
 
                 fig, ax = plt.subplots(figsize=(14, 8))
                 T = self.ant_pol_prepare(time, freq)
-                title = self.obs + ' Ant-Pol Drill t = ' + str(time) + ' f = ' + str(sigfig(self.UV.freq_array[0, freq])*10**(-6)) + ' Mhz'
+                title = self.obs + ' Ant-Pol Drill t = ' + str(time) + ' f = ' + \
+                    str(sigfig(self.UV.freq_array[0, freq]) * 10**(-6)) + ' Mhz'
                 vmax = np.amax(T)
                 vmin = np.amin(T)
 
