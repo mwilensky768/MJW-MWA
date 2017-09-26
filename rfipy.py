@@ -15,7 +15,7 @@ from scipy.optimize import curve_fit
 class RFI:
 
     def __init__(self, obs, filepath, bad_time_indices=[0, 53, 54, 55], coarse_band_remove=False,
-                 bad_blt_inds=[], auto_remove=True, filetype='uvfits'):
+                 auto_remove=True, filetype='uvfits'):
         self.obs = obs
         self.UV = pyuv.UVData()
         if filetype is 'uvfits':
