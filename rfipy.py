@@ -327,7 +327,8 @@ class RFI:
             fig = plt.figure(figsize=(14, 8))
             ax = fig.add_subplot(gs[0, :])
             self.one_d_hist_plot(fig, ax, Amp, flag_slices,
-                                 ' RFI Catalog ' + self.obs, fit=fit, bins=bins)
+                                 ' RFI Catalog ' + self.obs, fit=fit, bins=bins,
+                                 write=hist_write, writepath=hist_write_path)
             ax.axvline(x=min(band), color='r')
             for n in range(self.UV.Npols):
                 ax = fig.add_subplot(gs[gs_loc[n][0], gs_loc[n][1]])

@@ -1,6 +1,7 @@
 import rfipy as rfi
 import argparse
 import glob
+import numpy as np
 
 # Set these in the beginning every time! Also remember to pick the right type of catalog!
 
