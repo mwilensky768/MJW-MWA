@@ -117,8 +117,12 @@ class RFI:
             max_loc = bin_centers[n[0] == np.amax(n[0])][0]
             popt, pcov = curve_fit(func, bin_centers, n[0], p0=[0, max_loc**2])
             ax.plot(bin_centers, func(bin_centers, popt[0], popt[1]), label='Fit')
+
         if write:
-            np.save(writepath, n[0])
+            np.save(writepath + self.obs + '_hist.npy', n[0])
+        else:
+            print('I did not save')
+
         ax.set_title(title)
 
         if ylog:
