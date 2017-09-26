@@ -100,7 +100,7 @@ class RFI:
                         writepath='', ylog=True, xlog=True, write=False, normed=False,
                         bins='auto'):  # Data/title are tuples if multiple hists
 
-        if bins == 'auto':
+        if bins is 'auto':
             MIN = np.amin(data[1][np.where(data[1] > 0)])
             MAX = np.amax(data[1])
 
