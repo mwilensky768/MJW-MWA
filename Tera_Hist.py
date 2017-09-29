@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 inpath = '/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/Long_Run_8s_Autos_Hists/'
-Obs_text = 
+Obs_text
 
 with open('/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/Long_Run_8s_Autos_OBSIDS.txt') as f:
     obslist = f.read().split("\n")
