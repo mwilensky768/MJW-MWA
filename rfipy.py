@@ -101,8 +101,12 @@ class RFI:
                         bins='auto'):  # Data/title are tuples if multiple hists
 
         if bins is 'auto':
-            MIN = np.amin(data[1][np.where(data[1] > 0)])
-            MAX = np.amax(data[1])
+            if len(data) == 2:
+                MIN = np.amin(data[1][np.where(data[1] > 0)])
+                MAX = np.amax(data[1])
+            else:
+                MIN = np.amin(data)
+                MAX = np.amax(data)
 
             bins = np.logspace(floor(log10(MIN)), ceil(log10(MAX)), num=1001)
         else:
@@ -110,15 +114,27 @@ class RFI:
 
         n, bins, patches = ax.hist(data, bins=bins, histtype='step', label=label, normed=normed)
         bin_centers = bins[:-1] + 0.5 * np.diff(bins)
+
         if fit:
             def func(x, loc, scale):
                 return(rayleigh.pdf(x, loc, scale))
-            bin_centers = bins[:-1] + 0.5 * np.diff(bins)
-            max_loc = bin_centers[n[0] == np.amax(n[0])][0]
-            popt, pcov = curve_fit(func, bin_centers, n[0], p0=[0, max_loc**2])
-            ax.plot(bin_centers, func(bin_centers, popt[0], popt[1]), label='Fit')
+            b = np.copy(bin_centers)
+            if len(n) == 2:
+                m = np.copy(n[0])
+            else:
+                m = np.copy(n)
+            if fit_window:
+                m = m[np.logical_and(min(fit_window) < bin_centers, bin_centers < max(fit_window))]
+                b = b[np.logical_and(min(fit_window) < bin_centers, bin_centers < max(fit_window))]
+
+            sigma = b[m == np.amax(m)][0]
+            popt, pcov = curve_fit(func, b, m, p0=[0, sigma])
+            ax.plot(b, func(b, popt[0], popt[1]), label='Fit')
+
         if write:
-            np.save(writepath, n[0])
+            np.save(writepath + self.obs + '_hist.npy', n[0])
+        else:
+            print('I did not save')
         ax.set_title(title)
 
         if ylog:
@@ -330,6 +346,7 @@ class RFI:
                                  ' RFI Catalog ' + self.obs, fit=fit, bins=bins,
                                  write=hist_write, writepath=hist_write_path)
             ax.axvline(x=min(band), color='r')
+            ax.axvline(x=max(band), color='r')
             for n in range(self.UV.Npols):
                 ax = fig.add_subplot(gs[gs_loc[n][0], gs_loc[n][1]])
                 self.image_plot(fig, ax, W[:, :, n],

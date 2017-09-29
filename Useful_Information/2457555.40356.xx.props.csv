@@ -1,0 +1,9 @@
+vis_units,UNCALIB
+channel_width,97656.25
+Nbls,190
+Nblts,10640
+Ntimes,56
+Nfreqs,1024
+Npols,1
+Nants_data,19
+Nants_telescope,113
