@@ -113,28 +113,38 @@ class RFI:
             bins = bins
 
         n, bins, patches = ax.hist(data, bins=bins, histtype='step', label=label, normed=normed)
-        bin_centers = bins[:-1] + 0.5 * np.diff(bins)
+        bin_widths = np.diff(bins)
+        bin_centers = bins[:-1] + 0.5 * bin_widths
+
+        #if fit:
+        #    def func(x, loc, scale):
+        #        return(rayleigh.pdf(x, loc, scale))
+        #    b = np.copy(bin_centers)
+        #    if len(n) == 2:
+        #        m = np.copy(n[0])
+        #    else:
+        #        m = np.copy(n)
+        #    if fit_window:
+        #        m = m[np.logical_and(min(fit_window) < bin_centers, bin_centers < max(fit_window))]
+        #        b = b[np.logical_and(min(fit_window) < bin_centers, bin_centers < max(fit_window))]
+
+        #    sigma = b[m == np.amax(m)][0]
+        #    popt, pcov = curve_fit(func, b, m, p0=[0, sigma])
+        #    ax.plot(b, func(b, popt[0], popt[1]), label='Fit')
 
         if fit:
-            def func(x, loc, scale):
-                return(rayleigh.pdf(x, loc, scale))
-            b = np.copy(bin_centers)
-            if len(n) == 2:
-                m = np.copy(n[0])
+            if len(data) == 2:
+                sigma = np.sqrt(0.5 * np.sum(data[0]**2) / len(data[0]))
+                A = np.amax(n[0]) * sigma * np.exp(0.5)
             else:
-                m = np.copy(n)
-            if fit_window:
-                m = m[np.logical_and(min(fit_window) < bin_centers, bin_centers < max(fit_window))]
-                b = b[np.logical_and(min(fit_window) < bin_centers, bin_centers < max(fit_window))]
-
-            sigma = b[m == np.amax(m)][0]
-            popt, pcov = curve_fit(func, b, m, p0=[0, sigma])
-            ax.plot(b, func(b, popt[0], popt[1]), label='Fit')
+                sigma = np.sqrt(0.5 * np.sum(data**2) / len(data))
+                A = np.amax(n) * sigma * np.exp(0.5)
+            fit = (A / sigma**2) * bin_centers * np.exp(-bin_centers**2 / (2 * sigma ** 2))
+            ax.plot(bin_centers, fit, label='Fit: sigma = ' + str(sigma))
 
         if write:
             np.save(writepath + self.obs + '_hist.npy', n[0])
-        else:
-            print('I did not save')
+
         ax.set_title(title)
 
         if ylog:

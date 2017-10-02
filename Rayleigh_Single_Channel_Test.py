@@ -15,7 +15,7 @@ data = RFI.one_d_hist_prepare(freq_drill=freq_drill)
 
 fig, ax = plt.subplots()
 
-RFI.one_d_hist_plot(fig, ax, data, label, title, fit=True, fit_window=[1, 1000])
+RFI.one_d_hist_plot(fig, ax, data, label, title, normed=False, fit=True, fit_window=[1, 1000])
 
 fig.savefig('/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/1061313008_Rayleigh_Test_f300.png')
 
