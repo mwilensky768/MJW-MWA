@@ -112,6 +112,14 @@ class RFI:
                 max_slice = label
 
         if bins is 'auto':
+            maxlen = 0
+            length = 0
+            max_slice = ''
+            for label in data:
+                length = len(data[label])
+                if length > maxlen:
+                    maxlen = length
+                    max_slice = label
             MIN = np.amin(data[max_slice])
             MAX = np.amax(data[max_slice])
             bins = np.logspace(floor(log10(MIN)), ceil(log10(MAX)), num=1001)
