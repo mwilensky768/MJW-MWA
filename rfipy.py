@@ -402,6 +402,7 @@ class RFI:
                 n = int(floor(log10(np.absolute(x))))
                 y = 10**n * round(10**(-n) * x, s - 1)
                 return(y)
+
         if self.UV.Npols > 1:
             gs = GridSpec(3, 2)
             gs_loc = [[1, 0], [1, 1], [2, 0], [2, 1]]
