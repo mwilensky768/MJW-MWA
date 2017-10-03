@@ -103,9 +103,9 @@ class RFI:
                         bins='auto'):  # Data/title are tuples if multiple hists
 
         if bins is 'auto':
-            if len(data) == 2:
-                MIN = np.amin(data[1][np.where(data[1] > 0)])
-                MAX = np.amax(data[1])
+            if len(data) < 6:
+                MIN = np.amin(data[-1][np.where(data[-1] > 0)])
+                MAX = np.amax(data[-1])
             else:
                 MIN = np.amin(data)
                 MAX = np.amax(data)
@@ -135,7 +135,7 @@ class RFI:
         #    ax.plot(b, func(b, popt[0], popt[1]), label='Fit')
 
         if fit:
-            if len(data) == 2:
+            if len(data) < 6:
                 sigma = np.sqrt(0.5 * np.sum(data[0]**2) / len(data[0]))
                 A = np.amax(n[0]) * sigma * np.exp(0.5)
             else:
@@ -227,10 +227,6 @@ class RFI:
 
         for m in range(self.UV.Nbls):
             for n in range(self.UV.Npols):
-                print('m is of type ' + str(type(m)))
-                print('n is of type ' + str(type(n)))
-                print('time is of type ' + str(type(time)))
-                print('freq is of type ' + str(type(freq)))
                 T[self.UV.ant_1_array[m] + q[n][0], self.UV.ant_2_array[m] +
                   q[n][1]] = np.imag(self.data_array[time, m, 0, freq, n])
                 T[self.UV.ant_2_array[m] + q[n][0], self.UV.ant_1_array[m] +
@@ -308,10 +304,11 @@ class RFI:
             cbar.set_label('Counts RFI')
 
     def rfi_catalog(self, outpath, band=(2000, 10**5), hist_write=False,
-                    hist_write_path='', fit=False, bins='auto'):
+                    hist_write_path='', fit=False, bins='auto',
+                    flag_slices=['Unflagged', 'All']):
 
-        flag_slices = ['Unflagged', 'All']
-        Amp = [self.one_d_hist_prepare(flag_slice=flag_slices[k]) for k in range(2)]
+        Amp = [self.one_d_hist_prepare(flag_slice=flag_slices[k]) for k in
+               range(len(flag_slices))]
 
         if self.UV.Npols > 1:
             gs = GridSpec(3, 2)
@@ -370,9 +367,7 @@ class RFI:
             plt.close(fig)
 
     def catalog_drill(self, outpath, plot_type='ant-freq', band=(2000, 10**5),
-                      fit=False, bins='auto'):
-
-        flag_slices = ['Unflagged', 'All']
+                      fit=False, bins='auto', flag_slices=['Unflagged', 'All']):
 
         pol_keys = [-8 + k for k in range(13)]
         pol_keys.remove(0)
