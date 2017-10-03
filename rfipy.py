@@ -96,25 +96,36 @@ class RFI:
 
         values = values[flags > 0]
 
-        return(values)
+        return({flag_slice: values})
 
-    def one_d_hist_plot(self, fig, ax, data, label, title, fit=False, fit_window=[],
+    def one_d_hist_plot(self, fig, ax, data, title, fit=False, fit_window=[],
                         writepath='', ylog=True, xlog=True, write=False, normed=False,
                         bins='auto'):  # Data/title are tuples if multiple hists
 
-        if bins is 'auto':
-            if len(data) < 6:
-                MIN = np.amin(data[-1][np.where(data[-1] > 0)])
-                MAX = np.amax(data[-1])
-            else:
-                MIN = np.amin(data)
-                MAX = np.amax(data)
+        maxlen = 0
+        length = 0
+        max_slice = ''
+        for label in data:
+            length = len(data[label])
+            if length > maxlen:
+                maxlen = length
+                max_slice = label
 
+        if bins is 'auto':
+            MIN = np.amin(data[max_slice])
+            MAX = np.amax(data[max_slice])
             bins = np.logspace(floor(log10(MIN)), ceil(log10(MAX)), num=1001)
         else:
             bins = bins
 
-        n, bins, patches = ax.hist(data, bins=bins, histtype='step', label=label, normed=normed)
+        zorder = {'Unflagged': 10, 'Or': 8, 'And': 6, 'XOR': 4, 'All': 2}
+
+        n = {}
+        for label in data:
+            n[label], bins, patches = ax.hist(data[label], bins=bins,
+                                              histtype='step', label=label,
+                                              normed=normed, zorder=zorder[label])
+
         bin_widths = np.diff(bins)
         bin_centers = bins[:-1] + 0.5 * bin_widths
 
@@ -135,17 +146,13 @@ class RFI:
         #    ax.plot(b, func(b, popt[0], popt[1]), label='Fit')
 
         if fit:
-            if len(data) < 6:
-                sigma = np.sqrt(0.5 * np.sum(data[0]**2) / len(data[0]))
-                A = np.amax(n[0]) * sigma * np.exp(0.5)
-            else:
-                sigma = np.sqrt(0.5 * np.sum(data**2) / len(data))
-                A = np.amax(n) * sigma * np.exp(0.5)
+            sigma = np.sqrt(0.5 * np.sum(data['Unflagged']**2) / len(data['Unflagged']))
+            A = np.amax(n['Unflagged']) * sigma * np.exp(0.5)
             fit = (A / sigma**2) * bin_centers * np.exp(-bin_centers**2 / (2 * sigma ** 2))
             ax.plot(bin_centers, fit, label='Fit: sigma = ' + str(sigma))
 
         if write:
-            np.save(writepath + self.obs + '_hist.npy', n[0])
+            np.save(writepath + self.obs + '_hist.npy', n['Unflagged'])
 
         ax.set_title(title)
 
@@ -307,8 +314,9 @@ class RFI:
                     hist_write_path='', fit=False, bins='auto',
                     flag_slices=['Unflagged', 'All']):
 
-        Amp = [self.one_d_hist_prepare(flag_slice=flag_slices[k]) for k in
-               range(len(flag_slices))]
+        Amp = {}
+        for flag_slice in flag_slices:
+            Amp.update(self.one_d_hist_prepare(flag_slice=flag_slice))
 
         if self.UV.Npols > 1:
             gs = GridSpec(3, 2)
@@ -351,9 +359,9 @@ class RFI:
 
             fig = plt.figure(figsize=(14, 8))
             ax = fig.add_subplot(gs[0, :])
-            self.one_d_hist_plot(fig, ax, Amp, flag_slices,
-                                 ' RFI Catalog ' + self.obs, fit=fit, bins=bins,
-                                 write=hist_write, writepath=hist_write_path)
+            self.one_d_hist_plot(fig, ax, Amp, ' RFI Catalog ' + self.obs,
+                                 fit=fit, bins=bins, write=hist_write,
+                                 writepath=hist_write_path)
             ax.axvline(x=min(band), color='r')
             ax.axvline(x=max(band), color='r')
             for n in range(self.UV.Npols):
@@ -401,46 +409,34 @@ class RFI:
             gs = GridSpec(2, 1)
             gs_loc = [[1, 0], ]
 
-        for flag in flag_slices:
+        for flag_slice in flag_slices:
             W, uniques = self.waterfall_hist_prepare(band, plot_type=plot_type,
-                                                     fraction=False, flag_slice=flag)
-            if plot_type == 'ant-time':
-                unique_freqs = [sigfig(self.UV.freq_array[0, m]) * 10**(-6) for m in uniques]
+                                                     fraction=False,
+                                                     flag_slice=flag_slice)
             N_events = W.shape[3]
-            print('The number of events in the ' + flag + ' iteration is ' + str(N_events))
             for k in range(N_events):
 
                 fig = plt.figure(figsize=(14, 8))
                 ax = fig.add_subplot(gs[0, :])
 
                 if plot_type == 'ant-freq':
-                    Amp = [self.one_d_hist_prepare(flag_slice='Unflagged', time_drill=uniques[k]),
-                           self.one_d_hist_prepare(flag_slice='All', time_drill=uniques[k])]
-                    print('In event ' + str(k) + ' of the ' + flag +
-                          ' iteration, type(Amp) was ' + str(type(Amp)))
-                    if Amp:
-                        print('The length of Amp was ' + str(len(Amp)))
-                        print('The 0th element was of length ' +
-                              str(len(Amp[0])) + ' and type ' + str(type(Amp[0])))
-                        print('The 1st element was of length ' +
-                              str(len(Amp[1])) + ' and type ' + str(type(Amp[1])))
-                    self.one_d_hist_plot(fig, ax, Amp, flag_slices,
-                                         self.obs + ' Drill ' + plot_type_titles[plot_type] + str(uniques[k]),
-                                         fit=fit, bins=bins)
+                    Amp = {}
+                    for flag in flag_slices:
+                        Amp.update(self.one_d_hist_prepare(flag_slice=flag,
+                                                           time_drill=uniques[k]))
+                    self.one_d_hist_plot(fig, ax, Amp, self.obs + ' Drill ' +
+                                         plot_type_titles[plot_type] +
+                                         str(uniques[k]), fit=fit, bins=bins)
                 elif plot_type == 'ant-time':
-                    Amp = [self.one_d_hist_prepare(flag_slice='Unflagged', freq_drill=uniques[k]),
-                           self.one_d_hist_prepare(flag_slice='All', freq_drill=uniques[k])]
-                    print('In event ' + str(k) + ' of the ' + flag +
-                          ' iteration, type(Amp) was ' + str(type(Amp)))
-                    if Amp:
-                        print('The length of Amp was ' + str(len(Amp)))
-                        print('The 0th element was of length ' +
-                              str(len(Amp[0])) + ' and type ' + str(type(Amp[0])))
-                        print('The 1st element was of length ' +
-                              str(len(Amp[1])) + ' and type ' + str(type(Amp[1])))
-                    self.one_d_hist_plot(fig, ax, Amp, flag_slices,
-                                         self.obs + ' Drill ' + plot_type_titles[plot_type] + str(unique_freqs[k]),
-                                         fit=fit, bins=bins)
+                    unique_freqs = [sigfig(self.UV.freq_array[0, m]) * 10**(-6) for
+                                    m in uniques]
+                    Amp = {}
+                    for flag in flag_slices:
+                        Amp.update(self.one_d_hist_prepare(flag_slice=flag,
+                                                           freq_drill=uniques[k]))
+                    self.one_d_hist_plot(fig, ax, Amp, self.obs + ' Drill ' +
+                                         plot_type_titles[plot_type] +
+                                         str(unique_freqs[k]), fit=fit, bins=bins)
                 ax.axvline(x=min(band), color='r')
 
                 for l in range(self.UV.Npols):
@@ -449,32 +445,13 @@ class RFI:
                     ax = fig.add_subplot(gs[gs_loc[l][0], gs_loc[l][1]])
                     self.image_plot(fig, ax, W[:, :, l, k],
                                     'Drill ' + pol_titles[self.UV.polarization_array[l]] +
-                                    ' ' + flag, vmin, vmax, aspect_ratio=aspect[plot_type], fraction=False,
+                                    ' ' + flag_slice, vmin, vmax, aspect_ratio=aspect[plot_type], fraction=False,
                                     y_type='ant', x_type=x_type[plot_type])
 
                 plt.tight_layout()
-                fig.savefig(outpath + self.obs + '_Drill_' + flag +
+                fig.savefig(outpath + self.obs + '_Drill_' + flag_slice +
                             '_' + path_labels[plot_type] + str(uniques[k]) + '.png')
                 plt.close(fig)
-
-    def digital_gain_compare(self, outpath, normed=True, bins='auto'):
-
-        flag_slices = ['Unflagged', 'All']
-        freq_slices = [[0, 256], [256, 384]]  # Unfortunate hard-coding, but this is where the dig. gain jump happens
-        AMP = []
-        label = ['Unflagged Below', 'Unflagged Above', 'All Below', 'All Above']
-        ext = {True: 'Normed', False: ''}
-
-        for flag_slice in flag_slices:
-            for freq_slice in freq_slices:
-                AMP.append(self.one_d_hist_prepare(flag_slice=flag_slice, freq_slice=freq_slice))
-
-        fig, ax = plt.subplots(figsize=(14, 8))
-
-        self.one_d_hist_plot(fig, ax, AMP, label, self.obs + ' Digital Gain Comparison',
-                             normed=normed, bins=bins)
-        plt.tight_layout()
-        fig.savefig(outpath + self.obs + '_' + ext[normed] + '_DGC.png')
 
     def ant_pol_catalog(self, outpath, times, freqs):  # times and freqs should be of the same length
 
