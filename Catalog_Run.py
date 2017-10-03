@@ -5,13 +5,14 @@ import numpy as np
 
 # Set these in the beginning every time! Also remember to pick the right type of catalog!
 
-obslist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Misflags_OBSIDS.txt'
-pathlist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Misflags_OBSIDS_paths.txt'
-outpath = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Misflags_Waterfall_Plots/'
+obslist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Tail_OBSIDS.txt'
+pathlist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Tail_OBSIDS_paths.txt'
+outpath = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Drill_Plots/Long_Run_8s_Autos_Tail_Drill_Plots/'
 hist_write = False
 hist_write_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Hists/'
 bins = np.logspace(-3, 5, num=1001)
-catalog_type = 'waterfall'
+catalog_type = 'drill'
+plot_type = 'ant-time'
 flag_slices = ['Unflagged','Or', 'All']
 band = [10**3, 10**5]
 auto_remove = True
@@ -38,8 +39,8 @@ if not output_list:
         RFI.rfi_catalog(outpath, hist_write=hist_write, hist_write_path=hist_write_path,
                         bins=bins, band=band, flag_slices=flag_slices)
     elif catalog_type == 'drill':
-        RFI.catalog_drill(outpath, plot_type='ant-time', band=(2000, 10**5),
-                          bins=bins)
+        RFI.catalog_drill(outpath, plot_type='ant-time', band=band,
+                          bins=bins, flag_slices=flag_slices)
     elif catalog_type == 'ant-pol':
         RFI.ant_pol_catalog(outpath, range(RFI.UV.Ntimes), [162, ])
 else:
