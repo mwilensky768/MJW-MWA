@@ -59,6 +59,8 @@ class RFI:
         if flag_slice is 'Unflagged':
             A = np.logical_and(np.logical_not(A[0:(self.UV.Ntimes - 1), :, :, :, :]),
                                np.logical_not(A[1:self.UV.Ntimes, :, :, :, :]))
+        elif flag_slice is 'Or':
+            A = np.logical_or(A[0:(self.UV.Ntimes - 1), :, :, :, :], A[1:self.UV.Ntimes, :, :, :, :])
         elif flag_slice is 'And':
             A = np.logical_and(A[0:(self.UV.Ntimes - 1), :, :, :, :], A[1:self.UV.Ntimes, :, :, :, :])
         elif flag_slice is 'XOR':

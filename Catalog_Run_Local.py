@@ -11,4 +11,4 @@ RFI = rfi.RFI(obs,
               filetype='uvfits', auto_remove=True)
 
 RFI.rfi_catalog('/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/Waterfall_Plots/MWA/',
-                band=(2 * 10**3, 10**5), fit=False)
+                band=(400, 10**5), fit=False)
