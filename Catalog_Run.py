@@ -5,14 +5,16 @@ import numpy as np
 
 # Set these in the beginning every time! Also remember to pick the right type of catalog!
 
-obslist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Departure_OBSIDS.txt'
-pathlist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Departure_OBSIDS_paths.txt'
-outpath = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Departure_Waterfall_Plots/'
+obslist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Misflags_OBSIDS.txt'
+pathlist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Misflags_OBSIDS_paths.txt'
+outpath = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Misflags_Waterfall_Plots/'
+hist_write = False
 hist_write_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Hists/'
 bins = np.logspace(-3, 5, num=1001)
 catalog_type = 'waterfall'
-flag_slices = ['Or', 'All']
-band = [400, 10**5]
+flag_slices = ['Unflagged','Or', 'All']
+band = [10**3, 10**5]
+auto_remove = True
 
 with open(obslist_path) as f:
     obslist = f.read().split("\n")
@@ -30,10 +32,10 @@ output_list = glob.glob(output)
 
 if not output_list:
 
-    RFI = rfi.RFI(str(obs), inpath, auto_remove=True)
+    RFI = rfi.RFI(str(obs), inpath, auto_remove=auto_remove)
 
     if catalog_type == 'waterfall':
-        RFI.rfi_catalog(outpath, hist_write=False, hist_write_path=hist_write_path,
+        RFI.rfi_catalog(outpath, hist_write=hist_write, hist_write_path=hist_write_path,
                         bins=bins, band=band, flag_slices=flag_slices)
     elif catalog_type == 'drill':
         RFI.catalog_drill(outpath, plot_type='ant-time', band=(2000, 10**5),
