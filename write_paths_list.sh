@@ -1,10 +1,10 @@
 #!/bin/bash
 
-obs_file_name='/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Departure_OBSIDS.txt'
-obs_path_file_name='/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Departure_OBSIDS_paths.txt'
+obs_file_name='/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Tail_OBSIDS.txt'
+obs_path_file_name='/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Tail_OBSIDS_paths.txt'
 N_lines=$(wc -l ${obs_file_name})
 
-for i in {1..${N_lines}}
+for i in {1..6}
 do
 	obs=$(sed -n "${i}p" ${obs_file_name})
 	obs_path="$(python /nfs/eor-00/h1/mwilensk/MWA_Tools/scripts/read_uvfits_loc.py -v 4 -s 1 -o ${obs})"
