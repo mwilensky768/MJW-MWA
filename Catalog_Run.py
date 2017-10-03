@@ -5,12 +5,14 @@ import numpy as np
 
 # Set these in the beginning every time! Also remember to pick the right type of catalog!
 
-obslist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_OBSIDS.txt'
-pathlist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_OBSIDS_paths.txt'
-outpath = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Waterfall_Plots/'
+obslist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Departure_OBSIDS.txt'
+pathlist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Departure_OBSIDS_paths.txt'
+outpath = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Departure_Waterfall_Plots/'
 hist_write_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Hists/'
 bins = np.logspace(-3, 5, num=1001)
 catalog_type = 'waterfall'
+flag_slices = ['Or', 'All']
+band = [400, 10**5]
 
 with open(obslist_path) as f:
     obslist = f.read().split("\n")
@@ -31,8 +33,8 @@ if not output_list:
     RFI = rfi.RFI(str(obs), inpath, auto_remove=True)
 
     if catalog_type == 'waterfall':
-        RFI.rfi_catalog(outpath, hist_write=True,
-                        hist_write_path=hist_write_path, bins=bins)
+        RFI.rfi_catalog(outpath, hist_write=False, hist_write_path=hist_write_path,
+                        bins=bins, band=band, flag_slices=flag_slices)
     elif catalog_type == 'drill':
         RFI.catalog_drill(outpath, plot_type='ant-time', band=(2000, 10**5),
                           bins=bins)
