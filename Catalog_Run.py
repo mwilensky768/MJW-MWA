@@ -6,8 +6,8 @@ import numpy as np
 # Set these in the beginning every time! Also remember to pick the right type of catalog!
 
 obslist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Departure_OBSIDS.txt'
-pathlist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Tail_Departure_paths.txt'
-outpath = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Waterfall_Plots/Departure/'
+pathlist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Departure_OBSIDS_paths.txt'
+outpath = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Waterfall_Plots/Departure/'
 hist_write = False
 hist_write_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Hists/'
 bins = np.logspace(-3, 5, num=1001)
