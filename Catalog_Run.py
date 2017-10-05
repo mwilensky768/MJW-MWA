@@ -13,7 +13,7 @@ hist_write_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_H
 bins = np.logspace(-3, 5, num=1001)
 catalog_type = 'waterfall'
 plot_type = 'ant-time'
-flag_slices = ['Unflagged', 'Or', 'All']
+flag_slices = ['Unflagged', 'Flagged', 'All']
 band = [10**3, 10**5]
 auto_remove = True
 

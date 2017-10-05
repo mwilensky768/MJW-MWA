@@ -14,7 +14,7 @@ from scipy.optimize import curve_fit
 
 class RFI:
 
-    def __init__(self, obs, filepath, bad_time_indices=[0, 53, 54, 55], coarse_band_remove=False,
+    def __init__(self, obs, filepath, bad_time_indices=[0, -3, -2, -1], coarse_band_remove=False,
                  auto_remove=True, filetype='uvfits'):
         self.obs = obs
         self.UV = pyuv.UVData()
@@ -51,15 +51,15 @@ class RFI:
                                   [self.UV.Ntimes, self.UV.Nbls, self.UV.Nspws,
                                    self.UV.Nfreqs, self.UV.Npols]), axis=0)
 
-    def flag_operations(self, flag_slice='Unflagged'):
+    def flag_operations(self, flag_slice='Unflagged', coarse_band_ignore=False):
 
         A = np.reshape(self.UV.flag_array, [self.UV.Ntimes, self.UV.Nbls, self.UV.Nspws,
                        self.UV.Nfreqs, self.UV.Npols])
 
         if flag_slice is 'Unflagged':
-            A = np.logical_and(np.logical_not(A[0:(self.UV.Ntimes - 1), :, :, :, :]),
-                               np.logical_not(A[1:self.UV.Ntimes, :, :, :, :]))
-        elif flag_slice is 'Or':
+            A = np.logical_not(np.logical_or(A[0:(self.UV.Ntimes - 1), :, :, :, :],
+                                             A[1:self.UV.Ntimes, :, :, :, :]))
+        elif flag_slice is 'Flagged':
             A = np.logical_or(A[0:(self.UV.Ntimes - 1), :, :, :, :], A[1:self.UV.Ntimes, :, :, :, :])
         elif flag_slice is 'And':
             A = np.logical_and(A[0:(self.UV.Ntimes - 1), :, :, :, :], A[1:self.UV.Ntimes, :, :, :, :])
@@ -69,13 +69,26 @@ class RFI:
             A = np.ones([self.UV.Ntimes - 1, self.UV.Nbls, self.UV.Nspws,
                          self.UV.Nfreqs, self.UV.Npols], dtype=bool)
 
+        if coarse_band_ignore:
+            coarse_width = 1.28 * 10**(6)  # coarse band width of MWA in hz
+            Ncoarse = (self.UV.freq_array[0, -1] - self.UV.freq_array[0, 0]) / coarse_width
+            Mcoarse = coarse_width / self.UV.channel_width  # Number of fine channels per coarse channel
+            LEdges = [Mcoarse * p for p in range(Ncoarse)]
+            REdges = [Mcoarse - 1 + Mcoarse * p for p in range(Ncoarse)]
+
+            for x in LEdges + REdges:
+                A[:, :, :, x, :] = 0
+
         return(A)
 
     def one_d_hist_prepare(self, flag_slice='Unflagged', time_drill=[], freq_drill=[],
-                           time_slice=[], freq_slice=[]):
+                           time_slice=[], freq_slice=[], coarse_band_ignore=False,
+                           bins='auto', fit=False, fit_window=[-1, 10**12], write=False,
+                           writepath='', temp_write=False):
 
-        flags = self.flag_operations(flag_slice=flag_slice)
-        values = np.abs(self.data_array)
+        flags = self.flag_operations(flag_slice=flag_slice,
+                                     coarse_band_ignore=coarse_band_ignore)
+        values = np.absolute(self.data_array)
 
         if time_drill:
             values = values[time_drill, :, :, :, :]
@@ -90,77 +103,94 @@ class RFI:
             values = values[:, :, :, min(freq_slice):max(freq_slice), :]
             flags = flags[:, :, :, min(freq_slice):max(freq_slice), :]
 
-        N = np.prod(values.shape)
-        values = np.reshape(values, N)
-        flags = np.reshape(flags, N)
-
-        values = values[flags > 0]
-
-        return({flag_slice: values})
-
-    def one_d_hist_plot(self, fig, ax, data, title, fit=False, fit_window=[],
-                        writepath='', ylog=True, xlog=True, write=False, normed=False,
-                        bins='auto'):  # Data/title are tuples if multiple hists
-
-        maxlen = 0
-        length = 0
-        max_slice = ''
-        for label in data:
-            length = len(data[label])
-            if length > maxlen:
-                maxlen = length
-                max_slice = label
-
         if bins is 'auto':
-            maxlen = 0
-            length = 0
-            max_slice = ''
-            for label in data:
-                length = len(data[label])
-                if length > maxlen:
-                    maxlen = length
-                    max_slice = label
-            MIN = np.amin(data[max_slice])
-            MAX = np.amax(data[max_slice])
+            MIN = np.amin(values[values > 0])
+            MAX = np.amax(values)
             bins = np.logspace(floor(log10(MIN)), ceil(log10(MAX)), num=1001)
         else:
             bins = bins
 
-        zorder = {'Unflagged': 10, 'Or': 8, 'And': 6, 'XOR': 4, 'All': 2}
-
-        n = {}
-        for label in data:
-            n[label], bins, patches = ax.hist(data[label], bins=bins,
-                                              histtype='step', label=label,
-                                              normed=normed, zorder=zorder[label])
-
         bin_widths = np.diff(bins)
         bin_centers = bins[:-1] + 0.5 * bin_widths
 
-        #if fit:
-        #    def func(x, loc, scale):
-        #        return(rayleigh.pdf(x, loc, scale))
-        #    b = np.copy(bin_centers)
-        #    if len(n) == 2:
-        #        m = np.copy(n[0])
-        #    else:
-        #        m = np.copy(n)
-        #    if fit_window:
-        #        m = m[np.logical_and(min(fit_window) < bin_centers, bin_centers < max(fit_window))]
-        #        b = b[np.logical_and(min(fit_window) < bin_centers, bin_centers < max(fit_window))]
-
-        #    sigma = b[m == np.amax(m)][0]
-        #    popt, pcov = curve_fit(func, b, m, p0=[0, sigma])
-        #    ax.plot(b, func(b, popt[0], popt[1]), label='Fit')
-
         if fit:
-            sigma = np.sqrt(0.5 * np.sum(data['Unflagged']**2) / len(data['Unflagged']))
-            A = np.amax(n['Unflagged']) * sigma * np.exp(0.5)
-            fit = (A / sigma**2) * bin_centers * np.exp(-bin_centers**2 / (2 * sigma ** 2))
-            ax.plot(bin_centers, fit, label='Fit: sigma = ' + str(sigma))
+            fit = np.zeros(len(bins) - 1)
+            m = np.copy(fit)
+            if temp_write:
+                pol_keys = [-8 + k for k in range(13)]
+                pol_keys.remove(0)
+                pol_values = ['YX', 'XY', 'YY', 'XX', 'LR', 'RL', 'LL', 'RR',
+                              'I', 'Q', 'U', 'V']
+                pol_titles = dict(zip(pol_keys, pol_values))
+                sigma_array = np.zeros(values.shape[3])
+            for l in range(values.shape[4]):
+                for k in range(values.shape[3]):
+                    N = np.prod(values.shape[:3])
+                    temp_values = values[:, :, :, k, l]
+                    temp_flags = flags[:, :, :, k, l]
+                    temp_values = np.reshape(temp_values, N)
+                    temp_flags = np.reshape(temp_flags, N)
+                    temp_values = temp_values[temp_flags > 0]
+                    n, bins = np.histogram(temp_values, bins=bins)
+                    m += n
+                    bin_cond = np.logical_and(min(fit_window) < n, n < max(fit_window))
+                    bin_window = bins[:-1][bin_cond]
+                    data_cond = np.logical_and(min(bin_window) < temp_values,
+                                               temp_values < max(bin_window))
+                    N_fit = len(temp_values[data_cond])
+                    if N_fit > 0:
+                        sigma = np.sqrt(0.5 * np.sum(temp_values[data_cond]**2) / N_fit)
+                        fit += N * bin_widths * (1 / sigma**2) * bin_centers * \
+                            np.exp(-bin_centers**2 / (2 * sigma ** 2))
+                    else:
+                        sigma = 0
+                    if temp_write:
+                        sigma_array[k] = sigma
+                if temp_write:
+                    np.save(writepath + self.obs + '_sigma_' +
+                            pol_titles[self.UV.polarization_array[l]] + '.npy',
+                            sigma_array)
+
+        else:
+            N = np.prod(values.shape)
+            values = np.reshape(values, N)
+            flags = np.reshape(flags, N)
+            values = values[flags > 0]
+            m, bins = np.histogram(values, bins=bins)
+            fit = [0, ]
 
         if write:
-            np.save(writepath + self.obs + '_hist.npy', n['Unflagged'])
+            np.save(writepath + self.obs + '_hist.npy', m)
+            np.save(writepath + self.obs + '_bins.npy', bins)
+            np.save(writepath + self.obs + '_fit.npy', fit)
+
+        return({flag_slice: (m, bins, fit)})
+
+    def one_d_hist_plot(self, fig, ax, data, title, ylog=True, xlog=True, res_ax=[]):  # Data/title are tuples if multiple hists
+
+        zorder = {'Unflagged': 8, 'Flagged': 6, 'And': 4, 'XOR': 2, 'All': 0}
+
+        for x in data:
+            break
+
+        bin_widths = np.diff(data[x][1])
+        bin_centers = data[x][1][:-1] + 0.5 * bin_widths
+        for label in data:
+            ax.step(data[label][1][:-1], data[label][0], where='pre', label=label,
+                    zorder=zorder[label])
+            if len(data[label][2]) > 1:
+                ax.plot(bin_centers, data[label][2], label='Fit', zorder=10)
+                if res_ax:
+                    residual = data[label][0] - data[label][2]
+                    if np.all(data[label][2][data[label][1] > 0] > 0):
+                        chi_square = np.sum((residual**2) / data[label][2]) / (len(data[label][1]) - 1)
+                        res_label = 'Residual: chi_square/DoF = ' + str(chi_square)
+                    else:
+                        res_label = 'Residual'
+                    res_ax.plot(bin_centers, residual, label='Residual')
+                    res_ax.set_xscale('log', nonposy='clip')
+                    res_ax.set_yscale('linear')
+                    res_ax.legend()
 
         ax.set_title(title)
 
@@ -174,16 +204,17 @@ class RFI:
         else:
             ax.set_xscale('linear')
 
-        ylabels = {True: 'Fraction', False: 'Counts'}
-
         ax.set_xlabel('Amplitude (' + self.UV.vis_units + ')')
-        ax.set_ylabel(ylabels[normed])
+        ax.set_ylabel('Counts')
+        ax.set_ylim([10**(-1), 10 * max([np.amax(data[x][0]) for x in data])])
         ax.legend()
 
     def waterfall_hist_prepare(self, band, plot_type='time-freq', fraction=True,
-                               flag_slice='Unflagged'):  # band is a tuple (min,max)
+                               flag_slice='Unflagged', coarse_band_ignore=False):  # band is a tuple (min,max)
 
-        flags = np.reshape(self.flag_operations(flag_slice=flag_slice), self.data_array.shape)
+        flags = np.reshape(self.flag_operations(flag_slice=flag_slice,
+                                                coarse_band_ignore=coarse_band_ignore),
+                           self.data_array.shape)
 
         values = np.absolute(self.data_array)
 
@@ -320,11 +351,14 @@ class RFI:
 
     def rfi_catalog(self, outpath, band=(2000, 10**5), hist_write=False,
                     hist_write_path='', fit=False, bins='auto',
-                    flag_slices=['Unflagged', 'All']):
+                    flag_slices=['Unflagged', 'All'], coarse_band_ignore=False):
 
         Amp = {}
         for flag_slice in flag_slices:
-            Amp.update(self.one_d_hist_prepare(flag_slice=flag_slice))
+            Amp.update(self.one_d_hist_prepare(flag_slice=flag_slice, write=hist_write,
+                                               coarse_band_ignore=coarse_band_ignore,
+                                               writepath=hist_write_path, fit=fit,
+                                               bins=bins))
 
         if self.UV.Npols > 1:
             gs = GridSpec(3, 2)
@@ -349,7 +383,8 @@ class RFI:
 
         for flag_slice in flag_slices:
             W = self.waterfall_hist_prepare(band, plot_type='time-freq',
-                                            fraction=True, flag_slice=flag_slice)
+                                            fraction=True, flag_slice=flag_slice,
+                                            coarse_band_ignore=coarse_band_ignore)
 
             if self.UV.Npols > 1:
                 MAXW_list = [np.amax(W[:, :, k]) for k in range(W.shape[2])]
@@ -367,11 +402,9 @@ class RFI:
 
             fig = plt.figure(figsize=(14, 8))
             ax = fig.add_subplot(gs[0, :])
-            self.one_d_hist_plot(fig, ax, Amp, ' RFI Catalog ' + self.obs,
-                                 fit=fit, bins=bins, write=hist_write,
-                                 writepath=hist_write_path)
-            ax.axvline(x=min(band), color='r')
-            ax.axvline(x=max(band), color='r')
+            self.one_d_hist_plot(fig, ax, Amp, ' RFI Catalog ' + self.obs)
+            ax.axvline(x=min(band), color='black')
+            ax.axvline(x=max(band), color='black')
             for n in range(self.UV.Npols):
                 ax = fig.add_subplot(gs[gs_loc[n][0], gs_loc[n][1]])
                 self.image_plot(fig, ax, W[:, :, n],
@@ -383,7 +416,8 @@ class RFI:
             plt.close(fig)
 
     def catalog_drill(self, outpath, plot_type='ant-freq', band=(2000, 10**5),
-                      fit=False, bins='auto', flag_slices=['Unflagged', 'All']):
+                      fit=False, bins='auto', flag_slices=['Unflagged', 'All'],
+                      coarse_band_ignore=False):
 
         pol_keys = [-8 + k for k in range(13)]
         pol_keys.remove(0)
@@ -421,7 +455,8 @@ class RFI:
         for flag_slice in flag_slices:
             W, uniques = self.waterfall_hist_prepare(band, plot_type=plot_type,
                                                      fraction=False,
-                                                     flag_slice=flag_slice)
+                                                     flag_slice=flag_slice,
+                                                     coarse_band_ignore=coarse_band_ignore)
             N_events = W.shape[3]
             for k in range(N_events):
 
@@ -432,21 +467,26 @@ class RFI:
                     Amp = {}
                     for flag in flag_slices:
                         Amp.update(self.one_d_hist_prepare(flag_slice=flag,
-                                                           time_drill=uniques[k]))
+                                                           time_drill=uniques[k],
+                                                           coarse_band_ignore=coarse_band_ignore,
+                                                           fit=fit, bins=bins))
                     self.one_d_hist_plot(fig, ax, Amp, self.obs + ' Drill ' +
                                          plot_type_titles[plot_type] +
-                                         str(uniques[k]), fit=fit, bins=bins)
+                                         str(uniques[k]))
                 elif plot_type == 'ant-time':
                     unique_freqs = [sigfig(self.UV.freq_array[0, m]) * 10**(-6) for
                                     m in uniques]
                     Amp = {}
                     for flag in flag_slices:
                         Amp.update(self.one_d_hist_prepare(flag_slice=flag,
-                                                           freq_drill=uniques[k]))
+                                                           freq_drill=uniques[k],
+                                                           coarse_band_ignore=coarse_band_ignore,
+                                                           fit=fit, bins=bins))
                     self.one_d_hist_plot(fig, ax, Amp, self.obs + ' Drill ' +
                                          plot_type_titles[plot_type] +
-                                         str(unique_freqs[k]), fit=fit, bins=bins)
-                ax.axvline(x=min(band), color='r')
+                                         str(unique_freqs[k]))
+                ax.axvline(x=min(band), color='black')
+                ax.axvline(x=max(band), color='black')
 
                 for l in range(self.UV.Npols):
                     vmax = np.amax(W[:, :, l, k])
