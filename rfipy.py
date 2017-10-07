@@ -353,6 +353,14 @@ class RFI:
                     hist_write_path='', fit=False, bins='auto',
                     flag_slices=['Unflagged', 'All'], coarse_band_ignore=False):
 
+        def sigfig(x, s=4):  # s is number of sig-figs
+            if x == 0:
+                return(0)
+            else:
+                n = int(floor(log10(np.absolute(x))))
+                y = 10**n * round(10**(-n) * x, s - 1)
+                return(y)
+
         Amp = {}
         for flag_slice in flag_slices:
             Amp.update(self.one_d_hist_prepare(flag_slice=flag_slice, write=hist_write,
@@ -373,29 +381,19 @@ class RFI:
 
         pol_titles = dict(zip(pol_keys, pol_values))
 
-        def sigfig(x, s=4):  # s is number of sig-figs
-            if x == 0:
-                return(0)
-            else:
-                n = int(floor(log10(np.absolute(x))))
-                y = 10**n * round(10**(-n) * x, s - 1)
-                return(y)
-
         for flag_slice in flag_slices:
             W = self.waterfall_hist_prepare(band, plot_type='time-freq',
                                             fraction=True, flag_slice=flag_slice,
                                             coarse_band_ignore=coarse_band_ignore)
 
             if self.UV.Npols > 1:
-                MAXW_list = [np.amax(W[:, :, k]) for k in range(W.shape[2])]
-                MAXW_auto = max(MAXW_list[0:2])
-                MAXW_cross = max(MAXW_list[2:4])
-                MAXW_list = [MAXW_auto, MAXW_auto, MAXW_cross, MAXW_cross]
+                MAXW_list = range(4)
+                MAXW_list[:2] = max([np.amax(W[:, :, k]) for k in [0, 1]])
+                MAXW_list[2:4] = max([np.amax(W[:, :, k]) for k in [2, 3]])
 
-                MINW_list = [np.amin(W[:, :, k]) for k in range(W.shape[2])]
-                MINW_auto = min(MAXW_list[0:2])
-                MINW_cross = min(MAXW_list[2:4])
-                MINW_list = [MINW_auto, MINW_auto, MINW_cross, MINW_cross]
+                MINW_list = range(4)
+                MINW_list[:2] = min([np.amin(W[:, :, k]) for k in [0, 1]])
+                MINW_list[2:4] = min([np.amin(W[:, :, k]) for k in [2, 3]])
             else:
                 MAXW_list = [np.amax(W[:, :, 0]), ]
                 MINW_list = [np.amin(W[:, :, 0]), ]
