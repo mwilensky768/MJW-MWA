@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import pyuvdata
+from math import floor, ceil, log10
 
 obslist_path = '/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/Long_Run_8s_Autos_OBSIDS.txt'
 cutlist_path = '/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/Long_Run_8s_Autos_Misflags_OBSIDS.txt'
@@ -37,15 +38,15 @@ bins = np.load(inpath + obslist[0] + '_bins.npy')
 fit = np.load(inpath + obslist[0] + '_fit.npy')
 sigma = {}
 for pol in pols:
-    sigma{pol} = np.zeros([len(obslist), len(np.load(inpath + obslist[0] + '_sigma_' + pol + '.npy'))])
-    sigma{pol}[0, :] = np.load(inpath + obslist[0] + '_sigma_' + pol + '.npy')
+    sigma[pol] = np.zeros([len(obslist), UV.Nfreqs])
+    sigma[pol][0, :] = np.load(inpath + obslist[0] + '_sigma_' + pol + '.npy')
 
 k = 1
 for obs in obslist[1:]:
     n += np.load(inpath + obs + '_hist.npy')
     fit += np.load(inpath + obs + '_fit.npy')
     for pol in pols:
-        sigma{pol}[k, :] = np.load(inpath + obs + '_sigma_' + pol + '.npy')
+        sigma[pol][k, :] = np.load(inpath + obs + '_sigma_' + pol + '.npy')
     k += 1
 
 residual = n - fit
@@ -62,6 +63,7 @@ hist_ax[0].set_xlabel('Amplitude (UNCALIB)')
 hist_ax[0].set_ylabel('Counts')
 hist_ax[0].set_xscale('log', nonposy='clip')
 hist_ax[0].set_yscale('log', nonposy='clip')
+hist_ax[0].set_ylim([10 ** (-1), 10 ** (12)])
 hist_ax[0].legend()
 hist_ax[1].plot(centers, residual, label='Residual')
 hist_ax[1].set_xscale('log', nonposy='clip')
@@ -70,26 +72,26 @@ hist_ax[1].set_xlabel('Amplitude (UNCALIB)')
 hist_ax[1].set_ylabel('Counts')
 hist_ax[1].legend()
 
-temp_fig, temp_ax = plt.subplots(figsize=(14, 8), nrows=2, ncolumns=2)
-cmap = cm.cool
-cmap.set_bad(color='white')
+temp_fig, temp_ax = plt.subplots(figsize=(14, 8), nrows=2, ncols=2)
 auto_pol_max = max([np.amax(sigma['XX']), np.amax(sigma['YY'])])
 cross_pol_max = max([np.amax(sigma['XY']), np.amax(sigma['YX'])])
 vmax = dict(zip(pols, [auto_pol_max, auto_pol_max, cross_pol_max, cross_pol_max]))
 xticks = [UV.Nfreqs / 6 * l for l in range(6)]
 xticks.append(UV.Nfreqs - 1)
-xticklabels = [str(sigfig(UV.freq_array[0, k])) for k in xticks]
+xticklabels = [str(sigfig(UV.freq_array[0, k]) * 10**(-6)) for k in xticks]
 for k in range(4):
-    sigma[pols[k]] = np.ma.masked_equal(sigma[pols[k]], 0)
-    cax = temp_ax[k].imshow(sigma[pols[k]], vmin=0, vmax=vmax[pols[k]])
-    cbar = temp_fig.colorbar(cax, ax=temp_ax[k])
+    sigma[pols[k / 2][k % 2]] = np.ma.masked_equal(sigma[pols[k]], 0)
+    cmap = cm.cool
+    cmap.set_bad(color='white')
+    cax = temp_ax[k / 2][k % 2].imshow(sigma[pols[k]], cmap=cmap, vmin=0, vmax=vmax[pols[k]])
+    cbar = temp_fig.colorbar(cax, ax=temp_ax[k / 2][k % 2])
     cbar.set_label('Sigma (~Temperature)')
-    temp_ax[k].set_title(pols[k])
-    temp_ax[k].set_ylabel('Observation')
-    temp_ax[k].set_xlabel('Frequency (Mhz)')
-    temp_ax[k].set_xticks(xticks)
-    temp_ax[k].set_xticklabels(xtickslabels)
-    temp_ax[k].set_aspect(float(sigma[pols[k]].shape[1]) / sigma[pols[k]].shape[0])
+    temp_ax[k / 2][k % 2].set_title(pols[k])
+    temp_ax[k / 2][k % 2].set_ylabel('Observation')
+    temp_ax[k / 2][k % 2].set_xlabel('Frequency (Mhz)')
+    temp_ax[k / 2][k % 2].set_xticks(xticks)
+    temp_ax[k / 2][k % 2].set_xticklabels(xticklabels)
+    temp_ax[k / 2][k % 2].set_aspect(float(sigma[pols[k]].shape[1]) / sigma[pols[k]].shape[0])
 
 plt.tight_layout()
 

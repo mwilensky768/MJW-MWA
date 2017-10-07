@@ -83,7 +83,7 @@ class RFI:
 
     def one_d_hist_prepare(self, flag_slice='Unflagged', time_drill=[], freq_drill=[],
                            time_slice=[], freq_slice=[], coarse_band_ignore=False,
-                           bins='auto', fit=False, fit_window=[-1, 10**12], write=False,
+                           bins='auto', fit=False, fit_window=[0, 10**12], write=False,
                            writepath='', temp_write=False):
 
         flags = self.flag_operations(flag_slice=flag_slice,
@@ -135,16 +135,19 @@ class RFI:
                     m += n
                     bin_cond = np.logical_and(min(fit_window) < n, n < max(fit_window))
                     bin_window = bins[:-1][bin_cond]
-                    data_cond = np.logical_and(min(bin_window) < temp_values,
-                                               temp_values < max(bin_window))
-                    N_fit = len(temp_values[data_cond])
-                    if N_fit > 0:
-                        sigma = np.sqrt(0.5 * np.sum(temp_values[data_cond]**2) / N_fit)
-                        fit += N * bin_widths * (1 / sigma**2) * bin_centers * \
-                            np.exp(-bin_centers**2 / (2 * sigma ** 2))
-                    else:
+                    if len(bin_window > 0):
+                        data_cond = np.logical_and(min(bin_window) < temp_values,
+                                                   temp_values < max(bin_window))
+                        N_fit = len(temp_values[data_cond])
+                        if N_fit > 0:
+                            sigma = np.sqrt(0.5 * np.sum(temp_values[data_cond]**2) / N_fit)
+                            fit += N * bin_widths * (1 / sigma**2) * bin_centers * \
+                                np.exp(-bin_centers**2 / (2 * sigma ** 2))
+                        elif temp_write:
+                            sigma = 0
+                            sigma_array[k] = sigma
+                    elif temp_write:
                         sigma = 0
-                    if temp_write:
                         sigma_array[k] = sigma
                 if temp_write:
                     np.save(writepath + self.obs + '_sigma_' +
