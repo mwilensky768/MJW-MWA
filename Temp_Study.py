@@ -8,9 +8,9 @@ pathlist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_OBS
 write = True
 temp_write = True
 writepath = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Temperatures/'
-bins = np.logspace(-3, 5, num=1001)
+bins = np.logspace(-3, 3.3, num=1001)
 fit = True
-fit_window = [-1, 10**12]
+fit_window = [0, 10**12]
 cutlist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Misflags_OBSIDS.txt'
 cutpathlist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Misflags_OBSIDS_paths.txt'
 filetype = 'uvfits'
@@ -35,7 +35,7 @@ args = parser.parse_args()
 
 obs = obslist[args.id - 1]
 inpath = pathlist[args.id - 1]
-output = outpath + str(obs) + '*.npy'
+output = writepath + str(obs) + '*.npy'
 output_list = glob.glob(output)
 
 if not output_list:
