@@ -11,9 +11,10 @@ writepath = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Temperatures/'
 bins = np.logspace(-3, 3.3, num=1001)
 fit = True
 fit_window = [0, 10**12]
-cutlist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Misflags_OBSIDS.txt'
-cutpathlist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Misflags_OBSIDS_paths.txt'
+cutlist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Funky_OBSIDS.txt'
+cutpathlist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Funky_Funky_OBSIDS_paths.txt'
 filetype = 'uvfits'
+flag_slice = 'All'
 
 with open(obslist_path) as f:
     obslist = f.read().split("\n")
@@ -43,6 +44,7 @@ if not output_list:
     RFI = rfi.RFI(obs, inpath, filetype=filetype)
 
     RFI.one_d_hist_prepare(bins=bins, fit=fit, fit_window=fit_window, write=write,
-                           writepath=writepath, temp_write=temp_write)
+                           writepath=writepath, temp_write=temp_write,
+                           flag_slice=flag_slice)
 else:
     print('I already processed obs ' + obs)

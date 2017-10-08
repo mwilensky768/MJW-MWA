@@ -6,7 +6,7 @@ from math import floor, ceil, log10
 
 obslist_path = '/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/Long_Run_8s_Autos_OBSIDS.txt'
 cutlist_path = '/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/Long_Run_8s_Autos_Misflags_OBSIDS.txt'
-inpath = '/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/Temperatures/'
+inpath = '/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/Temperatures_Zeros/'
 freq_array_obs_path = '/Users/mike_e_dubs/python_stuff/smaller_uvfits/s1061313008.uvfits'
 outpath = '/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/'
 

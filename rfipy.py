@@ -143,6 +143,8 @@ class RFI:
                             sigma = np.sqrt(0.5 * np.sum(temp_values[data_cond]**2) / N_fit)
                             fit += N * bin_widths * (1 / sigma**2) * bin_centers * \
                                 np.exp(-bin_centers**2 / (2 * sigma ** 2))
+                            if temp_write:
+                                sigma_array[k] = sigma
                         elif temp_write:
                             sigma = 0
                             sigma_array[k] = sigma
