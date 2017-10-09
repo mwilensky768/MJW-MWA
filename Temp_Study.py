@@ -12,9 +12,10 @@ bins = np.logspace(-3, 3.3, num=1001)
 fit = True
 fit_window = [0, 10**12]
 cutlist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Funky_OBSIDS.txt'
-cutpathlist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Funky_Funky_OBSIDS_paths.txt'
+cutpathlist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Funky_OBSIDS_paths.txt'
 filetype = 'uvfits'
 flag_slice = 'All'
+N_Array = 7
 
 with open(obslist_path) as f:
     obslist = f.read().split("\n")
@@ -37,9 +38,9 @@ args = parser.parse_args()
 obs = obslist[args.id - 1]
 inpath = pathlist[args.id - 1]
 output = writepath + str(obs) + '*.npy'
-output_list = glob.glob(output)
+output_list = np.array(glob.glob(output))
 
-if not output_list:
+if  len(output_list) < N_Array:
 
     RFI = rfi.RFI(obs, inpath, filetype=filetype)
 
