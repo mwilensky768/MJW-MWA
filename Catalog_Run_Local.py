@@ -10,5 +10,5 @@ RFI = rfi.RFI(obs,
               '/Users/mike_e_dubs/python_stuff/smaller_uvfits/s1061313008.uvfits',
               filetype='uvfits', auto_remove=True)
 
-RFI.rfi_catalog('/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/Waterfall_Plots/MWA/',
-                band=(400, 10**5), fit=False)
+RFI.rfi_catalog('/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/Waterfall_Plots/MWA/Catalog_Merge_Test/',
+                band=(1100, 10**5), fit=False, plot_type='freq-time')

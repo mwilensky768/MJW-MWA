@@ -16,6 +16,9 @@ plot_type = 'ant-time'
 flag_slices = ['Unflagged', 'Flagged', 'All']
 band = [10**3, 10**5]
 auto_remove = True
+fit = True
+bin_window = [0, 10**3]
+fit_window = [0, 10**12]
 
 with open(obslist_path) as f:
     obslist = f.read().split("\n")
@@ -35,13 +38,14 @@ if not output_list:
 
     RFI = rfi.RFI(str(obs), inpath, auto_remove=auto_remove)
 
-    if catalog_type == 'waterfall':
+    if catalog_type is 'waterfall':
         RFI.rfi_catalog(outpath, hist_write=hist_write, hist_write_path=hist_write_path,
-                        bins=bins, band=band, flag_slices=flag_slices)
-    elif catalog_type == 'drill':
-        RFI.catalog_drill(outpath, plot_type='ant-time', band=band,
-                          bins=bins, flag_slices=flag_slices)
-    elif catalog_type == 'ant-pol':
+                        bins=bins, band=band, flag_slices=flag_slices, plot_type=plot_type,
+                        fit=fit, fit_window=fit_window, bin_window=bin_window)
+    elif plot_type is 'ant-pol':
         RFI.ant_pol_catalog(outpath, range(RFI.UV.Ntimes), [162, ])
+    elif catalog_type is 'Temperature':
+        RFI.one_d_hist_prepare(flag_slice=flag_slices[2], bins=bins, fit_window=fit_window,
+                               bin_window=bin_window, write=hist_write, writepath=hist_write_path)
 else:
     print('I already processed obs ' + str(obs))

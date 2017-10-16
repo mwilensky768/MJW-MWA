@@ -219,7 +219,7 @@ class RFI:
         ax.set_ylim([10**(-1), 10 * max([np.amax(data[x][0]) for x in data])])
         ax.legend()
 
-    def waterfall_hist_prepare(self, band, plot_type='time-freq', fraction=True,
+    def waterfall_hist_prepare(self, band, plot_type='freq-time', fraction=True,
                                flag_slice='Unflagged', coarse_band_ignore=False):  # band is a tuple (min,max)
 
         flags = np.reshape(self.flag_operations(flag_slice=flag_slice,
@@ -230,15 +230,16 @@ class RFI:
 
         ind = np.where((min(band) < values) & (values < max(band)) & (flags > 0))  # Returns list of five-index combos
 
-        if plot_type == 'time-freq':
-            H = np.zeros([self.UV.Ntimes - 1, self.UV.Nfreqs, self.UV.Npols])
+        if plot_type == 'freq-time':
+            uniques = np.array([])
+            H = np.zeros([self.UV.Ntimes - 1, self.UV.Nfreqs, self.UV.Npols, 1])
             for p in range(len(ind[0])):
-                H[ind[0][p], ind[3][p], ind[4][p]] += 1
+                H[ind[0][p], ind[3][p], ind[4][p], 0] += 1
             N = float(self.UV.Nbls * self.UV.Npols)
             if fraction:
                 N = float(self.UV.Nbls * self.UV.Npols)
                 H = H / N
-            return(H)
+            return(H, uniques)
         elif plot_type == 'ant-freq':
             unique_times = np.unique(ind[0])
             N_unique_times = len(unique_times)
@@ -274,19 +275,20 @@ class RFI:
 
     def ant_pol_prepare(self, time, freq):
 
-        dim = np.sqrt(self.UV.Npols) * self.UV.Nants_telescope
+        dim = 2 * self.UV.Nants_telescope
 
         T = np.zeros([dim, dim])
 
-        q = [[0, 0], [self.UV.Nants_telescope, self.UV.Nants_telescope],
-             [0, self.UV.Nants_telescope], [self.UV.Nants_telescope, 0]]
+        q = {'XX': [0, 0], 'YY': [self.UV.Nants_telescope, self.UV.Nants_telescope],
+             'XY': [0, self.UV.Nants_telescope], 'YX': [self.UV.Nants_telescope, 0]}
 
         for m in range(self.UV.Nbls):
             for n in range(self.UV.Npols):
-                T[self.UV.ant_1_array[m] + q[n][0], self.UV.ant_2_array[m] +
-                  q[n][1]] = np.imag(self.data_array[time, m, 0, freq, n])
-                T[self.UV.ant_2_array[m] + q[n][0], self.UV.ant_1_array[m] +
-                  q[n][1]] = np.real(self.data_array[time, m, 0, freq, n])
+                A = self.data_array[time, m, 0, freq, n]
+                T[self.UV.ant_1_array[m] + q[self.pol_titles[self.UV.polarization_array[n]]][0],
+                  self.UV.ant_2_array[m] + q[self.pol_titles[self.UV.polarization_array[n]]][1]] = A.imag
+                T[self.UV.ant_2_array[m] + q[self.pol_titles[self.UV.polarization_array[n]]][0],
+                  self.UV.ant_1_array[m] + q[self.pol_titles[self.UV.polarization_array[n]]][1]] = A.real
 
         return(T)
 
@@ -362,7 +364,8 @@ class RFI:
     def rfi_catalog(self, outpath, band=(2000, 10**5), hist_write=False,
                     hist_write_path='', fit=False, fit_window=[0, 10**12], bins='auto',
                     flag_slices=['Unflagged', 'All'], coarse_band_ignore=False,
-                    bin_window=np.array([]), temp_write=False):
+                    bin_window=np.array([]), temp_write=False, plot_type='freq-time',
+                    fraction=True):
 
         def sigfig(x, s=4):  # s is number of sig-figs
             if x == 0:
@@ -372,84 +375,33 @@ class RFI:
                 y = 10**n * round(10**(-n) * x, s - 1)
                 return(y)
 
-        Amp = {}
-        for flag_slice in flag_slices:
-            Amp.update(self.one_d_hist_prepare(flag_slice=flag_slice, write=hist_write,
-                                               coarse_band_ignore=coarse_band_ignore,
-                                               writepath=hist_write_path, fit=fit,
-                                               bins=bins, fit_window=fit_window,
-                                               bin_window=bin_window, temp_write=temp_write))
+        if plot_type == 'freq-time':
+            Amp = {}
+            for flag_slice in flag_slices:
+                Amp.update(self.one_d_hist_prepare(flag_slice=flag_slice, fit=fit,
+                                                   write=hist_write, bins=bins,
+                                                   coarse_band_ignore=coarse_band_ignore,
+                                                   writepath=hist_write_path,
+                                                   fit_window=fit_window,
+                                                   bin_window=bin_window,
+                                                   temp_write=temp_write))
 
-        if self.UV.Npols > 1:
-            gs = GridSpec(3, 2)
-            gs_loc = [[1, 0], [1, 1], [2, 0], [2, 1]]
-        else:
-            gs = GridSpec(2, 1)
-            gs_loc = [[1, 0], ]
-
-        for flag_slice in flag_slices:
-            if band is 'fit':
-                max_loc = min(Amp[flag_slice][1][np.where(Amp[flag_slice][0] ==
-                                                          np.amax(Amp[flag_slice][0]))])
-                band = [np.amin(Amp[flag_slice][1][:-1][np.logical_and(Amp[flag_slice][2] < 1,
-                                                                       Amp[flag_slice][1][:-1] > max_loc)]),
-                        np.amax(Amp[flag_slice][1])]
-            W = self.waterfall_hist_prepare(band, plot_type='time-freq',
-                                            fraction=True, flag_slice=flag_slice,
-                                            coarse_band_ignore=coarse_band_ignore)
-
-            if self.UV.Npols > 1:
-                MAXW_list = range(4)
-                MAXW_list[:2] = [max([np.amax(W[:, :, k]) for k in [0, 1]]) for l in [0, 1]]
-                MAXW_list[2:4] = [max([np.amax(W[:, :, k]) for k in [2, 3]]) for l in [0, 1]]
-
-                MINW_list = range(4)
-                MINW_list[:2] = [min([np.amin(W[:, :, k]) for k in [0, 1]]) for l in [0, 1]]
-                MINW_list[2:4] = [min([np.amin(W[:, :, k]) for k in [2, 3]]) for l in [0, 1]]
-            else:
-                MAXW_list = [np.amax(W[:, :, 0]), ]
-                MINW_list = [np.amin(W[:, :, 0]), ]
-
-            fig = plt.figure(figsize=(14, 8))
-            ax = fig.add_subplot(gs[0, :])
-            self.one_d_hist_plot(fig, ax, Amp, ' RFI Catalog ' + self.obs)
-            ax.axvline(x=min(band), color='black')
-            ax.axvline(x=max(band), color='black')
-            for n in range(self.UV.Npols):
-                ax = fig.add_subplot(gs[gs_loc[n][0], gs_loc[n][1]])
-                self.image_plot(fig, ax, W[:, :, n],
-                                self.pol_titles[self.UV.polarization_array[n]] +
-                                ' ' + flag_slice, MINW_list[n], MAXW_list[n])
-
-            plt.tight_layout()
-            fig.savefig(outpath + self.obs + '_RFI_Diagnostic_' + flag_slice + '.png')
-            plt.close(fig)
-
-    def catalog_drill(self, outpath, plot_type='ant-freq', band=(2000, 10**5),
-                      fit=False, bins='auto', flag_slices=['Unflagged', 'All'],
-                      coarse_band_ignore=False, fit_window=[0, 10**12],
-                      bin_window=[]):
-
-        plot_type_keys = ['ant-freq', 'ant-time']
-        aspect_values = [1, 0.2]
-        x_type_values = ['freq', 'time']
-        plot_type_title_values = [' t = ', ' f = ']
-        x_label_values = ['Frequency (Mhz)', 'Time-Pair']
-        path_label_values = ['t', 'f']
+        plot_type_keys = ['freq-time', 'ant-freq', 'ant-time']
+        aspect_values = [3, 1, 0.2]
+        x_type_values = ['freq', 'freq', 'time']
+        y_type_values = ['time', 'ant', 'ant']
+        plot_type_title_values = ['', ' t = ', ' f = ']
+        x_label_values = ['Frequency (Mhz)', 'Frequency (Mhz)', 'Time-Pair']
+        y_label_values = ['Time Pair', 'Antenna #', 'Antenna #']
+        path_label_values = ['', 't', 'f']
 
         aspect = dict(zip(plot_type_keys, aspect_values))
         x_type = dict(zip(plot_type_keys, x_type_values))
+        y_type = dict(zip(plot_type_keys, y_type_values))
         plot_type_titles = dict(zip(plot_type_keys, plot_type_title_values))
         x_labels = dict(zip(plot_type_keys, x_label_values))
+        y_labels = dict(zip(plot_type_keys, y_label_values))
         path_labels = dict(zip(plot_type_keys, path_label_values))
-
-        def sigfig(x, s=4):  # s is number of sig-figs
-            if x == 0:
-                return(0)
-            else:
-                n = int(floor(log10(np.absolute(x))))
-                y = 10**n * round(10**(-n) * x, s - 1)
-                return(y)
 
         if self.UV.Npols > 1:
             gs = GridSpec(3, 2)
@@ -459,8 +411,16 @@ class RFI:
             gs_loc = [[1, 0], ]
 
         for flag_slice in flag_slices:
+            if plot_type is 'freq-time':
+                if band is 'fit':
+                    max_loc = min(Amp[flag_slice][1][np.where(Amp[flag_slice][0] ==
+                                                              np.amax(Amp[flag_slice][0]))])
+                    band = [np.amin(Amp[flag_slice][1][:-1][np.logical_and(Amp[flag_slice][2] < 1,
+                                                                           Amp[flag_slice][1][:-1] > max_loc)]),
+                            np.amax(Amp[flag_slice][1])]
+
             W, uniques = self.waterfall_hist_prepare(band, plot_type=plot_type,
-                                                     fraction=False,
+                                                     fraction=fraction,
                                                      flag_slice=flag_slice,
                                                      coarse_band_ignore=coarse_band_ignore)
             N_events = W.shape[3]
@@ -469,6 +429,8 @@ class RFI:
                 fig = plt.figure(figsize=(14, 8))
                 ax = fig.add_subplot(gs[0, :])
 
+                if plot_type == 'freq-time':
+                    self.one_d_hist_plot(fig, ax, Amp, ' RFI Catalog ' + self.obs)
                 if plot_type == 'ant-freq':
                     Amp = {}
                     for flag in flag_slices:
@@ -498,18 +460,33 @@ class RFI:
                 ax.axvline(x=min(band), color='black')
                 ax.axvline(x=max(band), color='black')
 
-                for l in range(self.UV.Npols):
-                    vmax = np.amax(W[:, :, l, k])
-                    vmin = np.amin(W[:, :, l, k])
-                    ax = fig.add_subplot(gs[gs_loc[l][0], gs_loc[l][1]])
-                    self.image_plot(fig, ax, W[:, :, l, k],
-                                    'Drill ' + self.pol_titles[self.UV.polarization_array[l]] +
-                                    ' ' + flag_slice, vmin, vmax, aspect_ratio=aspect[plot_type], fraction=False,
-                                    y_type='ant', x_type=x_type[plot_type])
+                if self.UV.Npols > 1:
+                    MAXW_list = range(4)
+                    MAXW_list[:2] = [max([np.amax(W[:, :, l, k]) for l in [0, 1]]) for m in [0, 1]]
+                    MAXW_list[2:4] = [max([np.amax(W[:, :, l, k]) for l in [2, 3]]) for m in [0, 1]]
+
+                    MINW_list = range(4)
+                    MINW_list[:2] = [min([np.amin(W[:, :, l, k]) for l in [0, 1]]) for m in [0, 1]]
+                    MINW_list[2:4] = [min([np.amin(W[:, :, l, k]) for l in [2, 3]]) for m in [0, 1]]
+                else:
+                    MAXW_list = [np.amax(W[:, :, 0, k]), ]
+                    MINW_list = [np.amin(W[:, :, 0, k]), ]
+
+                for n in range(self.UV.Npols):
+                    ax = fig.add_subplot(gs[gs_loc[n][0], gs_loc[n][1]])
+                    self.image_plot(fig, ax, W[:, :, n, k],
+                                    self.pol_titles[self.UV.polarization_array[n]] +
+                                    ' ' + flag_slice, MINW_list[n], MAXW_list[n],
+                                    aspect_ratio=aspect[plot_type], fraction=fraction,
+                                    y_type=y_type[plot_type], x_type=x_type[plot_type])
 
                 plt.tight_layout()
-                fig.savefig(outpath + self.obs + '_Drill_' + flag_slice +
-                            '_' + path_labels[plot_type] + str(uniques[k]) + '.png')
+                if plot_type == 'freq-time':
+                    fig.savefig(outpath + self.obs + flag_slice +
+                                '_' + path_labels[plot_type] + '.png')
+                else:
+                    fig.savefig(outpath + self.obs + plot_type + flag_slice +
+                                '_' + path_labels[plot_type] + str(uniques[k]) + '.png')
                 plt.close(fig)
 
     def ant_pol_catalog(self, outpath, times, freqs):
@@ -537,4 +514,5 @@ class RFI:
 
                 plt.tight_layout()
                 fig.savefig(outpath + self.obs + '_ant_pol_t' + str(time) +
-                            '_f' + str(freq))
+                            '_f' + str(freq) + '.png')
+                plt.close(fig)

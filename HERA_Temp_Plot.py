@@ -7,13 +7,13 @@ from matplotlib.ticker import AutoMinorLocator
 import glob
 
 obs_pathlist = glob.glob('/Users/mike_e_dubs/python_stuff/miriad/temp_HERA_data/*.uvc')
-inpath = '/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/Temperatures_HERA/'
-outpath = inpath + 'Plots/'
-N_freqs_removed = 128
+inpath = '/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/Temperatures_HERA/Hists_Midband_Autos/'
+outpath = '/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/Temperatures_HERA/Plots_Midband_Autos/'
+N_freqs_removed = 1024 - 100
 UV = pyuvdata.UVData()
 UV.read_miriad(obs_pathlist[0])
 N_freqs = UV.Nfreqs - N_freqs_removed
-freq_chan_interval = [64, 960]
+freq_chan_interval = [550, 650]
 freq_array = UV.freq_array[0, min(freq_chan_interval):max(freq_chan_interval)]
 
 
@@ -73,7 +73,7 @@ hist_ax[1].set_ylabel('Counts')
 hist_ax[1].legend()
 
 temp_fig, temp_ax = plt.subplots(figsize=(14, 8), nrows=2, ncols=2)
-temp_fig.suptitle('HERA Preliminary Temperatures, Band Edges/Autos Removed')
+temp_fig.suptitle('HERA Preliminary Temperatures, ~ 155-165 Mhz /Autos Removed')
 auto_pol_max = max([np.amax(sigma['XX']), np.amax(sigma['YY'])])
 cross_pol_max = max([np.amax(sigma['XY']), np.amax(sigma['YX'])])
 vmax = dict(zip(pols, [auto_pol_max, auto_pol_max, cross_pol_max, cross_pol_max]))
