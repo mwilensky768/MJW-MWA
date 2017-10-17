@@ -193,8 +193,7 @@ class RFI:
                 if res_ax:
                     residual = data[label][0] - data[label][2]
                     if np.all(data[label][2] > 0):
-                        chi_square = np.sum((residual**2) / data[label][2]) /
-                        (len(data[label][1]) - 2)
+                        chi_square = np.sum((residual**2) / data[label][2]) / (len(data[label][1]) - 2)
                         res_label = 'Residual: chi_square/DoF = ' + str(chi_square)
                     else:
                         res_label = 'Residual'
