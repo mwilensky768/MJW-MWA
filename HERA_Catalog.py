@@ -5,13 +5,12 @@ import glob
 
 outpath = '/data4/mwilensky/catalogs/golden_set/freq_time_2/'
 plotlist = glob.glob(outpath + '*.png')
-flag_slices = ['All','Unflagged' ]
+flag_slices = ['All', 'Unflagged']
 if plotlist:
     proc_start = len(plotlist) / len(flag_slices)
     pathlist = glob.glob('/data6/HERA/data/2458042/*.uvOR')[proc_start:]
 else:
     pathlist = glob.glob('/data6/HERA/data/2458042/*.uvOR')
-outpath = '/data4/mwilensky/catalogs/golden_set/freq_time_1/'
 catalog_type = 'waterfall'
 plot_type = 'freq-time'
 band = [10**(-0.5), 10**(5)]
@@ -20,7 +19,7 @@ fit_window = [0, 10**12]
 bin_window = [10**(-6), 10**(-1)]
 bad_time_indices = []
 auto_remove = True
-good_freq_indices = range(64,960)
+good_freq_indices = range(64, 960)
 bins = np.logspace(-5, 3, num=1001)
 temp_write = True
 write = True

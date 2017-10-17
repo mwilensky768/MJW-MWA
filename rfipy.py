@@ -189,11 +189,12 @@ class RFI:
             ax.step(data[label][1][:-1], data[label][0], where='pre', label=label,
                     zorder=zorder[label])
             if len(data[label][2]) > 1:
-                ax.plot(bin_centers, data[label][2], label='Fit', zorder=10)
+                ax.plot(bin_centers, data[label][2], label=label + ' Fit', zorder=10)
                 if res_ax:
                     residual = data[label][0] - data[label][2]
                     if np.all(data[label][2] > 0):
-                        chi_square = np.sum((residual**2) / data[label][2]) / (len(data[label][1]) - 1)
+                        chi_square = np.sum((residual**2) / data[label][2]) /
+                        (len(data[label][1]) - 2)
                         res_label = 'Residual: chi_square/DoF = ' + str(chi_square)
                     else:
                         res_label = 'Residual'
