@@ -3,18 +3,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 import glob
 
-pathlist = glob.glob('/Users/mike_e_dubs/python_stuff/miriad/temp_HERA_data/*.uvc')
-outpath = '/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/Waterfall_Plots/HERA/HERA_Catalog_12/'
-catalog_type = 'temperature'
-plot_type = 'ant-pol'
+pathlist = glob.glob('/data6/HERA/data/2458042/*.uvOR')[0]
+outpath = 'data4/mwilensky/catalogs/golden_set/freq_time_0/'
+catalog_type = 'waterfall'
+plot_type = 'freq_time'
 band = 'fit'
 fit = True
 fit_window = [0, 10**12]
 bin_window = [0, 0.2]
 flag_slices = ['All', ]
 bad_time_indices = []
-auto_remove = True
-good_freq_indices = range(550, 650)
+auto_remove = False
+good_freq_indices = range(1024)
 bins = np.logspace(-5, 3, num=1001)
 temp_write = True
 write = True
