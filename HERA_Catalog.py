@@ -3,27 +3,26 @@ import numpy as np
 import matplotlib.pyplot as plt
 import glob
 
-outpath = '/data4/mwilensky/catalogs/golden_set/freq_time_2/'
+outpath = '/data4/mwilensky/temperatures/golden_set/'
 plotlist = glob.glob(outpath + '*.png')
-flag_slices = ['All', 'Unflagged']
+flag_slices = ['Unflagged', ]
 if plotlist:
-    proc_start = len(plotlist) / len(flag_slices)
+    proc_start = len(plotlist) / 4
     pathlist = glob.glob('/data6/HERA/data/2458042/*.uvOR')[proc_start:]
 else:
     pathlist = glob.glob('/data6/HERA/data/2458042/*.uvOR')
-catalog_type = 'waterfall'
+catalog_type = 'temperature'
 plot_type = 'freq-time'
-band = [10**(-0.5), 10**(5)]
+band = 'fit'
 fit = True
 fit_window = [0, 10**12]
-bin_window = [10**(-6), 10**(-1)]
+bin_window = [10**(-7.5), 10**(0)]
 bad_time_indices = []
 auto_remove = True
 good_freq_indices = range(64, 960)
-bins = np.logspace(-5, 3, num=1001)
+bins = np.logspace(-7.5, 0, num=1001)
 temp_write = True
 write = True
-writepath = '/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/Temperatures_HERA/Hists_Midband_Autos/'
 ant_pol_times = range(55)
 ant_pol_freqs = [316, 317, 318, 319, 320, 321, 322, 406, 787, 788, 849, 869, 870]
 
@@ -47,7 +46,7 @@ for path in pathlist:
         RFI.one_d_hist_prepare(flag_slice=flag_slices[0], bins=bins, fit=fit,
                                bin_window=bin_window, fit_window=fit_window,
                                temp_write=temp_write, write=write,
-                               writepath=writepath)
+                               writepath=outpath)
 
     elif plot_type is 'ant-pol':
 
