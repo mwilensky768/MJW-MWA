@@ -482,8 +482,8 @@ class RFI:
 
                 plt.tight_layout()
                 if plot_type == 'freq-time':
-                    fig.savefig(outpath + self.obs + flag_slice +
-                                '_' + path_labels[plot_type] + '.png')
+                    fig.savefig(outpath + self.obs + '_' + plot_type + '_' + flag_slice +
+                                '.png')
                 else:
                     fig.savefig(outpath + self.obs + plot_type + flag_slice +
                                 '_' + path_labels[plot_type] + str(uniques[k]) + '.png')
