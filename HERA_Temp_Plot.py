@@ -6,15 +6,17 @@ from math import floor, ceil, log10
 from matplotlib.ticker import AutoMinorLocator
 import glob
 
-obs_pathlist = glob.glob('/Users/mike_e_dubs/python_stuff/miriad/temp_HERA_data/*.uvc')
-inpath = '/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/Temperatures_HERA/Hists_Midband_Autos/'
-outpath = '/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/Temperatures_HERA/Plots_Midband_Autos/'
-N_freqs_removed = 1024 - 100
+inpath = '/Users/mike_e_dubs/HERA/Temperatures/HERA_Golden_Set_Hists/'
+obs_pathlist = glob.glob(inpath + '*bins.npy')  # Might want to just make the obs_list with shell script in a txt file
+outpath = '/Users/mike_e_dubs/HERA/Temperatures/HERA_Golden_Set_Plots/'
+N_freqs_removed = 128
 UV = pyuvdata.UVData()
-UV.read_miriad(obs_pathlist[0])
+freq_array_obs_path = '/Users/mike_e_dubs/HERA/Data/miriad/temp_HERA_data/zen.2457555.40356.xx.HH.uvc'
+UV.read_miriad(freq_array_obs_path)
 N_freqs = UV.Nfreqs - N_freqs_removed
-freq_chan_interval = [550, 650]
+freq_chan_interval = [64, 960]
 freq_array = UV.freq_array[0, min(freq_chan_interval):max(freq_chan_interval)]
+curve_calc = True
 
 
 def sigfig(x, s=4):  # s is number of sig-figs
@@ -34,10 +36,8 @@ for pol in pols:
 
 k = 0
 for path in obs_pathlist:
-    start = path.find('zen.')
-    end = path.find('.uvc')
-    obs = path[start:end]
-    pol = path[end - 5:end - 3].upper()
+    obs = path[path.find('zen'):path.find('.HH') + 3]
+    pol = obs[-5:-3].upper()
     if k == 0:
         n = np.load(inpath + obs + '_hist.npy')
         bins = np.load(inpath + obs + '_bins.npy')
@@ -49,6 +49,15 @@ for path in obs_pathlist:
         sigma[pol][k / 4, :] += np.load(inpath + obs + '_sigma_' + pol + '.npy')
     k += 1
 
+# count = {}
+
+# for pol in pols:
+#    count[pol] = []
+# for pol in pols:
+#    for f in range(len(freq_array)):
+#        if float(np.count_nonzero(sigma[pol][:, f])) / len(sigma[pol][:, f]) > 0.95:
+#            count[pol].append(f)
+
 residual = n - fit
 
 widths = np.diff(bins)
@@ -56,24 +65,24 @@ centers = bins[:-1] + 0.5 * widths
 N = len(n)
 
 hist_fig, hist_ax = plt.subplots(figsize=(14, 8), nrows=2)
-hist_ax[0].step(bins[:-1], n, where='pre', label='Histogram (No Flag Cut)')
+hist_ax[0].step(bins[:-1], n, where='pre', label='Histogram ("Uncontaminated" Data Only)')
 hist_ax[0].plot(centers, fit, label='Fit')
-hist_ax[0].set_title('Visibility Difference Histogram, HERA Preliminiary, Band Edges/Autos Removed')
-hist_ax[0].set_xlabel('Amplitude (UNCALIB)')
+hist_ax[0].set_title('Visibility Difference Histogram, HERA Golden Set, Band Edges/Autos Removed')
+hist_ax[0].set_xlabel('Amplitude')
 hist_ax[0].set_ylabel('Counts')
 hist_ax[0].set_xscale('log', nonposy='clip')
 hist_ax[0].set_yscale('log', nonposy='clip')
-hist_ax[0].set_ylim([10 ** (-1), 10 ** (12)])
+hist_ax[0].set_ylim([10 ** (-1), 10 * max(n)])
 hist_ax[0].legend()
 hist_ax[1].plot(centers, residual, label='Residual')
 hist_ax[1].set_xscale('log', nonposy='clip')
 hist_ax[1].set_yscale('linear')
-hist_ax[1].set_xlabel('Amplitude (UNCALIB)')
+hist_ax[1].set_xlabel('Amplitude')
 hist_ax[1].set_ylabel('Counts')
 hist_ax[1].legend()
 
 temp_fig, temp_ax = plt.subplots(figsize=(14, 8), nrows=2, ncols=2)
-temp_fig.suptitle('HERA Preliminary Temperatures, ~ 155-165 Mhz /Autos Removed')
+temp_fig.suptitle('HERA Golden Set Temperatures, ~ Band Edges/Autos Removed')
 auto_pol_max = max([np.amax(sigma['XX']), np.amax(sigma['YY'])])
 cross_pol_max = max([np.amax(sigma['XY']), np.amax(sigma['YX'])])
 vmax = dict(zip(pols, [auto_pol_max, auto_pol_max, cross_pol_max, cross_pol_max]))
@@ -95,7 +104,26 @@ for k in range(4):
     temp_ax[k / 2][k % 2].set_aspect(float(sigma[pols[k]].shape[1]) / sigma[pols[k]].shape[0])
     temp_ax[k / 2][k % 2].xaxis.set_minor_locator(AutoMinorLocator(4))
 
+if curve_calc:
+    curve_freqs = [9, 160, 346, 458, 690, 881]
+    curves = {}
+    for pol in pols:
+        for f in curve_freqs:
+            curves[pol] = sigma[pol][:, f]
+    cu_fig, cu_ax = plt.subplots(figsize=(14, 8), nrows=2, ncols=2)
+    cu_fig.suptitle('HERA Golden Set Sigmas for Interesting Frequencies')
+    for k in range(4):
+        cu_ax[k / 2][k % 2].set_title(pols[k])
+        cu_ax[k / 2][k % 2].set_ylabel('Sigma')
+        cu_ax[k / 2][k % 2].set_xlabel('Observation')
+        for f in curve_freqs:
+            cu_ax[k / 2][k % 2].plot(range(len(sigma[pols[k]][:, f])),
+                                     sigma[pols[k]][:, f],
+                                     label=str(sigfig(freq_array[f]) * 10**(-6)))
+        cu_ax[k / 2][k % 2].legend()
+
 plt.tight_layout()
 
-hist_fig.savefig(outpath + 'HERA_Autos_Edges_Hist_Fit_All.png')
-temp_fig.savefig(outpath + 'HERA_Autos_Edges_Temperatures_All.png')
+hist_fig.savefig(outpath + 'HERA_GS_Autos_Edges_Hist_Fit_All.png')
+temp_fig.savefig(outpath + 'HERA_GS_Autos_Edges_Temperatures_All.png')
+cu_fig.savefig(outpath + 'HERA_GS_Autos_Edges_Curves.png')

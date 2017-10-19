@@ -5,18 +5,18 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import SIR
 
-#This script will attempt to flag 1061313128D1 with sumthreshold
+# This script will attempt to flag 1061313128D1 with sumthreshold
 
 UV = np.load('/Users/radcosgroup/UVFITS/1061313128D1.npy')
 UVamp = abs(UV)
 
-#Array should be constant time-slices (flagging frequency sequences)
+# Array should be constant time-slices (flagging frequency sequences)
 
-M = 20 #Will flag subsequences of length M
+M = 20  # Will flag subsequences of length M
 
-SubS = np.zeros([56,384-M+1], dtype = float)
+SubS = np.zeros([56, 384 - M + 1], dtype=float)
 
-for m in range(0,56): #Generate array of subsequence sums
+for m in range(0, 56): # Generate array of subsequence sums
     SubS[m,:] = UVT.SubSequenceSum(UVamp[m,:], M)
 
 Stats = UVT.UVstats(SubS) #return some stats
@@ -32,7 +32,7 @@ for k in range(0,2):
 
     for m in range(0,56): #Apply SIR
         Flags[m,:] = SIR.SIROperator(Flags[m,:], eta)
-        
+
 
 #The following code plots the flag mask
 

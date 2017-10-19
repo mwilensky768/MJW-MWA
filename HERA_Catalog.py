@@ -3,15 +3,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 import glob
 
-outpath = '/data4/mwilensky/temperatures/golden_set/'
+outpath = '/data4/mwilensky/catalogs/golden_set/freq_time_uncalibrated/'
 plotlist = glob.glob(outpath + '*.png')
 flag_slices = ['Unflagged', ]
+N_plot = 1
 if plotlist:
-    proc_start = len(plotlist) / 4
-    pathlist = glob.glob('/data6/HERA/data/2458042/*.uvOR')[proc_start:]
+    proc_start = len(plotlist) / N_plot
+    pathlist = glob.glob('/data6/HERA/data/2458042/*.uv')[proc_start:]
 else:
-    pathlist = glob.glob('/data6/HERA/data/2458042/*.uvOR')
-catalog_type = 'temperature'
+    pathlist = glob.glob('/data6/HERA/data/2458042/*.uv')[0:1]
+catalog_type = 'waterfall'
 plot_type = 'freq-time'
 band = 'fit'
 fit = True
@@ -25,8 +26,6 @@ temp_write = True
 write = True
 ant_pol_times = range(55)
 ant_pol_freqs = [316, 317, 318, 319, 320, 321, 322, 406, 787, 788, 849, 869, 870]
-
-print('There are ' + str(len(pathlist)) + ' files to process ')
 
 for path in pathlist:
     start = path.find('zen.')

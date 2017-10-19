@@ -411,13 +411,12 @@ class RFI:
             gs_loc = [[1, 0], ]
 
         for flag_slice in flag_slices:
-            if plot_type is 'freq-time':
-                if band is 'fit':
-                    max_loc = min(Amp[flag_slice][1][np.where(Amp[flag_slice][0] ==
-                                                              np.amax(Amp[flag_slice][0]))])
-                    band = [np.amin(Amp[flag_slice][1][:-1][np.logical_and(Amp[flag_slice][2] < 1,
-                                                                           Amp[flag_slice][1][:-1] > max_loc)]),
-                            np.amax(Amp[flag_slice][1])]
+            if band is 'fit':
+                max_loc = min(Amp[flag_slice][1][np.where(Amp[flag_slice][0] ==
+                                                          np.amax(Amp[flag_slice][0]))])
+                band = [np.amin(Amp[flag_slice][1][:-1][np.logical_and(Amp[flag_slice][2] < 1,
+                                                                       Amp[flag_slice][1][:-1] > max_loc)]),
+                        np.amax(Amp[flag_slice][1])]
 
             W, uniques = self.waterfall_hist_prepare(band, plot_type=plot_type,
                                                      fraction=fraction,
