@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import glob
 
-outpath = '/data4/mwilensky/catalogs/golden_set/freq_time_uncalibrated/'
+outpath = '/data4/mwilensky/temperatures/golden_set/uncalibrated/'
 plotlist = glob.glob(outpath + '*.png')
 flag_slices = ['Unflagged', ]
 N_plot = 1
@@ -11,17 +11,17 @@ if plotlist:
     proc_start = len(plotlist) / N_plot
     pathlist = glob.glob('/data6/HERA/data/2458042/*.uv')[proc_start:]
 else:
-    pathlist = glob.glob('/data6/HERA/data/2458042/*.uv')[0:1]
-catalog_type = 'waterfall'
+    pathlist = glob.glob('/data6/HERA/data/2458042/*.uv')
+catalog_type = 'temperature'
 plot_type = 'freq-time'
 band = 'fit'
 fit = True
 fit_window = [0, 10**12]
-bin_window = [10**(-7.5), 10**(0)]
+bin_window = [10**(-7.5), 10**(-1)]
 bad_time_indices = []
 auto_remove = True
 good_freq_indices = range(64, 960)
-bins = np.logspace(-7.5, 0, num=1001)
+bins = np.logspace(-7.5, 3, num=1001)
 temp_write = True
 write = True
 ant_pol_times = range(55)
