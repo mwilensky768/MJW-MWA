@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 UV = pyuv.UVData()
-UV.read_uvfits('/Users/mike_e_dubs/python_stuff/smaller_uvfits/s1061313008.uvfits')
+UV.read_uvfits('/Users/mike_e_dubs/MWA/Data/smaller_uvfits/s1061313008.uvfits')
 
 baselines = []
 

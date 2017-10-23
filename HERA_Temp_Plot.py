@@ -6,9 +6,10 @@ from math import floor, ceil, log10
 from matplotlib.ticker import AutoMinorLocator
 import glob
 
-inpath = '/Users/mike_e_dubs/HERA/Temperatures/HERA_Golden_Set_Hists/'
-obs_pathlist = glob.glob(inpath + '*bins.npy')  # Might want to just make the obs_list with shell script in a txt file
-outpath = '/Users/mike_e_dubs/HERA/Temperatures/HERA_Golden_Set_Plots/'
+cal_title = 'Calibrated'
+inpath = '/Users/mike_e_dubs/HERA/Temperatures/GS_' + cal_title + '_Hists/'
+obs_pathlist = glob.glob(inpath + '*bins.npy')   # Might want to just make the obs_list with shell script in a txt file
+outpath = '/Users/mike_e_dubs/HERA/Temperatures/GS_' + cal_title + '_Plots/'
 N_freqs_removed = 128
 UV = pyuvdata.UVData()
 freq_array_obs_path = '/Users/mike_e_dubs/HERA/Data/miriad/temp_HERA_data/zen.2457555.40356.xx.HH.uvc'
@@ -17,6 +18,16 @@ N_freqs = UV.Nfreqs - N_freqs_removed
 freq_chan_interval = [64, 960]
 freq_array = UV.freq_array[0, min(freq_chan_interval):max(freq_chan_interval)]
 curve_calc = True
+ratio = True
+ratio_outpath = '/Users/mike_e_dubs/HERA/Temperatures/GS_Ratio_Data/'
+pols = ['XX', 'YY', 'XY', 'YX']
+hist_label = 'Histogram ("Unflagged" Data Only)'
+hist_title = 'Visibility Difference Histogram, HERA Golden Set, Band Edges/Autos Removed, ' + cal_title
+waterfall_title = 'HERA Golden Set Temperatures, Band Edges/Autos Removed, ' + cal_title
+hist_fig_name = 'HERA_GS_' + cal_title + '_Autos_Edges_Hist_Fit.png'
+temp_fig_name = 'HERA_GS_' + cal_title + '_Autos_Edges_Temperatures.png'
+cu_fig_name = 'HERA_GS_' + cal_title + '_Autos_Edges_Curves.png'
+curve_freqs = [160, 346, 458, 690, 881]
 
 
 def sigfig(x, s=4):  # s is number of sig-figs
@@ -27,8 +38,6 @@ def sigfig(x, s=4):  # s is number of sig-figs
         y = 10**n * round(10**(-n) * x, s - 1)
         return(y)
 
-
-pols = ['XX', 'YY', 'XY', 'YX']
 
 sigma = {}
 for pol in pols:
@@ -49,6 +58,10 @@ for path in obs_pathlist:
         sigma[pol][k / 4, :] += np.load(inpath + obs + '_sigma_' + pol + '.npy')
     k += 1
 
+if ratio:
+    for pol in pols:
+        np.save(ratio_outpath + cal_title + '_Sigma_' + pol + '.npy', sigma[pol])
+
 # count = {}
 
 # for pol in pols:
@@ -65,9 +78,9 @@ centers = bins[:-1] + 0.5 * widths
 N = len(n)
 
 hist_fig, hist_ax = plt.subplots(figsize=(14, 8), nrows=2)
-hist_ax[0].step(bins[:-1], n, where='pre', label='Histogram ("Uncontaminated" Data Only)')
+hist_ax[0].step(bins[:-1], n, where='pre', label=hist_label)
 hist_ax[0].plot(centers, fit, label='Fit')
-hist_ax[0].set_title('Visibility Difference Histogram, HERA Golden Set, Band Edges/Autos Removed')
+hist_ax[0].set_title(hist_title)
 hist_ax[0].set_xlabel('Amplitude')
 hist_ax[0].set_ylabel('Counts')
 hist_ax[0].set_xscale('log', nonposy='clip')
@@ -82,7 +95,7 @@ hist_ax[1].set_ylabel('Counts')
 hist_ax[1].legend()
 
 temp_fig, temp_ax = plt.subplots(figsize=(14, 8), nrows=2, ncols=2)
-temp_fig.suptitle('HERA Golden Set Temperatures, ~ Band Edges/Autos Removed')
+temp_fig.suptitle(waterfall_title)
 auto_pol_max = max([np.amax(sigma['XX']), np.amax(sigma['YY'])])
 cross_pol_max = max([np.amax(sigma['XY']), np.amax(sigma['YX'])])
 vmax = dict(zip(pols, [auto_pol_max, auto_pol_max, cross_pol_max, cross_pol_max]))
@@ -105,13 +118,12 @@ for k in range(4):
     temp_ax[k / 2][k % 2].xaxis.set_minor_locator(AutoMinorLocator(4))
 
 if curve_calc:
-    curve_freqs = [9, 160, 346, 458, 690, 881]
     curves = {}
     for pol in pols:
         for f in curve_freqs:
             curves[pol] = sigma[pol][:, f]
     cu_fig, cu_ax = plt.subplots(figsize=(14, 8), nrows=2, ncols=2)
-    cu_fig.suptitle('HERA Golden Set Sigmas for Interesting Frequencies')
+    cu_fig.suptitle('HERA Golden Set Sigmas, for Interesting Frequencies, ' + cal_title)
     for k in range(4):
         cu_ax[k / 2][k % 2].set_title(pols[k])
         cu_ax[k / 2][k % 2].set_ylabel('Sigma')
@@ -124,6 +136,6 @@ if curve_calc:
 
 plt.tight_layout()
 
-hist_fig.savefig(outpath + 'HERA_GS_Autos_Edges_Hist_Fit_All.png')
-temp_fig.savefig(outpath + 'HERA_GS_Autos_Edges_Temperatures_All.png')
-cu_fig.savefig(outpath + 'HERA_GS_Autos_Edges_Curves.png')
+hist_fig.savefig(outpath + hist_fig_name)
+temp_fig.savefig(outpath + temp_fig_name)
+cu_fig.savefig(outpath + cu_fig_name)
