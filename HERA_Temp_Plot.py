@@ -8,7 +8,7 @@ import glob
 
 cal_title = 'Calibrated'
 inpath = '/Users/mike_e_dubs/HERA/Temperatures/GS_' + cal_title + '_Hists/'
-obs_pathlist = glob.glob(inpath + '*bins.npy')   # Might want to just make the obs_list with shell script in a txt file
+obs_pathlist = glob.glob(inpath + '*bins.npy')  # Might want to just make the obs_list with shell script in a txt file
 outpath = '/Users/mike_e_dubs/HERA/Temperatures/GS_' + cal_title + '_Plots/'
 N_freqs_removed = 128
 UV = pyuvdata.UVData()
