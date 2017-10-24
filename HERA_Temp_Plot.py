@@ -6,7 +6,7 @@ from math import floor, ceil, log10
 from matplotlib.ticker import AutoMinorLocator
 import glob
 
-cal_title = 'Calibrated'
+cal_title = 'Uncalibrated'
 inpath = '/Users/mike_e_dubs/HERA/Temperatures/GS_' + cal_title + '_Hists/'
 obs_pathlist = glob.glob(inpath + '*bins.npy')  # Might want to just make the obs_list with shell script in a txt file
 outpath = '/Users/mike_e_dubs/HERA/Temperatures/GS_' + cal_title + '_Plots/'
@@ -28,6 +28,9 @@ hist_fig_name = 'HERA_GS_' + cal_title + '_Autos_Edges_Hist_Fit.png'
 temp_fig_name = 'HERA_GS_' + cal_title + '_Autos_Edges_Temperatures.png'
 cu_fig_name = 'HERA_GS_' + cal_title + '_Autos_Edges_Curves.png'
 curve_freqs = [160, 346, 458, 690, 881]
+LST = True
+if LST:
+    cu_fig_name = 'HERA_GS_' + cal_title + '_LST_Autos_Edges_Curves.png'
 
 
 def sigfig(x, s=4):  # s is number of sig-figs
@@ -48,14 +51,14 @@ for path in obs_pathlist:
     obs = path[path.find('zen'):path.find('.HH') + 3]
     pol = obs[-5:-3].upper()
     if k == 0:
-        n = np.load(inpath + obs + '_hist.npy')
-        bins = np.load(inpath + obs + '_bins.npy')
-        fit = np.load(inpath + obs + '_fit.npy')
-        sigma[pol][k / 4, :] += np.load(inpath + obs + '_sigma_' + pol + '.npy')
+        n = np.load(inpath + obs + '.u_hist.npy')
+        bins = np.load(inpath + obs + '.u_bins.npy')
+        fit = np.load(inpath + obs + '.u_fit.npy')
+        sigma[pol][k / 4, :] += np.load(inpath + obs + '.u_sigma_' + pol + '.npy')
     else:
-        n += np.load(inpath + obs + '_hist.npy')
-        fit += np.load(inpath + obs + '_fit.npy')
-        sigma[pol][k / 4, :] += np.load(inpath + obs + '_sigma_' + pol + '.npy')
+        n += np.load(inpath + obs + '.u_hist.npy')
+        fit += np.load(inpath + obs + '.u_fit.npy')
+        sigma[pol][k / 4, :] += np.load(inpath + obs + '.u_sigma_' + pol + '.npy')
     k += 1
 
 if ratio:
@@ -124,15 +127,25 @@ if curve_calc:
             curves[pol] = sigma[pol][:, f]
     cu_fig, cu_ax = plt.subplots(figsize=(14, 8), nrows=2, ncols=2)
     cu_fig.suptitle('HERA Golden Set Sigmas, for Interesting Frequencies, ' + cal_title)
+    if LST:
+        LST_array = np.load('/Users/mike_e_dubs/HERA/GS_LST.npy')
     for k in range(4):
         cu_ax[k / 2][k % 2].set_title(pols[k])
         cu_ax[k / 2][k % 2].set_ylabel('Sigma')
-        cu_ax[k / 2][k % 2].set_xlabel('Observation')
         for f in curve_freqs:
             cu_ax[k / 2][k % 2].plot(range(len(sigma[pols[k]][:, f])),
                                      sigma[pols[k]][:, f],
                                      label=str(sigfig(freq_array[f]) * 10**(-6)))
         cu_ax[k / 2][k % 2].legend()
+        if LST:
+            xticklabels = [str(sigfig(LST_array[int(tick)])) for tick in
+                           cu_ax[k / 2][k % 2].get_xticks()[1:-1]]
+            xticklabels.insert(0, '0')
+            xticklabels.append('0')
+            cu_ax[k / 2][k % 2].set_xticklabels(xticklabels)
+            cu_ax[k / 2][k % 2].set_xlabel('LST (hours)')
+        else:
+            cu_ax[k / 2][k % 2].set_xlabel('Observation')
 
 plt.tight_layout()
 

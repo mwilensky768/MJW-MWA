@@ -5,18 +5,18 @@ import numpy as np
 
 # Set these in the beginning every time! Also remember to pick the right type of catalog!
 
-obslist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Departure_OBSIDS.txt'
-pathlist_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Departure_OBSIDS_paths.txt'
-outpath = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Waterfall_Plots/Departure/'
-hist_write = False
-hist_write_path = '/nfs/eor-00/h1/mwilensk/Long_Run_8s_Autos/Long_Run_8s_Autos_Hists/'
+obslist_path = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/season2_zenith_calcut.txt'
+pathlist_path = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/season2_zenith_calcut_paths.txt'
+outpath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Catalogs/Freq_Time/'
+flag_slices = ['Unflagged', 'All']
+write = {'Unflagged': True, 'All': False}
+writepath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Hists/'
 bins = np.logspace(-3, 5, num=1001)
 catalog_type = 'waterfall'
-plot_type = 'ant-time'
-flag_slices = ['Unflagged', 'Flagged', 'All']
-band = [10**3, 10**5]
+plot_type = 'freq-time'
+band = {'Unflagged': 'fit', 'All': [10**3, 10**5]}
 auto_remove = True
-fit = True
+fit = {'Unflagged': True, 'All': False}
 bin_window = [0, 10**3]
 fit_window = [0, 10**12]
 
@@ -39,13 +39,14 @@ if not output_list:
     RFI = rfi.RFI(str(obs), inpath, auto_remove=auto_remove)
 
     if catalog_type is 'waterfall':
-        RFI.rfi_catalog(outpath, hist_write=hist_write, hist_write_path=hist_write_path,
-                        bins=bins, band=band, flag_slices=flag_slices, plot_type=plot_type,
+        RFI.rfi_catalog(outpath, write=write, writepath=writepath, bins=bins,
+                        band=band, flag_slices=flag_slices, plot_type=plot_type,
                         fit=fit, fit_window=fit_window, bin_window=bin_window)
     elif plot_type is 'ant-pol':
         RFI.ant_pol_catalog(outpath, range(RFI.UV.Ntimes), [162, ])
     elif catalog_type is 'Temperature':
-        RFI.one_d_hist_prepare(flag_slice=flag_slices[2], bins=bins, fit_window=fit_window,
-                               bin_window=bin_window, write=hist_write, writepath=hist_write_path)
+        RFI.one_d_hist_prepare(flag_slice=flag_slices[2], bins=bins,
+                               fit_window=fit_window, bin_window=bin_window,
+                               write=write, writepath=writepath)
 else:
     print('I already processed obs ' + str(obs))

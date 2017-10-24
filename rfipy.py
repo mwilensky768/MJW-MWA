@@ -92,8 +92,8 @@ class RFI:
 
     def one_d_hist_prepare(self, flag_slice='Unflagged', time_drill=[], freq_drill=[],
                            time_slice=[], freq_slice=[], coarse_band_ignore=False,
-                           bins='auto', fit=False, fit_window=[0, 10**12], write=False,
-                           writepath='', temp_write=False, bin_window=np.array([])):
+                           bins='auto', fit=False, fit_window=[0, 10**12],
+                           write=False, writepath='', bin_window=np.array([])):
 
         flags = self.flag_operations(flag_slice=flag_slice,
                                      coarse_band_ignore=coarse_band_ignore)
@@ -125,7 +125,7 @@ class RFI:
         if fit:
             fit = np.zeros(len(bins) - 1)
             m = np.copy(fit)
-            if temp_write:
+            if write:
                 sigma_array = np.zeros(values.shape[3])
             for l in range(values.shape[4]):
                 for k in range(values.shape[3]):
@@ -148,16 +148,16 @@ class RFI:
                             sigma = np.sqrt(0.5 * np.sum(temp_values[data_cond]**2) / N_fit)
                             fit += N * bin_widths * (1 / sigma**2) * bin_centers * \
                                 np.exp(-bin_centers**2 / (2 * sigma ** 2))
-                            if temp_write:
+                            if write:
                                 sigma_array[k] = sigma
                         elif temp_write:
                             sigma = 0
                             sigma_array[k] = sigma
-                    elif temp_write:
+                    elif write:
                         sigma = 0
                         sigma_array[k] = sigma
-                if temp_write:
-                    np.save(writepath + self.obs + '_sigma_' +
+                if write:
+                    np.save(writepath + self.obs + '_' + flag_slice + '_sigma_' +
                             self.pol_titles[self.UV.polarization_array[l]] +
                             '.npy', sigma_array)
 
@@ -170,9 +170,9 @@ class RFI:
             fit = [0, ]
 
         if write:
-            np.save(writepath + self.obs + '_hist.npy', m)
-            np.save(writepath + self.obs + '_bins.npy', bins)
-            np.save(writepath + self.obs + '_fit.npy', fit)
+            np.save(writepath + self.obs + '_' + flag_slice + '_hist.npy', m)
+            np.save(writepath + self.obs + '_' + flag_slice + '_bins.npy', bins)
+            np.save(writepath + self.obs + '_' + flag_slice + '_fit.npy', fit)
 
         return({flag_slice: (m, bins, fit)})
 
@@ -361,10 +361,10 @@ class RFI:
         else:
             cbar.set_label('Counts RFI')
 
-    def rfi_catalog(self, outpath, band=(2000, 10**5), hist_write=False,
-                    hist_write_path='', fit=False, fit_window=[0, 10**12], bins='auto',
+    def rfi_catalog(self, outpath, band=(2000, 10**5), write=False,
+                    writepath='', fit=False, fit_window=[0, 10**12], bins='auto',
                     flag_slices=['Unflagged', 'All'], coarse_band_ignore=False,
-                    bin_window=np.array([]), temp_write=False, plot_type='freq-time',
+                    bin_window=np.array([]), plot_type='freq-time',
                     fraction=True):
 
         def sigfig(x, s=4):  # s is number of sig-figs
@@ -378,13 +378,12 @@ class RFI:
         if plot_type == 'freq-time':
             Amp = {}
             for flag_slice in flag_slices:
-                Amp.update(self.one_d_hist_prepare(flag_slice=flag_slice, fit=fit,
-                                                   write=hist_write, bins=bins,
+                Amp.update(self.one_d_hist_prepare(flag_slice=flag_slice, fit=fit[flag_slice],
+                                                   write=write[flag_slice], bins=bins,
                                                    coarse_band_ignore=coarse_band_ignore,
-                                                   writepath=hist_write_path,
+                                                   writepath=writepath,
                                                    fit_window=fit_window,
-                                                   bin_window=bin_window,
-                                                   temp_write=temp_write))
+                                                   bin_window=bin_window))
 
         plot_type_keys = ['freq-time', 'ant-freq', 'ant-time']
         aspect_values = [3, 1, 0.2]
@@ -411,7 +410,7 @@ class RFI:
             gs_loc = [[1, 0], ]
 
         for flag_slice in flag_slices:
-            if band is 'fit':
+            if band[flag_slice] is 'fit':
                 max_loc = min(Amp[flag_slice][1][np.where(Amp[flag_slice][0] ==
                                                           np.amax(Amp[flag_slice][0]))])
                 band = [np.amin(Amp[flag_slice][1][:-1][np.logical_and(Amp[flag_slice][2] < 1,
