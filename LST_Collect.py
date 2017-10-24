@@ -5,8 +5,8 @@ from math import pi
 
 inpath = '/data6/HERA/data/2458042/zen.2458042.'
 pathlist = glob.glob(inpath + '*.xx*.uv')
-obslist = np.array([int(path[path.find('zen.') + 12:path.find('.xx')])
-                    for path in pathlist]).sort()
+obslist = np.sort(np.array([int(path[path.find('zen.') + 12:path.find('.xx')])
+                    for path in pathlist]))
 
 pathlist_sort = [inpath + str(obs) + '.xx.HH.uv' for obs in obslist]
 
