@@ -150,7 +150,7 @@ class RFI:
                                 np.exp(-bin_centers**2 / (2 * sigma ** 2))
                             if write:
                                 sigma_array[k] = sigma
-                        elif temp_write:
+                        elif write:
                             sigma = 0
                             sigma_array[k] = sigma
                     elif write:
@@ -361,7 +361,7 @@ class RFI:
         else:
             cbar.set_label('Counts RFI')
 
-    def rfi_catalog(self, outpath, band=(2000, 10**5), write=False,
+    def rfi_catalog(self, outpath, band={}, write=False,
                     writepath='', fit=False, fit_window=[0, 10**12], bins='auto',
                     flag_slices=['Unflagged', 'All'], coarse_band_ignore=False,
                     bin_window=np.array([]), plot_type='freq-time',
@@ -413,11 +413,11 @@ class RFI:
             if band[flag_slice] is 'fit':
                 max_loc = min(Amp[flag_slice][1][np.where(Amp[flag_slice][0] ==
                                                           np.amax(Amp[flag_slice][0]))])
-                band = [np.amin(Amp[flag_slice][1][:-1][np.logical_and(Amp[flag_slice][2] < 1,
+                band[flag_slice] = [np.amin(Amp[flag_slice][1][:-1][np.logical_and(Amp[flag_slice][2] < 1,
                                                                        Amp[flag_slice][1][:-1] > max_loc)]),
-                        np.amax(Amp[flag_slice][1])]
+                                    10 * np.amax(Amp[flag_slice][1])]
 
-            W, uniques = self.waterfall_hist_prepare(band, plot_type=plot_type,
+            W, uniques = self.waterfall_hist_prepare(band[flag_slice], plot_type=plot_type,
                                                      fraction=fraction,
                                                      flag_slice=flag_slice,
                                                      coarse_band_ignore=coarse_band_ignore)
@@ -455,8 +455,8 @@ class RFI:
                     self.one_d_hist_plot(fig, ax, Amp, self.obs + ' Drill ' +
                                          plot_type_titles[plot_type] +
                                          str(unique_freqs[k]))
-                ax.axvline(x=min(band), color='black')
-                ax.axvline(x=max(band), color='black')
+                ax.axvline(x=min(band[flag_slice]), color='black')
+                ax.axvline(x=max(band[flag_slice]), color='black')
 
                 if self.UV.Npols > 1:
                     MAXW_list = range(4)

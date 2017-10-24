@@ -14,7 +14,7 @@ writepath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Hists/'
 bins = np.logspace(-3, 5, num=1001)
 catalog_type = 'waterfall'
 plot_type = 'freq-time'
-band = {'Unflagged': 'fit', 'All': [10**3, 10**5]}
+band = {'Unflagged': 'fit', 'All': [4 * 10**3, 10**5]}
 auto_remove = True
 fit = {'Unflagged': True, 'All': False}
 bin_window = [0, 10**3]
