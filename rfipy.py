@@ -414,7 +414,7 @@ class RFI:
                 max_loc = min(Amp[flag_slice][1][np.where(Amp[flag_slice][0] ==
                                                           np.amax(Amp[flag_slice][0]))])
                 band[flag_slice] = [np.amin(Amp[flag_slice][1][:-1][np.logical_and(Amp[flag_slice][2] < 1,
-                                                                       Amp[flag_slice][1][:-1] > max_loc)]),
+                                                                    Amp[flag_slice][1][:-1] > max_loc)]),
                                     10 * np.amax(Amp[flag_slice][1])]
 
             W, uniques = self.waterfall_hist_prepare(band[flag_slice], plot_type=plot_type,
@@ -435,7 +435,8 @@ class RFI:
                         Amp.update(self.one_d_hist_prepare(flag_slice=flag,
                                                            time_drill=uniques[k],
                                                            coarse_band_ignore=coarse_band_ignore,
-                                                           fit=fit[flag_slice], bins=bins,
+                                                           fit=fit[flag_slice],
+                                                           bins=bins,
                                                            fit_window=fit_window,
                                                            bin_window=bin_window))
                     self.one_d_hist_plot(fig, ax, Amp, self.obs + ' Drill ' +
@@ -487,7 +488,7 @@ class RFI:
                                 '_' + path_labels[plot_type] + str(uniques[k]) + '.png')
                 plt.close(fig)
 
-    def ant_pol_catalog(self, outpath, times, freqs):
+    def ant_pol_catalog(self, outpath, times=[], freqs[], band=[]):
 
         def sigfig(x, s=4):  # s is number of sig-figs
             if x == 0:
@@ -496,6 +497,12 @@ class RFI:
                 n = int(floor(log10(np.absolute(x))))
                 y = 10**n * round(10**(-n) * x, s - 1)
                 return(y)
+
+        if band:
+            values = np.absolute(self.data_array)
+            ind = np.where((min(band) < values) & (values < max(band)))
+            times = np.unique(ind[0])
+            freqs = np.unique(ind[3])
 
         for time in times:
             for freq in freqs:
