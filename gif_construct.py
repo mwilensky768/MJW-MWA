@@ -1,5 +1,5 @@
 from images2gif import writeGif
-from PIL import Image, ImageDraw
+from PIL import Image
 import glob
 
 inpath = '/Users/mike_e_dubs/MWA/Catalogs/Golden_Set_8s_Autos/Ant_Scatter/Narrowband/'
@@ -11,3 +11,5 @@ with open(obslist_path) as f:
 
 for obs in obslist:
     im_list = glob.glob(inpath + obs + '*')
+    images = [Image.open(im) for im in im_list]
+    writeGif(outpath + obs + '.gif', images, duration=30)

@@ -535,8 +535,7 @@ class RFI:
                 for n in range(self.UV.Ntimes - 1):
                     c[H[:, n, m, k] > 0] = 'r'
                     c[H[:, n, m, k] < 1] = 'b'
-                    fig = plt.figure(figsize=(14, 8))
-                    ax = fig.add_subplot(111, projection='3d')
+                    fig, ax = plt.subplots(figsize=(14, 8))
                     ax.scatter(self.UV.antenna_positions[:, 0],
                                self.UV.antenna_positions[:, 1], c=c)
                     ax.set_title('RFI Antenna Lightup, t = ' + str(n) + ' f = ' +
