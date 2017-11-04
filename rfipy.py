@@ -274,7 +274,7 @@ class RFI:
                       np.where(unique_freqs == ind[3][q])[0][0]] += 1
             return(H, unique_freqs)
 
-    def ant_pol_prepare(self, time, freq):
+    def ant_pol_prepare(self, time, freq, amp=True):
 
         dim = 2 * self.UV.Nants_telescope
 
@@ -286,10 +286,16 @@ class RFI:
         for m in range(self.UV.Nbls):
             for n in range(self.UV.Npols):
                 A = self.data_array[time, m, 0, freq, n]
-                T[self.UV.ant_1_array[m] + q[self.pol_titles[self.UV.polarization_array[n]]][0],
-                  self.UV.ant_2_array[m] + q[self.pol_titles[self.UV.polarization_array[n]]][1]] = A.imag
-                T[self.UV.ant_2_array[m] + q[self.pol_titles[self.UV.polarization_array[n]]][0],
-                  self.UV.ant_1_array[m] + q[self.pol_titles[self.UV.polarization_array[n]]][1]] = A.real
+                if amp:
+                    T[self.UV.ant_1_array[m] + q[self.pol_titles[self.UV.polarization_array[n]]][0],
+                      self.UV.ant_2_array[m] + q[self.pol_titles[self.UV.polarization_array[n]]][1]] = np.absolute(A.imag)
+                    T[self.UV.ant_2_array[m] + q[self.pol_titles[self.UV.polarization_array[n]]][0],
+                      self.UV.ant_1_array[m] + q[self.pol_titles[self.UV.polarization_array[n]]][1]] = np.absolute(A.real)
+                else:
+                    T[self.UV.ant_1_array[m] + q[self.pol_titles[self.UV.polarization_array[n]]][0],
+                      self.UV.ant_2_array[m] + q[self.pol_titles[self.UV.polarization_array[n]]][1]] = A.imag
+                    T[self.UV.ant_2_array[m] + q[self.pol_titles[self.UV.polarization_array[n]]][0],
+                      self.UV.ant_1_array[m] + q[self.pol_titles[self.UV.polarization_array[n]]][1]] = A.real
 
         return(T)
 
@@ -489,7 +495,7 @@ class RFI:
                                 '_' + path_labels[plot_type] + str(uniques[k]) + '.png')
                 plt.close(fig)
 
-    def ant_pol_catalog(self, outpath, times=[], freqs=[], band=[]):
+    def ant_pol_catalog(self, outpath, times=[], freqs=[], band=[], clip=False):
 
         def sigfig(x, s=4):  # s is number of sig-figs
             if x == 0:
@@ -508,11 +514,14 @@ class RFI:
         for (time, freq) in zip(times, freqs):
 
                 fig, ax = plt.subplots(figsize=(14, 8))
-                T = self.ant_pol_prepare(time, freq)
+                T = self.ant_pol_prepare(time, freq, amp=clip)
                 title = self.obs + ' Ant-Pol Drill t = ' + str(time) + ' f = ' + \
                     str(sigfig(self.UV.freq_array[0, freq]) * 10**(-6)) + ' Mhz'
                 vmax = np.amax(T)
-                vmin = np.amin(T)
+                if clip:
+                    vmin = min(band)
+                else:
+                    vmin = np.amin(T)
 
                 self.image_plot(fig, ax, T, title, vmin, vmax, aspect_ratio=1, fraction=False,
                                 y_type='ant-pol', x_type='ant-pol')
@@ -543,7 +552,6 @@ class RFI:
                                  ' Mhz')
                     ax.set_xlabel('X (m)')
                     ax.set_ylabel('Y (m)')
-                    ax.set_zlabel('Z (m)')
 
                     fig.savefig(outpath + self.obs + '_ant_scatter_f' +
                                 str(unique_freqs[k]) + '_t' + str(n) + '.png')

@@ -19,6 +19,7 @@ auto_remove = True
 fit = {'Unflagged': True, 'All': False}
 bin_window = [0, 10**3]
 fit_window = [0, 10**12]
+clip = True
 
 with open(obslist_path) as f:
     obslist = f.read().split("\n")
@@ -50,6 +51,6 @@ if not output_list:
     elif catalog_type is 'ant-scatter':
         RFI.ant_scatter(outpath, band=band['All'], flag_slice=flag_slices[0])
     elif plot_type is 'ant-pol':
-        RFI.ant_pol_catalog(outpath, band=band['All'])
+        RFI.ant_pol_catalog(outpath, band=band['All'], clip=clip)
 else:
     print('I already processed obs ' + str(obs))
