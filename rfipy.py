@@ -305,7 +305,7 @@ class RFI:
                 return(y)
 
         H = np.ma.masked_equal(H, 0)
-        cmap = cm.cool
+        cmap = cm.plasma
         cmap.set_bad(color='white')
 
         cax = ax.imshow(H, cmap=cmap, vmin=vmin, vmax=vmax)
@@ -489,7 +489,7 @@ class RFI:
                                 '_' + path_labels[plot_type] + str(uniques[k]) + '.png')
                 plt.close(fig)
 
-    def ant_pol_catalog(self, outpath, times=[], freqs[], band=[]):
+    def ant_pol_catalog(self, outpath, times=[], freqs=[], band=[]):
 
         def sigfig(x, s=4):  # s is number of sig-figs
             if x == 0:
@@ -502,11 +502,10 @@ class RFI:
         if band:
             values = np.absolute(self.data_array)
             ind = np.where((min(band) < values) & (values < max(band)))
-            times = np.unique(ind[0])
-            freqs = np.unique(ind[3])
+            times = range(min(ind[0]), max(ind[0]))
+            freqs = range(min(ind[3]), max(ind[3]))
 
-        for time in times:
-            for freq in freqs:
+        for (time, freq) in zip(times, freqs):
 
                 fig, ax = plt.subplots(figsize=(14, 8))
                 T = self.ant_pol_prepare(time, freq)
