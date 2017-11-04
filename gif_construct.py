@@ -1,5 +1,4 @@
-from images2gif import writeGif
-from PIL import Image
+import imageio
 import glob
 
 inpath = '/Users/mike_e_dubs/MWA/Catalogs/Golden_Set_8s_Autos/Ant_Scatter/Narrowband/'
@@ -10,6 +9,6 @@ with open(obslist_path) as f:
     obslist = f.read().split("\n")
 
 for obs in obslist:
-    im_list = glob.glob(inpath + obs + '*')
-    images = [Image.open(im) for im in im_list]
-    writeGif(outpath + obs + '.gif', images, duration=30)
+    im_list = sorted(glob.glob(inpath + obs + '*'), key=lambda name: int(name[104:-4]))
+    images = [imageio.imread(im) for im in im_list]
+    imageio.mimsave(outpath + obs + '.gif', images, duration=30)
