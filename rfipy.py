@@ -538,8 +538,7 @@ class RFI:
                     fig = plt.figure(figsize=(14, 8))
                     ax = fig.add_subplot(111, projection='3d')
                     ax.scatter(self.UV.antenna_positions[:, 0],
-                               self.UV.antenna_positions[:, 1],
-                               self.UV.antenna_positions[:, 2], c=c)
+                               self.UV.antenna_positions[:, 1], c=c)
                     ax.set_title('RFI Antenna Lightup, t = ' + str(n) + ' f = ' +
                                  '%.1f' % (10 ** (-6) * self.UV.freq_array[0, unique_freqs[k]]) +
                                  ' Mhz')
