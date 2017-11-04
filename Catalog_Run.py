@@ -7,12 +7,12 @@ import numpy as np
 
 obslist_path = '/nfs/eor-00/h1/mwilensk/Golden_Set/Golden_Set_Narrowband_OBSIDS.txt'
 pathlist_path = '/nfs/eor-00/h1/mwilensk/Golden_Set/Golden_Set_Narrowband_OBSIDS_paths.txt'
-outpath = '/nfs/eor-00/h1/mwilensk/Golden_Set/Golden_Set_Drill_Plots/Golden_Set_Drill_Plots_Narrowband/'
+outpath = '/nfs/eor-00/h1/mwilensk/Golden_Set_8s_Autos/Catalogs/Ant_Scatter/Narrowband/'
 flag_slices = ['All', ]
 write = {'Unflagged': True, 'All': False}
 writepath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Hists/'
 bins = np.logspace(-3, 5, num=1001)
-catalog_type = 'waterfall'
+catalog_type = 'ant-scatter'
 plot_type = 'ant-time'
 band = {'Unflagged': 'fit', 'All': [1.5 * 10**3, 10**5]}
 auto_remove = True
@@ -43,11 +43,13 @@ if not output_list:
                         band=band, flag_slices=flag_slices, plot_type=plot_type,
                         fit=fit, fit_window=fit_window, bin_window=bin_window,
                         fraction=False)
-    elif plot_type is 'ant-pol':
-        RFI.ant_pol_catalog(outpath, band=band['All'])
-    elif catalog_type is 'Temperature':
+    elif catalog_type is 'temperature':
         RFI.one_d_hist_prepare(flag_slice=flag_slices[2], bins=bins,
                                fit_window=fit_window, bin_window=bin_window,
                                write=write, writepath=writepath)
+    elif catalog_type is 'ant-scatter':
+        RFI.ant_scatter(outpath, band=band['All'], flag_slice=flag_slices[0])
+    elif plot_type is 'ant-pol':
+        RFI.ant_pol_catalog(outpath, band=band['All'])
 else:
     print('I already processed obs ' + str(obs))
