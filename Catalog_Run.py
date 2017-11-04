@@ -5,16 +5,16 @@ import numpy as np
 
 # Set these in the beginning every time! Also remember to pick the right type of catalog!
 
-obslist_path = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/S2_Zenith_Calcut_8s_Autos_Chirp.txt'
-pathlist_path = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/S2_Zenith_Calcut_8s_Autos_Chirp_paths.txt'
-outpath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Catalogs/Ant_Pol/Chirp/'
+obslist_path = '/nfs/eor-00/h1/mwilensk/Golden_Set/Golden_Set_Narrowband_OBSIDS.txt'
+pathlist_path = '/nfs/eor-00/h1/mwilensk/Golden_Set/Golden_Set_Narrowband_OBSIDS_paths.txt'
+outpath = '/nfs/eor-00/h1/mwilensk/Golden_Set/Golden_Set_Drill_Plots/Golden_Set_Drill_Plots_Narrowband/'
 flag_slices = ['All', ]
 write = {'Unflagged': True, 'All': False}
 writepath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Hists/'
 bins = np.logspace(-3, 5, num=1001)
-catalog_type = ''
-plot_type = 'ant-pol'
-band = {'Unflagged': 'fit', 'All': [4 * 10**3, 10**5]}
+catalog_type = 'waterfall'
+plot_type = 'ant-time'
+band = {'Unflagged': 'fit', 'All': [1.5 * 10**3, 10**5]}
 auto_remove = True
 fit = {'Unflagged': True, 'All': False}
 bin_window = [0, 10**3]
