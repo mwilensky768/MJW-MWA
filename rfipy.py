@@ -10,6 +10,7 @@ import time
 import os
 from scipy.stats import rayleigh
 from scipy.optimize import curve_fit
+from mpl_toolkits.mplot3d import Axes3D
 
 
 class RFI:
@@ -521,3 +522,31 @@ class RFI:
                 fig.savefig(outpath + self.obs + '_ant_pol_t' + str(time) +
                             '_f' + str(freq) + '.png')
                 plt.close(fig)
+
+    def ant_scatter(self, outpath, band=[1.5 * 10**3, 10**5], flag_slice='All'):
+
+        H, unique_freqs = self.waterfall_hist_prepare(band, plot_type='ant-time',
+                                                      fraction=False,
+                                                      flag_slice=flag_slice,
+                                                      coarse_band_ignore=False)
+
+        c = np.array(self.UV.Nants_telescope * ['b'])
+        for k in range(unique_freqs):
+            for m in range(self.UV.Npols):
+                for n in range(self.UV.Ntimes - 1):
+                    c[H[:, n, m, k] > 0] = 'r'
+                    c[H[:, n, m, k] < 1] = 'b'
+                    fig = plt.figure(figsize=(14, 8))
+                    ax = fig.add_subplot(111, projection='3d')
+                    ax.scatter(self.UV.antenna_positions[:, 0],
+                               self.UV.antenna_positions[:, 1],
+                               self.UV.antenna_positions[:, 2], c=c)
+                    ax.set_title('RFI Antenna Lightup, t = ' + str(n) + ' f = ' +
+                                 '%.1f' % (10 ** (-6) * self.UV.freq_array[0, unique_freqs[k]]) +
+                                 ' Mhz')
+                    ax.set_xlabel('X (m)')
+                    ax.set_ylabel('Y (m)')
+                    ax.set_zlabel('Z (m)')
+
+                    fig.savefig(outpath + self.obs + '_ant_scatter_f' +
+                                str(unique_freqs[k]) + '_t' + str(n) + '.png')
