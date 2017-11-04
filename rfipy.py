@@ -530,7 +530,7 @@ class RFI:
                                                       coarse_band_ignore=False)
 
         c = np.array(self.UV.Nants_telescope * ['b'])
-        for k in range(unique_freqs):
+        for k in range(len(unique_freqs)):
             for m in range(self.UV.Npols):
                 for n in range(self.UV.Ntimes - 1):
                     c[H[:, n, m, k] > 0] = 'r'
