@@ -11,4 +11,4 @@ with open(obslist_path) as f:
 for obs in obslist:
     im_list = sorted(glob.glob(inpath + obs + '*'), key=lambda name: int(name[104:-4]))
     images = [imageio.imread(im) for im in im_list]
-    imageio.mimsave(outpath + obs + '.gif', images, duration=30)
+    imageio.mimsave(outpath + obs + '.gif', images, duration=0.5)

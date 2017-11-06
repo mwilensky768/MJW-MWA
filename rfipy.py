@@ -508,11 +508,12 @@ class RFI:
         if band:
             values = np.absolute(self.data_array)
             ind = np.where((min(band) < values) & (values < max(band)))
-            times = range(min(ind[0]), max(ind[0]))
-            freqs = range(min(ind[3]), max(ind[3]))
+            times = ind[0]
+            freqs = ind[3]
 
         for (time, freq) in zip(times, freqs):
-
+            if not os.path.exists(outpath + self.obs + '_ant_pol_t' + str(time) +
+                                  '_f' + str(freq) + '.png'):
                 fig, ax = plt.subplots(figsize=(14, 8))
                 T = self.ant_pol_prepare(time, freq, amp=clip)
                 title = self.obs + ' Ant-Pol Drill t = ' + str(time) + ' f = ' + \
