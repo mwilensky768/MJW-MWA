@@ -79,9 +79,6 @@ class RFI:
             A = np.ones([self.UV.Ntimes - 1, self.UV.Nbls, self.UV.Nspws,
                          self.UV.Nfreqs, self.UV.Npols], dtype=bool)
 
-            for x in LEdges + REdges:
-                A[:, :, :, x, :] = 0
-
         return(A)
 
     def one_d_hist_prepare(self, flag_slice='Unflagged', time_drill=[],
@@ -522,6 +519,6 @@ class RFI:
                     ax.set_ylabel('Y (m)')
 
                     fig.savefig(outpath + self.obs + '_ant_scatter_f' +
-                                str(unique_freqs[k]) + '_t' + str(n) +
+                                str(unique_freqs[k]) + '_t' + str(n) + '_' +
                                 self.pol_titles[self.UV.polarization_array[m]] +
                                 '.png')

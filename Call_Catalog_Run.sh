@@ -1,6 +1,6 @@
 #! /bin/bash
 #$ -V
-#$ -N S2_Catalog
+#$ -N GS_Narrowband
 #$ -S /bin/bash
 
 echo JOBID ${JOB_ID}
