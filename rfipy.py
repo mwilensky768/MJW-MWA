@@ -61,7 +61,7 @@ class RFI:
                                   [self.UV.Ntimes, self.UV.Nbls, self.UV.Nspws,
                                    self.UV.Nfreqs, self.UV.Npols]), axis=0)
 
-    def flag_operations(self, flag_slice='Unflagged', coarse_band_ignore=False):
+    def flag_operations(self, flag_slice='Unflagged'):
 
         A = np.reshape(self.UV.flag_array, [self.UV.Ntimes, self.UV.Nbls, self.UV.Nspws,
                        self.UV.Nfreqs, self.UV.Npols])
@@ -79,25 +79,17 @@ class RFI:
             A = np.ones([self.UV.Ntimes - 1, self.UV.Nbls, self.UV.Nspws,
                          self.UV.Nfreqs, self.UV.Npols], dtype=bool)
 
-        if coarse_band_ignore:
-            coarse_width = 1.28 * 10**(6)  # coarse band width of MWA in hz
-            Ncoarse = (self.UV.freq_array[0, -1] - self.UV.freq_array[0, 0]) / coarse_width
-            Mcoarse = coarse_width / self.UV.channel_width  # Number of fine channels per coarse channel
-            LEdges = [Mcoarse * p for p in range(Ncoarse)]
-            REdges = [Mcoarse - 1 + Mcoarse * p for p in range(Ncoarse)]
-
             for x in LEdges + REdges:
                 A[:, :, :, x, :] = 0
 
         return(A)
 
-    def one_d_hist_prepare(self, flag_slice='Unflagged', time_drill=[], freq_drill=[],
-                           time_slice=[], freq_slice=[], coarse_band_ignore=False,
+    def one_d_hist_prepare(self, flag_slice='Unflagged', time_drill=[],
+                           freq_drill=[], time_slice=[], freq_slice=[],
                            bins='auto', fit=False, fit_window=[0, 10**12],
                            write=False, writepath='', bin_window=np.array([])):
 
-        flags = self.flag_operations(flag_slice=flag_slice,
-                                     coarse_band_ignore=coarse_band_ignore)
+        flags = self.flag_operations(flag_slice=flag_slice)
         values = np.absolute(self.data_array)
 
         if time_drill:
@@ -221,10 +213,9 @@ class RFI:
         ax.legend()
 
     def waterfall_hist_prepare(self, band, plot_type='freq-time', fraction=True,
-                               flag_slice='Unflagged', coarse_band_ignore=False):  # band is a tuple (min,max)
+                               flag_slice='Unflagged'):  # band is a tuple (min,max)
 
-        flags = np.reshape(self.flag_operations(flag_slice=flag_slice,
-                                                coarse_band_ignore=coarse_band_ignore),
+        flags = np.reshape(self.flag_operations(flag_slice=flag_slice),
                            self.data_array.shape)
 
         values = np.absolute(self.data_array)
@@ -302,14 +293,6 @@ class RFI:
     def image_plot(self, fig, ax, H, title, vmin, vmax, aspect_ratio=3,
                    fraction=True, y_type='time', x_type='freq'):
 
-        def sigfig(x, s=4):  # s is number of sig-figs
-            if x == 0:
-                return(0)
-            else:
-                n = int(floor(log10(np.absolute(x))))
-                y = 10**n * round(10**(-n) * x, s - 1)
-                return(y)
-
         H = np.ma.masked_equal(H, 0)
         cmap = cm.plasma
         cmap.set_bad(color='white')
@@ -338,13 +321,15 @@ class RFI:
         ax.yaxis.set_minor_locator(minor_ticks[y_type])
 
         if y_type == 'freq':
-            y_tick_labels = [str(sigfig(self.UV.freq_array[0, k]) * 10 ** (-6)) for k in ticks[y_type]]
+            y_tick_labels = ['%.1f' % (self.UV.freq_array[0, k] * 10 ** (-6))
+                             for k in ticks[y_type]]
             ax.set_yticklabels(y_tick_labels)
         elif y_type == 'ant-pol':
             y_tick_labels = np.mod(ticks[y_type], self.UV.Nants_telescope)
             ax.set_yticklabels(y_tick_labels)
         if x_type == 'freq':
-            x_tick_labels = [str(sigfig(self.UV.freq_array[0, k]) * 10 ** (-6)) for k in ticks[x_type]]
+            x_tick_labels = ['%.1f' % (self.UV.freq_array[0, k] * 10 ** (-6))
+                             for k in ticks[x_type]]
             ax.set_xticklabels(x_tick_labels)
         elif x_type == 'ant-pol':
             x_tick_labels = np.mod(ticks[x_type], self.UV.Nants_telescope)
@@ -370,24 +355,16 @@ class RFI:
 
     def rfi_catalog(self, outpath, band={}, write=False,
                     writepath='', fit=False, fit_window=[0, 10**12], bins='auto',
-                    flag_slices=['Unflagged', 'All'], coarse_band_ignore=False,
-                    bin_window=np.array([]), plot_type='freq-time',
-                    fraction=True):
-
-        def sigfig(x, s=4):  # s is number of sig-figs
-            if x == 0:
-                return(0)
-            else:
-                n = int(floor(log10(np.absolute(x))))
-                y = 10**n * round(10**(-n) * x, s - 1)
-                return(y)
+                    flag_slices=['Unflagged', 'All'], bin_window=np.array([]),
+                    plot_type='freq-time', fraction=True):
 
         if plot_type == 'freq-time':
             Amp = {}
             for flag_slice in flag_slices:
-                Amp.update(self.one_d_hist_prepare(flag_slice=flag_slice, fit=fit[flag_slice],
-                                                   write=write[flag_slice], bins=bins,
-                                                   coarse_band_ignore=coarse_band_ignore,
+                Amp.update(self.one_d_hist_prepare(flag_slice=flag_slice,
+                                                   fit=fit[flag_slice],
+                                                   write=write[flag_slice],
+                                                   bins=bins,
                                                    writepath=writepath,
                                                    fit_window=fit_window,
                                                    bin_window=bin_window))
@@ -424,10 +401,10 @@ class RFI:
                                                                     Amp[flag_slice][1][:-1] > max_loc)]),
                                     10 * np.amax(Amp[flag_slice][1])]
 
-            W, uniques = self.waterfall_hist_prepare(band[flag_slice], plot_type=plot_type,
+            W, uniques = self.waterfall_hist_prepare(band[flag_slice],
+                                                     plot_type=plot_type,
                                                      fraction=fraction,
-                                                     flag_slice=flag_slice,
-                                                     coarse_band_ignore=coarse_band_ignore)
+                                                     flag_slice=flag_slice)
             N_events = W.shape[3]
             for k in range(N_events):
 
@@ -441,7 +418,6 @@ class RFI:
                     for flag in flag_slices:
                         Amp.update(self.one_d_hist_prepare(flag_slice=flag,
                                                            time_drill=uniques[k],
-                                                           coarse_band_ignore=coarse_band_ignore,
                                                            fit=fit[flag_slice],
                                                            bins=bins,
                                                            fit_window=fit_window,
@@ -450,19 +426,19 @@ class RFI:
                                          plot_type_titles[plot_type] +
                                          str(uniques[k]))
                 elif plot_type == 'ant-time':
-                    unique_freqs = [sigfig(self.UV.freq_array[0, m]) * 10**(-6) for
-                                    m in uniques]
+                    unique_freqs = ['%.1f' % (self.UV.freq_array[0, k] * 10 ** (-6))
+                                    for m in uniques]
                     Amp = {}
                     for flag in flag_slices:
                         Amp.update(self.one_d_hist_prepare(flag_slice=flag,
                                                            freq_drill=uniques[k],
-                                                           coarse_band_ignore=coarse_band_ignore,
-                                                           fit=fit[flag_slice], bins=bins,
+                                                           fit=fit[flag_slice],
+                                                           bins=bins,
                                                            fit_window=fit_window,
                                                            bin_window=bin_window))
                     self.one_d_hist_plot(fig, ax, Amp, self.obs + ' Drill ' +
                                          plot_type_titles[plot_type] +
-                                         str(unique_freqs[k]))
+                                         unique_freqs[k])
                 ax.axvline(x=min(band[flag_slice]), color='black')
                 ax.axvline(x=max(band[flag_slice]), color='black')
 
@@ -497,14 +473,6 @@ class RFI:
 
     def ant_pol_catalog(self, outpath, times=[], freqs=[], band=[], clip=False):
 
-        def sigfig(x, s=4):  # s is number of sig-figs
-            if x == 0:
-                return(0)
-            else:
-                n = int(floor(log10(np.absolute(x))))
-                y = 10**n * round(10**(-n) * x, s - 1)
-                return(y)
-
         if band:
             values = np.absolute(self.data_array)
             ind = np.where((min(band) < values) & (values < max(band)))
@@ -517,7 +485,7 @@ class RFI:
                 fig, ax = plt.subplots(figsize=(14, 8))
                 T = self.ant_pol_prepare(time, freq, amp=clip)
                 title = self.obs + ' Ant-Pol Drill t = ' + str(time) + ' f = ' + \
-                    str(sigfig(self.UV.freq_array[0, freq]) * 10**(-6)) + ' Mhz'
+                    '%.1f' % (self.UV.freq_array[0, k] * 10 ** (-6)) + ' Mhz'
                 vmax = np.amax(T)
                 if clip:
                     vmin = min(band)
@@ -536,8 +504,7 @@ class RFI:
 
         H, unique_freqs = self.waterfall_hist_prepare(band, plot_type='ant-time',
                                                       fraction=False,
-                                                      flag_slice=flag_slice,
-                                                      coarse_band_ignore=False)
+                                                      flag_slice=flag_slice)
 
         c = np.array(self.UV.Nants_telescope * ['b'])
         for k in range(len(unique_freqs)):
@@ -550,9 +517,11 @@ class RFI:
                                self.UV.antenna_positions[:, 1], c=c)
                     ax.set_title('RFI Antenna Lightup, t = ' + str(n) + ' f = ' +
                                  '%.1f' % (10 ** (-6) * self.UV.freq_array[0, unique_freqs[k]]) +
-                                 ' Mhz')
+                                 ' Mhz ' + self.pol_titles[self.UV.polarization_array[m]])
                     ax.set_xlabel('X (m)')
                     ax.set_ylabel('Y (m)')
 
                     fig.savefig(outpath + self.obs + '_ant_scatter_f' +
-                                str(unique_freqs[k]) + '_t' + str(n) + '.png')
+                                str(unique_freqs[k]) + '_t' + str(n) +
+                                self.pol_titles[self.UV.polarization_array[m]] +
+                                '.png')
