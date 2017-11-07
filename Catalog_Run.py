@@ -14,7 +14,7 @@ writepath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Catalogs/Ant_Pol/
 bins = np.logspace(-3, 5, num=1001)
 catalog_type = ''
 plot_type = 'ant-pol'
-band = {'Unflagged': 'fit', 'All': [4e + 03, 1e + 05]}
+band = {'Unflagged': 'fit', 'All': [4e+03, 1e+05]}
 auto_remove = True
 fit = {'Unflagged': True, 'All': False}
 bin_window = [0, 10**3]

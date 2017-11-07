@@ -488,7 +488,7 @@ class RFI:
                 T = self.ant_pol_prepare(time, freq, amp=clip, write=write,
                                          writepath=writepath)
                 title = '%s Ant-Pol Drill t = %i f = %.1f Mhz ' % \
-                        (self.obs, time, self.UV.freq_array[0, k]e - 06)
+                        (self.obs, time, self.UV.freq_array[0, k] * 10 ** (-6))
                 vmax = np.amax(T)
                 if clip:
                     vmin = min(band)
@@ -519,7 +519,7 @@ class RFI:
                     ax.scatter(self.UV.antenna_positions[:, 0],
                                self.UV.antenna_positions[:, 1], c=c)
                     ax.set_title('RFI Antenna Lightup, t = %i f = %.1f Mhz %s' %
-                                 (n, self.UV.freq_array[0, unique_freqs[k]]e - 6,
+                                 (n, self.UV.freq_array[0, unique_freqs[k]] * 10**(-6),
                                   self.pol_titles[self.UV.polarization_array[m]]))
                     ax.set_xlabel('X (m)')
                     ax.set_ylabel('Y (m)')
