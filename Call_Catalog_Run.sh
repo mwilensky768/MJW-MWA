@@ -1,6 +1,6 @@
 #! /bin/bash
 #$ -V
-#$ -N GS_Narrowband
+#$ -N S2_Chirp
 #$ -S /bin/bash
 
 echo JOBID ${JOB_ID}

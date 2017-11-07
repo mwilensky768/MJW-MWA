@@ -147,9 +147,10 @@ class RFI:
                         sigma = 0
                         sigma_array[k] = sigma
                 if write:
-                    np.save(writepath + self.obs + '_' + flag_slice + '_sigma_' +
-                            self.pol_titles[self.UV.polarization_array[l]] +
-                            '.npy', sigma_array)
+                    np.save('%s%s_%s_sigma_%s.npy' % (writepath, self.obs,
+                                                      flag_slice,
+                                                      self.pol_titles[self.UV.polarization_array[l]]),
+                            sigma_array)
 
         else:
             N = np.prod(values.shape)
@@ -160,9 +161,9 @@ class RFI:
             fit = [0, ]
 
         if write:
-            np.save(writepath + self.obs + '_' + flag_slice + '_hist.npy', m)
-            np.save(writepath + self.obs + '_' + flag_slice + '_bins.npy', bins)
-            np.save(writepath + self.obs + '_' + flag_slice + '_fit.npy', fit)
+            np.save('%s%s_%s_hist.npy' % (writepath, self.obs, flag_slice), m)
+            np.save('%s%s_%s_bins.npy' % (writepath, self.obs, flag_slice), bins)
+            np.save('%s%s_%s_fit.npy' % (writepath, self.obs, flag_slice), fit)
 
         return({flag_slice: (m, bins, fit)})
 
@@ -204,7 +205,7 @@ class RFI:
         else:
             ax.set_xscale('linear')
 
-        ax.set_xlabel('Amplitude (' + self.UV.vis_units + ')')
+        ax.set_xlabel('Amplitude (%s)' % (self.UV.vis_units))
         ax.set_ylabel('Counts')
         ax.set_ylim([10**(-1), 10 * max([np.amax(data[x][0]) for x in data])])
         ax.legend()
@@ -419,9 +420,9 @@ class RFI:
                                                            bins=bins,
                                                            fit_window=fit_window,
                                                            bin_window=bin_window))
-                    self.one_d_hist_plot(fig, ax, Amp, self.obs + ' Drill ' +
-                                         plot_type_titles[plot_type] +
-                                         str(uniques[k]))
+                    self.one_d_hist_plot(fig, ax, Amp, '%s Drill %s %i' %
+                                         (self.obs, plot_type_titles[plot_type],
+                                          uniques[k]))
                 elif plot_type == 'ant-time':
                     unique_freqs = ['%.1f' % (self.UV.freq_array[0, k] * 10 ** (-6))
                                     for m in uniques]
@@ -433,9 +434,9 @@ class RFI:
                                                            bins=bins,
                                                            fit_window=fit_window,
                                                            bin_window=bin_window))
-                    self.one_d_hist_plot(fig, ax, Amp, self.obs + ' Drill ' +
-                                         plot_type_titles[plot_type] +
-                                         unique_freqs[k])
+                    self.one_d_hist_plot(fig, ax, Amp, '%s Drill %s %s' %
+                                         (self.obs, plot_type_titles[plot_type],
+                                          unique_freqs[k]))
                 ax.axvline(x=min(band[flag_slice]), color='black')
                 ax.axvline(x=max(band[flag_slice]), color='black')
 
@@ -453,48 +454,53 @@ class RFI:
 
                 for n in range(self.UV.Npols):
                     ax = fig.add_subplot(gs[gs_loc[n][0], gs_loc[n][1]])
-                    self.image_plot(fig, ax, W[:, :, n, k],
-                                    self.pol_titles[self.UV.polarization_array[n]] +
-                                    ' ' + flag_slice, MINW_list[n], MAXW_list[n],
+                    self.image_plot(fig, ax, W[:, :, n, k], '%s %s' %
+                                    (self.pol_titles[self.UV.polarization_array[n]],
+                                     flag_slice), MINW_list[n], MAXW_list[n],
                                     aspect_ratio=aspect[plot_type], fraction=fraction,
                                     y_type=y_type[plot_type], x_type=x_type[plot_type])
 
                 plt.tight_layout()
                 if plot_type == 'freq-time':
-                    fig.savefig(outpath + self.obs + '_' + plot_type + '_' + flag_slice +
-                                '.png')
+                    fig.savefig('%s%s_%s_%s.png' % (outpath, self.obs, plot_type,
+                                                    flag_slice))
                 else:
-                    fig.savefig(outpath + self.obs + plot_type + flag_slice +
-                                '_' + path_labels[plot_type] + str(uniques[k]) + '.png')
+                    fig.savefig('%s%s%s%s_%s%i.png' % (outpath, self.obs, plot_type,
+                                flag_slice, path_labels[plot_type], uniques[k]))
                 plt.close(fig)
 
-    def ant_pol_catalog(self, outpath, times=[], freqs=[], band=[], clip=False):
+    def ant_pol_catalog(self, outpath, times=[], freqs=[], band=[], clip=False,
+                        write=False, writepath=''):
 
         if band:
             values = np.absolute(self.data_array)
             ind = np.where((min(band) < values) & (values < max(band)))
+            if write:
+                np.save('%s%s_ind.npy' % (writepath, self.obs), ind)
             times = ind[0]
             freqs = ind[3]
 
         for (time, freq) in zip(times, freqs):
-            if not os.path.exists(outpath + self.obs + '_ant_pol_t' + str(time) +
-                                  '_f' + str(freq) + '.png'):
+            if not os.path.exists('%s%s_ant_pol_t%i_f%i.png' %
+                                  (outpath, self.obs, time, freq)):
+
                 fig, ax = plt.subplots(figsize=(14, 8))
-                T = self.ant_pol_prepare(time, freq, amp=clip)
-                title = self.obs + ' Ant-Pol Drill t = ' + str(time) + ' f = ' + \
-                    '%.1f' % (self.UV.freq_array[0, k] * 10 ** (-6)) + ' Mhz'
+                T = self.ant_pol_prepare(time, freq, amp=clip, write=write,
+                                         writepath=writepath)
+                title = '%s Ant-Pol Drill t = %i f = %.1f Mhz ' % \
+                        (self.obs, time, self.UV.freq_array[0, k]e - 06)
                 vmax = np.amax(T)
                 if clip:
                     vmin = min(band)
                 else:
                     vmin = np.amin(T)
 
-                self.image_plot(fig, ax, T, title, vmin, vmax, aspect_ratio=1, fraction=False,
-                                y_type='ant-pol', x_type='ant-pol')
+                self.image_plot(fig, ax, T, title, vmin, vmax, aspect_ratio=1,
+                                fraction=False, y_type='ant-pol', x_type='ant-pol')
 
                 plt.tight_layout()
-                fig.savefig(outpath + self.obs + '_ant_pol_t' + str(time) +
-                            '_f' + str(freq) + '.png')
+                fig.savefig('%s%s_ant_pol_t%i_f%i.png' % (outpath, self.obs,
+                                                          time, freq))
                 plt.close(fig)
 
     def ant_scatter(self, outpath, band=[1.5 * 10**3, 10**5], flag_slice='All'):
@@ -512,13 +518,12 @@ class RFI:
                     fig, ax = plt.subplots(figsize=(14, 8))
                     ax.scatter(self.UV.antenna_positions[:, 0],
                                self.UV.antenna_positions[:, 1], c=c)
-                    ax.set_title('RFI Antenna Lightup, t = ' + str(n) + ' f = ' +
-                                 '%.1f' % (10 ** (-6) * self.UV.freq_array[0, unique_freqs[k]]) +
-                                 ' Mhz ' + self.pol_titles[self.UV.polarization_array[m]])
+                    ax.set_title('RFI Antenna Lightup, t = %i f = %.1f Mhz %s' %
+                                 (n, self.UV.freq_array[0, unique_freqs[k]]e - 6,
+                                  self.pol_titles[self.UV.polarization_array[m]]))
                     ax.set_xlabel('X (m)')
                     ax.set_ylabel('Y (m)')
 
-                    fig.savefig(outpath + self.obs + '_ant_scatter_f' +
-                                str(unique_freqs[k]) + '_t' + str(n) + '_' +
-                                self.pol_titles[self.UV.polarization_array[m]] +
-                                '.png')
+                    fig.savefig('%s%s_ant_scatter_%s_f%i_t%i.png' %
+                                (outpath, self.obs, self.pol_titles[self.UV.polarization_array[m]],
+                                 unique_freqs[k], n))

@@ -5,16 +5,16 @@ import numpy as np
 
 # Set these in the beginning every time! Also remember to pick the right type of catalog!
 
-obslist_path = '/nfs/eor-00/h1/mwilensk/Golden_Set/Golden_Set_Narrowband_OBSIDS.txt'
-pathlist_path = '/nfs/eor-00/h1/mwilensk/Golden_Set/Golden_Set_Narrowband_OBSIDS_paths.txt'
-outpath = '/nfs/eor-00/h1/mwilensk/Golden_Set_8s_Autos/Catalogs/Ant_Scatter/Narrowband/'
+obslist_path = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/S2_Zenith_Calcut_8s_Autos_Chirp.txt'
+pathlist_path = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/S2_Zenith_Calcut_8s_Autos_Chirp_paths.txt'
+outpath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Catalogs/Ant_Pol/Chirp/'
 flag_slices = ['All', ]
 write = {'Unflagged': True, 'All': False}
-writepath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Hists/'
+writepath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Catalogs/Ant_Pol/Chirp_Arr/'
 bins = np.logspace(-3, 5, num=1001)
-catalog_type = 'ant-scatter'
-plot_type = 'ant-scatter'
-band = {'Unflagged': 'fit', 'All': [1.5 * 10**3, 10**5]}
+catalog_type = ''
+plot_type = 'ant-pol'
+band = {'Unflagged': 'fit', 'All': [4e + 03, 1e + 05]}
 auto_remove = True
 fit = {'Unflagged': True, 'All': False}
 bin_window = [0, 10**3]
@@ -51,6 +51,7 @@ if not output_list:
     elif catalog_type is 'ant-scatter':
         RFI.ant_scatter(outpath, band=band['All'], flag_slice=flag_slices[0])
     elif plot_type is 'ant-pol':
-        RFI.ant_pol_catalog(outpath, band=band['All'], clip=clip)
+        RFI.ant_pol_catalog(outpath, band=band['All'], clip=clip,
+                            write=write['Unflagged'], writepath=writepath)
 else:
     print('I already processed obs ' + str(obs))
