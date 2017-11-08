@@ -424,7 +424,7 @@ class RFI:
                                          (self.obs, plot_type_titles[plot_type],
                                           uniques[k]))
                 elif plot_type == 'ant-time':
-                    unique_freqs = ['%.1f' % (self.UV.freq_array[0, k] * 10 ** (-6))
+                    unique_freqs = ['%.1f' % (self.UV.freq_array[0, m] * 10 ** (-6))
                                     for m in uniques]
                     Amp = {}
                     for flag in flag_slices:
@@ -485,10 +485,9 @@ class RFI:
                                   (outpath, self.obs, time, freq)):
 
                 fig, ax = plt.subplots(figsize=(14, 8))
-                T = self.ant_pol_prepare(time, freq, amp=clip, write=write,
-                                         writepath=writepath)
+                T = self.ant_pol_prepare(time, freq, amp=clip)
                 title = '%s Ant-Pol Drill t = %i f = %.1f Mhz ' % \
-                        (self.obs, time, self.UV.freq_array[0, k] * 10 ** (-6))
+                        (self.obs, time, self.UV.freq_array[0, freq] * 10 ** (-6))
                 vmax = np.amax(T)
                 if clip:
                     vmin = min(band)
