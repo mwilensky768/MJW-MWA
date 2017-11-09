@@ -107,10 +107,10 @@ class RFI:
             flags = flags[:, :, :, freq_drill:freq_drill + 1, :]
             drill_label = 'f = %.1f Mhz' % (self.UV.freq_array[0, freq_drill])
         if freq_exc:
-            values = np.concatenate(values[:, :, :, :freq_exc, :],
-                                    values[:, :, :, freq_exc + 1:, :], axis=3)
-            flags = np.concatenate(flags[:, :, :, :freq_exc, :],
-                                   flags[:, :, :, freq_exc + 1:, :], axis=3)
+            values = np.concatenate((values[:, :, :, :freq_exc, :],
+                                     values[:, :, :, freq_exc + 1:, :]), axis=3)
+            flags = np.concatenate((flags[:, :, :, :freq_exc, :],
+                                    flags[:, :, :, freq_exc + 1:, :]), axis=3)
             exc_label = 'f != %.1f Mhz' % (self.UV.freq_array[0, freq_exc])
 
         if bins is 'auto':
@@ -282,7 +282,7 @@ class RFI:
         bin_centers = data[x][1][:-1] + 0.5 * bin_widths
         for label in data:
             ax.step(data[label][1][:-1], data[label][0], where='pre', label=label,
-                    zorder=zorder[:label.find(' ')])
+                    zorder=zorder[label[:label.find(' ')]])
             if len(data[label][2]) > 1:
                 ax.plot(bin_centers, data[label][2], label=label + ' Fit', zorder=10)
                 if res_ax:
