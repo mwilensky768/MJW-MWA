@@ -179,7 +179,7 @@ class RFI:
         return({'%s %s %s' % (flag_slice, drill_label, exc_label): (m, bins, fit)})
 
     def waterfall_hist_prepare(self, band, plot_type='freq-time', fraction=True,
-                               flag_slice='Unflagged'):  # band is a tuple (min,max)
+                               flag_slice='Unflagged'):
 
         flags = np.reshape(self.flag_operations(flag_slice=flag_slice),
                            self.data_array.shape)
@@ -256,11 +256,20 @@ class RFI:
 
         return(T)
 
-    def vis_avg_prepare(self, outpath, band=[1.5 * 10**3, 10**5], flag_slice='All'):
+    def vis_avg_prepare(self, band=[1.5 * 10**3, 10**5], flag_slice='All'):
 
         values = np.absolute(self.data_array)
         flags = self.flag_operations(flag_slice)
         ind = np.where((min(band) < values) & (values < max(band)) & (flags > 0))
+        unique_bls = np.unique(ind[1])
+        bool_ind = np.zeros(len(self.UV.Nbls), dtype=bool)
+        for bl in unique_bls:
+            bool_ind[bl] = 1
+        avg_affected = np.mean(values[:, bool_ind, :, :, :], axis=1)
+        avg_unaffected = np.mean(values[:, np.logical_not(bool_ind), :, :, :],
+                                 axis=1)
+
+        return({'Affected': avg_affected, 'Unaffected': avg_unaffected})
 
     def one_d_hist_plot(self, fig, ax, data, title, ylog=True, xlog=True, res_ax=[]):  # Data/title are tuples if multiple hists
 
@@ -305,10 +314,18 @@ class RFI:
         ax.set_ylim([10**(-1), 10 * max([np.amax(data[x][0]) for x in data])])
         ax.legend()
 
-    def line_plot(self, fig, ax, data, title, x_type='freq', y_type='vis_amp'):
+    def line_plot(self, fig, ax, data, title, xlabel='Frequency (Mhz)',
+                  ylabel='Visibility Amplitude'):
 
         for label in data:
-            break
+            ax.plot(data[label], label=label)
+
+        ax.set_title(title)
+        ax.set_ylabel(ylabel)
+        ax.set_xlabel(xlabel)
+        if x_type is 'Frequency (Mhz)':
+            ax.set_xticklabels(['%.1f' % (self.UV.freq_array[0, tick] * 10**(-6))
+                                for tick in ax.get_xticks()])
 
     def image_plot(self, fig, ax, H, title, vmin, vmax, aspect_ratio=3,
                    fraction=True, y_type='time', x_type='freq'):
@@ -535,6 +552,24 @@ class RFI:
                 fig.savefig('%s%s_ant_pol_t%i_f%i.png' % (outpath, self.obs,
                                                           time, freq))
                 plt.close(fig)
+
+    def vis_avg_catalog(self, outpath, band=[1.5 * 10**3, 10**5],
+                        flag_slice='All'):
+
+        data = self.vis_avg_prepare(band=band, flag_slice=flag_slice)
+
+        for m in range(self.UV.Ntimes - 1):
+            if self.UV.Npols > 1:
+                fig, ax = plt.subplots(figsize=(14, 8), nrows=2, ncols=2)
+            else:
+                fig, ax = plt.subplots(figsize=(14, 8))
+            for n in range(self.UV.Npols):
+                self.line_plot(fig, ax[k / 2][k % 2],
+                               {label: data[label][m, :, :, n] for label in data},
+                               self.pol_titles[self.UV.polarization_array[n]])
+            fig.suptitle('%s Visibility Difference Average per Frequency' %
+                         (self.obs))
+            fig.savefig('%s%s_Vis_Avg_t%i' % (outpath, self.obs, m))
 
     def ant_scatter(self, outpath, band=[1.5 * 10**3, 10**5], flag_slice='All'):
 
