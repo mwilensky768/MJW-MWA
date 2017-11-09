@@ -12,7 +12,7 @@ flag_slices = ['All', ]
 write = {'Unflagged': False, 'All': False}
 writepath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Catalogs/Ant_Pol/Chirp_Arr/'
 bins = np.logspace(-3, 5, num=1001)
-catalog_type = 'waterfall'
+catalog_type = 'vis_avg'
 plot_type = 'ant-time'
 band = {'Unflagged': 'fit', 'All': [1.5e+03, 1e+05]}
 auto_remove = True
@@ -44,6 +44,8 @@ if not output_list:
                         band=band, flag_slices=flag_slices, plot_type=plot_type,
                         fit=fit, fit_window=fit_window, bin_window=bin_window,
                         fraction=False)
+    elif catalog_type is 'vis_avg':
+        RFI.vis_avg_catalog(outpath, band=band[flag_slices[0]], flag_slice=flag_slices[0])
     elif catalog_type is 'temperature':
         RFI.one_d_hist_prepare(flag_slice=flag_slices[2], bins=bins,
                                fit_window=fit_window, bin_window=bin_window,
