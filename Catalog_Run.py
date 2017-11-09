@@ -7,7 +7,7 @@ import numpy as np
 
 obslist_path = '/nfs/eor-00/h1/mwilensk/Golden_Set/Golden_Set_Narrowband_OBSIDS.txt'
 pathlist_path = '/nfs/eor-00/h1/mwilensk/Golden_Set/Golden_Set_Narrowband_OBSIDS_paths.txt'
-outpath = '/nfs/eor-00/h1/mwilensk/Golden_Set_8s_Autos/Catalogs/Ant_Time/Narrowband/'
+outpath = '/nfs/eor-00/h1/mwilensk/Golden_Set_8s_Autos/Catalogs/Vis_Avg/Narrowband/'
 flag_slices = ['All', ]
 write = {'Unflagged': False, 'All': False}
 writepath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Catalogs/Ant_Pol/Chirp_Arr/'
