@@ -1,11 +1,12 @@
-import pyvudata
+import pyuvdata
 import numpy as np
+from matplotlib import use
+use('Agg')
 import matplotlib.pyplot as plt
 import glob
 import os
 
 arr_path_list = glob.glob('/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Catalogs/Ant_Pol/Chirp_Arr/*.npy')
-ant_loc = np.load('/nfs/eor-00/h1/mwilensk/MJW-MWA/Useful_Information/MWA_ant_pos.npy')
 UV = pyuvdata.UVData()
 UV.read_uvfits('/nfs/eor-10/r1/EoRuvfits/jd2456855v5_1/1089578304/1089578304.uvfits')
 outpath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Catalogs/Ant_Scatter/Chirp/'
@@ -25,7 +26,7 @@ for path in arr_path_list:
             c[UV.ant_1_array[indices[1][k]]] = 'r'
             c[UV.ant_2_array[indices[1][k]]] = 'r'
             fig, ax = plt.subplots(figsize=(14, 8))
-            ax.scatter(ant_loc[0], ant_loc[1], c=c)
+            ax.scatter(UV.antenna_positions[:, 0], UV.antenna_positions[:, 1], c=c)
             ax.set_xlabel('X (m)')
             ax.set_ylabel('Y (m)')
             ax.set_title('%s Antenna Lightup %s t = %i f = %.1f Mhz' %
