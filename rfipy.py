@@ -83,24 +83,35 @@ class RFI:
 
     def one_d_hist_prepare(self, flag_slice='Unflagged', time_drill=[],
                            freq_drill=[], time_slice=[], freq_slice=[],
+                           freq_exc=[], time_exc=[],
                            bins='auto', fit=False, fit_window=[0, 10**12],
                            write=False, writepath='', bin_window=np.array([])):
 
         flags = self.flag_operations(flag_slice=flag_slice)
         values = np.absolute(self.data_array)
+        drill_label = ''
+        exc_label = ''
 
         if time_drill:
             values = values[time_drill:time_drill + 1, :, :, :, :]
             flags = flags[time_drill:time_drill + 1, :, :, :, :]
-        if time_slice:
-            values = values[min(time_slice):max(time_slice), :, :, :, :]
-            flags = flags[min(time_slice):max(time_slice), :, :, :, :]
+            drill_label = 't = %i' % (time_drill)
+        if time_exc:
+            values = np.concatenate((values[:time_exc, :, :, :, :],
+                                     values[time_exc + 1:, :, :, :, :]), axis=0)
+            flags = np.concatenate((flags[:time_exc, :, :, :, :],
+                                    flags[time_exc + 1:, :, :, :, :]), axis=0)
+            exc_label = 't != %i' % (time_exc)
         if freq_drill:
             values = values[:, :, :, freq_drill:freq_drill + 1, :]
             flags = flags[:, :, :, freq_drill:freq_drill + 1, :]
-        if freq_slice:
-            values = values[:, :, :, min(freq_slice):max(freq_slice), :]
-            flags = flags[:, :, :, min(freq_slice):max(freq_slice), :]
+            drill_label = 'f = %.1f Mhz' % (self.UV.freq_array[0, freq_drill])
+        if freq_exc:
+            values = np.concatenate(values[:, :, :, :freq_exc, :],
+                                    values[:, :, :, freq_exc + 1:, :], axis=3)
+            flags = np.concatenate(flags[:, :, :, :freq_exc, :],
+                                   flags[:, :, :, freq_exc + 1:, :], axis=3)
+            exc_label = 'f != %.1f Mhz' % (self.UV.freq_array[0, freq_exc])
 
         if bins is 'auto':
             MIN = np.amin(values[values > 0])
@@ -165,50 +176,7 @@ class RFI:
             np.save('%s%s_%s_bins.npy' % (writepath, self.obs, flag_slice), bins)
             np.save('%s%s_%s_fit.npy' % (writepath, self.obs, flag_slice), fit)
 
-        return({flag_slice: (m, bins, fit)})
-
-    def one_d_hist_plot(self, fig, ax, data, title, ylog=True, xlog=True, res_ax=[]):  # Data/title are tuples if multiple hists
-
-        zorder = {'Unflagged': 8, 'Flagged': 6, 'And': 4, 'XOR': 2, 'All': 0}
-
-        for x in data:
-            break
-
-        bin_widths = np.diff(data[x][1])
-        bin_centers = data[x][1][:-1] + 0.5 * bin_widths
-        for label in data:
-            ax.step(data[label][1][:-1], data[label][0], where='pre', label=label,
-                    zorder=zorder[label])
-            if len(data[label][2]) > 1:
-                ax.plot(bin_centers, data[label][2], label=label + ' Fit', zorder=10)
-                if res_ax:
-                    residual = data[label][0] - data[label][2]
-                    if np.all(data[label][2] > 0):
-                        chi_square = np.sum((residual**2) / data[label][2]) / (len(data[label][1]) - 2)
-                        res_label = 'Residual: chi_square/DoF = ' + str(chi_square)
-                    else:
-                        res_label = 'Residual'
-                    res_ax.plot(bin_centers, residual, label='Residual')
-                    res_ax.set_xscale('log', nonposy='clip')
-                    res_ax.set_yscale('linear')
-                    res_ax.legend()
-
-        ax.set_title(title)
-
-        if ylog:
-            ax.set_yscale('log', nonposy='clip')
-        else:
-            ax.set_yscale('linear')
-
-        if xlog:
-            ax.set_xscale('log', nonposy='clip')
-        else:
-            ax.set_xscale('linear')
-
-        ax.set_xlabel('Amplitude (%s)' % (self.UV.vis_units))
-        ax.set_ylabel('Counts')
-        ax.set_ylim([10**(-1), 10 * max([np.amax(data[x][0]) for x in data])])
-        ax.legend()
+        return({'%s %s %s' % (flag_slice, drill_label, exc_label): (m, bins, fit)})
 
     def waterfall_hist_prepare(self, band, plot_type='freq-time', fraction=True,
                                flag_slice='Unflagged'):  # band is a tuple (min,max)
@@ -287,6 +255,60 @@ class RFI:
                       self.UV.ant_1_array[m] + q[self.pol_titles[self.UV.polarization_array[n]]][1]] = A.real
 
         return(T)
+
+    def vis_avg_prepare(self, outpath, band=[1.5 * 10**3, 10**5], flag_slice='All'):
+
+        values = np.absolute(self.data_array)
+        flags = self.flag_operations(flag_slice)
+        ind = np.where((min(band) < values) & (values < max(band)) & (flags > 0))
+
+    def one_d_hist_plot(self, fig, ax, data, title, ylog=True, xlog=True, res_ax=[]):  # Data/title are tuples if multiple hists
+
+        zorder = {'Unflagged': 8, 'Flagged': 6, 'And': 4, 'XOR': 2, 'All': 0}
+
+        for x in data:
+            break
+
+        bin_widths = np.diff(data[x][1])
+        bin_centers = data[x][1][:-1] + 0.5 * bin_widths
+        for label in data:
+            ax.step(data[label][1][:-1], data[label][0], where='pre', label=label,
+                    zorder=zorder[:label.find(' ')])
+            if len(data[label][2]) > 1:
+                ax.plot(bin_centers, data[label][2], label=label + ' Fit', zorder=10)
+                if res_ax:
+                    residual = data[label][0] - data[label][2]
+                    if np.all(data[label][2] > 0):
+                        chi_square = np.sum((residual**2) / data[label][2]) / (len(data[label][1]) - 2)
+                        res_label = 'Residual: chi_square/DoF = ' + str(chi_square)
+                    else:
+                        res_label = 'Residual'
+                    res_ax.plot(bin_centers, residual, label='Residual')
+                    res_ax.set_xscale('log', nonposy='clip')
+                    res_ax.set_yscale('linear')
+                    res_ax.legend()
+
+        ax.set_title(title)
+
+        if ylog:
+            ax.set_yscale('log', nonposy='clip')
+        else:
+            ax.set_yscale('linear')
+
+        if xlog:
+            ax.set_xscale('log', nonposy='clip')
+        else:
+            ax.set_xscale('linear')
+
+        ax.set_xlabel('Amplitude (%s)' % (self.UV.vis_units))
+        ax.set_ylabel('Counts')
+        ax.set_ylim([10**(-1), 10 * max([np.amax(data[x][0]) for x in data])])
+        ax.legend()
+
+    def line_plot(self, fig, ax, data, title, x_type='freq', y_type='vis_amp'):
+
+        for label in data:
+            break
 
     def image_plot(self, fig, ax, H, title, vmin, vmax, aspect_ratio=3,
                    fraction=True, y_type='time', x_type='freq'):
@@ -420,6 +442,12 @@ class RFI:
                                                            bins=bins,
                                                            fit_window=fit_window,
                                                            bin_window=bin_window))
+                        Amp.update(self.one_d_hist_prepare(flag_slice=flag,
+                                                           time_exc=uniques[k],
+                                                           fit=fit[flag_slice],
+                                                           bins=bins,
+                                                           fit_window=fit_window,
+                                                           bin_window=bin_window))
                     self.one_d_hist_plot(fig, ax, Amp, '%s Drill %s %i' %
                                          (self.obs, plot_type_titles[plot_type],
                                           uniques[k]))
@@ -434,7 +462,13 @@ class RFI:
                                                            bins=bins,
                                                            fit_window=fit_window,
                                                            bin_window=bin_window))
-                    self.one_d_hist_plot(fig, ax, Amp, '%s Drill %s %s' %
+                        Amp.update(self.one_d_hist_prepare(flag_slice=flag,
+                                                           freq_exc=uniques[k],
+                                                           fit=fit[flag_slice],
+                                                           bins=bins,
+                                                           fit_window=fit_window,
+                                                           bin_window=bin_window))
+                    self.one_d_hist_plot(fig, ax, Amp, '%s Drill %s %s Mhz' %
                                          (self.obs, plot_type_titles[plot_type],
                                           unique_freqs[k]))
                 ax.axvline(x=min(band[flag_slice]), color='black')
