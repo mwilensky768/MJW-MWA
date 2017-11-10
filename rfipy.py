@@ -262,7 +262,7 @@ class RFI:
         flags = self.flag_operations(flag_slice)
         ind = np.where((min(band) < values) & (values < max(band)) & (flags > 0))
         unique_bls = np.unique(ind[1])
-        bool_ind = np.zeros(len(self.UV.Nbls), dtype=bool)
+        bool_ind = np.zeros(self.UV.Nbls, dtype=bool)
         for bl in unique_bls:
             bool_ind[bl] = 1
         avg_affected = np.mean(values[:, bool_ind, :, :, :], axis=1)
@@ -323,7 +323,7 @@ class RFI:
         ax.set_title(title)
         ax.set_ylabel(ylabel)
         ax.set_xlabel(xlabel)
-        if x_type is 'Frequency (Mhz)':
+        if xlabel is 'Frequency (Mhz)':
             ax.set_xticklabels(['%.1f' % (self.UV.freq_array[0, tick] * 10**(-6))
                                 for tick in ax.get_xticks()])
 
@@ -564,7 +564,7 @@ class RFI:
             else:
                 fig, ax = plt.subplots(figsize=(14, 8))
             for n in range(self.UV.Npols):
-                self.line_plot(fig, ax[k / 2][k % 2],
+                self.line_plot(fig, ax[n / 2][n % 2],
                                {label: data[label][m, :, :, n] for label in data},
                                self.pol_titles[self.UV.polarization_array[n]])
             fig.suptitle('%s Visibility Difference Average per Frequency' %
