@@ -317,8 +317,10 @@ class RFI:
     def line_plot(self, fig, ax, data, title, xlabel='Frequency (Mhz)',
                   ylabel='Visibility Amplitude'):
 
+        zorder = {'Affected': 5, 'Unaffected' : 10}
+
         for label in data:
-            ax.plot(range(len(data[label])), data[label], label=label)
+            ax.plot(range(len(data[label])), data[label], label=label, zorder=zorder[label])
 
         ax.set_title(title)
         ax.set_ylabel(ylabel)
