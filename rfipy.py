@@ -318,14 +318,17 @@ class RFI:
                   ylabel='Visibility Amplitude'):
 
         for label in data:
-            ax.plot(data[label], label=label)
+            ax.plot(range(len(data[label])), data[label], label=label)
 
         ax.set_title(title)
         ax.set_ylabel(ylabel)
         ax.set_xlabel(xlabel)
-        if xlabel is 'Frequency (Mhz)':
-            ax.set_xticklabels(['%.1f' % (self.UV.freq_array[0, tick] * 10**(-6))
-                                for tick in ax.get_xticks()])
+        ax.legend()
+        if xlabel == 'Frequency (Mhz)':
+            xticklabels = ['%.1f' % ((self.UV.freq_array[0, 0] + int(tick) *
+                                      self.UV.channel_width) * 10**(-6))
+                           for tick in ax.get_xticks()]
+            ax.set_xticklabels(xticklabels)
 
     def image_plot(self, fig, ax, H, title, vmin, vmax, aspect_ratio=3,
                    fraction=True, y_type='time', x_type='freq'):
@@ -565,11 +568,12 @@ class RFI:
                 fig, ax = plt.subplots(figsize=(14, 8))
             for n in range(self.UV.Npols):
                 self.line_plot(fig, ax[n / 2][n % 2],
-                               {label: data[label][m, :, :, n] for label in data},
+                               {label: data[label][m, 0, :, n] for label in data},
                                self.pol_titles[self.UV.polarization_array[n]])
             fig.suptitle('%s Visibility Difference Average per Frequency' %
                          (self.obs))
             fig.savefig('%s%s_Vis_Avg_t%i' % (outpath, self.obs, m))
+            plt.close(fig)
 
     def ant_scatter(self, outpath, band=[1.5 * 10**3, 10**5], flag_slice='All'):
 
