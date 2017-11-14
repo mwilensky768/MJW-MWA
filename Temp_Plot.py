@@ -14,16 +14,6 @@ corr_freq_chan = 128
 bftemp_path = '/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/Long_Run_Avg_Obs_Temp.npy'
 obs_count_path = '/Users/mike_e_dubs/python_stuff/RFI_Diagnostic/Long_Run_Temp_Obs_Count.npy'
 
-
-def sigfig(x, s=4):  # s is number of sig-figs
-    if x == 0:
-        return(0)
-    else:
-        n = int(floor(log10(np.absolute(x))))
-        y = 10**n * round(10**(-n) * x, s - 1)
-        return(y)
-
-
 UV = pyuvdata.UVData()
 UV.read_uvfits(freq_array_obs_path)
 
@@ -93,7 +83,7 @@ vmax = dict(zip(pols, [auto_pol_max, auto_pol_max, cross_pol_max, cross_pol_max]
 vmin = dict(zip(pols, [auto_pol_min, auto_pol_min, cross_pol_min, cross_pol_min]))
 xticks = [UV.Nfreqs / 6 * l for l in range(6)]
 xticks.append(UV.Nfreqs - 1)
-xticklabels = [str(sigfig(UV.freq_array[0, k]) * 10**(-6)) for k in xticks]
+xticklabels = ['%.1f' % (UV.freq_array[0, k] * 10**(-6)) for k in xticks]
 for k in range(4):
     sigma[pols[k]] = np.ma.masked_equal(sigma[pols[k]], 0)
     cmap = cm.cool
@@ -111,8 +101,8 @@ for k in range(4):
 
 
 corr_fig, corr_ax = plt.subplots(figsize=(14, 8))
-corr_ax.set_title('Ambient Temperature vs. Sigma f = ' +
-                  str(sigfig(UV.freq_array[0, corr_freq_chan]) * 10**(-6)) + ' Mhz (MWA)')
+corr_ax.set_title('Ambient Temperature vs. Sigma f = %.1f Mhz (MWA)' %
+                  (UV.freq_array[0, corr_freq_chan] * 10**(-6)) + ' Mhz (MWA)')
 corr_ax.set_xlabel('Ambient Temperature (K)')
 corr_ax.set_ylabel('Sigma')
 corr_ax.scatter(corr_temp[corr_obs_count > 0], corr_sigma[corr_obs_count > 0])
