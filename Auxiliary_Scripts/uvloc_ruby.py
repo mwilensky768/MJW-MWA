@@ -8,9 +8,9 @@ from astropy.time import Time
 
 def main():
 
-    obsfile_name = "/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/season2_zenith_calcut.txt"
+    obsfile_name = "/nfs/eor-00/h1/mwilensk/Diffuse_2015_8s_Autos/diffuse_survey_good_pointings.txt"
     version = 5
-    subversion = 1
+    subversion = 2
     quiet = False
     delete = False
 

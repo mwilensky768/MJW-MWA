@@ -1,6 +1,6 @@
 #! /bin/bash
 #$ -V
-#$ -N GS_Narrowband
+#$ -N Diffuse_Good_Pointings
 #$ -S /bin/bash
 
 echo JOBID ${JOB_ID}
