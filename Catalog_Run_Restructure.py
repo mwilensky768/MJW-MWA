@@ -7,7 +7,7 @@ from matplotlib.ticker import FixedLocator, AutoMinorLocator
 
 obslist_path = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_8s_Autos/Diffuse_2015_Good_Pointings_Misflags.txt'
 pathlist_path = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_8s_Autos/Diffuse_2015_Good_Pointings_Misflags_paths.txt'
-outpath = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_8s_Autos/Catalogs/Good_Pointings/Misflags/Vis_Avg/'
+outpath = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_8s_Autos/Catalogs/Good_Pointings/Misflags/Vis_Avg/Avg_First/'
 flag_slices = ['All', ]
 write = {'Unflagged': False, 'All': False}
 writepath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Catalogs/Ant_Pol/Chirp_Arr/'
@@ -48,8 +48,9 @@ if not output_list:
                         fit=fit, fit_window=fit_window, bin_window=bin_window,
                         fraction=False)
     elif catalog_type is 'vis_avg':
-        cf.vis_avg_catalog(outpath, band=band[flag_slices[0]], xticks=xticks,
-                           flag_slice=flag_slices[0], yminors='auto', xminors=xminors)
+        cf.vis_avg_catalog(RFI, outpath, band=band[flag_slices[0]], xticks=xticks,
+                           flag_slice=flag_slices[0], yminors='auto', xminors=xminors,
+                           amp_avg='Avg')
     elif catalog_type is 'temperature':
         RFI.one_d_hist_prepare(flag_slice=flag_slices[2], bins=bins,
                                fit_window=fit_window, bin_window=bin_window,

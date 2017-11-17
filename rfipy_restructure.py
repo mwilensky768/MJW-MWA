@@ -252,7 +252,7 @@ class RFI:
         if amp_avg is 'Amp':
             values = np.absolute(self.data_array)
         elif amp_avg is 'Avg':
-            values = np.absolute(self.data_array)
+            values = self.data_array
         if bl_slice is 'All':
             avg = np.absolute(np.mean(values, axis=1))
             return(avg)
