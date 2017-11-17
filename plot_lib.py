@@ -2,26 +2,18 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.ticker import FixedLocator, AutoMinorLocator
 from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
 
 
-def one_d_hist_plot(fig, ax, bin_edges, counts, fit=None, count_zorder=[],
-                    fit_zorder=[], count_labels=[], fit_labels=[], xlog=True,
-                    ylog=True, xlabel='Amplitude', ylabel='Counts',
-                    title='Visibility Difference Histogram'):
+def one_d_hist_plot(fig, ax, bin_edges, counts, zorder=[], labels=[], xlog=True,
+                    ylog=True, xlabel='Amplitude', ylabel='Counts', title=''):
 
     bin_widths = np.diff(bin_edges)
     bin_centers = bin_edges[:-1] + 0.5 * bin_widths
 
     for i in range(len(count_labels)):
-        ax.step(bin_edges, counts[i], where='pre', label=count_labels[i],
-                zorder=count_zorder[i])
-
-    if fit:
-        bin_widths = np.diff(bin_edges)
-        bin_centers = bin_edges[:-1] + 0.5 * bin_widths
-        for i in range(len(fit_labels)):
-            ax.plot(bin_centers, fit[i], label=fit_labels[i],
-                    zorder=fit_zorder[i])
+        ax.step(bin_centers, counts[i], where='mid', label=labels[i],
+                zorder=zorder[i])
 
     ax.set_ylim([10**(-1), 10 * max([np.amax(x) for x in counts])])
     ax.legend()
@@ -42,10 +34,10 @@ def one_d_hist_plot(fig, ax, bin_edges, counts, fit=None, count_zorder=[],
 
 def line_plot(self, fig, ax, data, title='Visibility Difference Average',
               xlabel='Frequency (Mhz)', ylabel='Visibility Amplitude',
-              zorder=[], data_labels=[], xticklabels=[]):
+              zorder=[], labels=[], xticklabels=[]):  # Please pass data as a list
 
-    for label in data:
-        ax.plot(range(len(data[label])), data[label], label=label, zorder=zorder[label])
+    for k in range(len(data)):
+        ax.plot(data[k], label=labels[k], zorder=zorder[k])
 
     ax.set_title(title)
     ax.set_ylabel(ylabel)
@@ -55,7 +47,7 @@ def line_plot(self, fig, ax, data, title='Visibility Difference Average',
         ax.set_xticklabels(xticklabels)
 
 
-def image_plot(self, fig, ax, data, cmap, vmin=0, vmax=None, title='',
+def image_plot(fig, ax, data, cmap=cm.plasma, vmin=None, vmax=None, title='',
                aspect_ratio=3, xlabel='Frequency (Mhz)', ylabel='Time Pair',
                cbar_label='Counts RFI', xticks=[], yticks=[], xminors=None,
                yminors=None, xticklabels=None, yticklabels=None):
@@ -64,6 +56,8 @@ def image_plot(self, fig, ax, data, cmap, vmin=0, vmax=None, title='',
     cmap = cmap
     cmap.set_bad(color='white')
 
+    if not vmin:
+        vmin = np.amin(data)
     if not vmax:
         vmax = np.amax(data)
 
