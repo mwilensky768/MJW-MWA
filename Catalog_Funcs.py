@@ -42,6 +42,26 @@ def grid_setup(RFI):
     return(gs, gs_loc)
 
 
+def ax_constructor(RFI):
+
+    if RFI.UV.Npols > 1:
+        fig, ax = plt.subplots(figsize=(14, 8), nrows=2, ncols=2)
+    else:
+        fig, ax = plt.subplots(figsize=(14, 8))
+
+    return(fig, ax)
+
+
+def ax_chooser(RFI, m):
+
+    if RFI.UV.Npols > 1:
+        curr_ax = ax[m / 2][m % 2]
+    else:
+        curr_ax = ax
+
+    return(curr_ax)
+
+
 def waterfall_catalog(RFI, outpath, band={}, write={}, writepath='', fit={},
                       bins=np.logspace(-3, 5, num=1001), fraction=True,
                       flag_slices=['Unflagged', 'All'], bin_window=[0, 1e+03],
@@ -189,7 +209,7 @@ def drill_catalog(RFI, outpath, band={}, write={}, writepath='', fit={},
             ax.axvline(x=min(band[flag_slice]), color='black')
             ax.axvline(x=max(band[flag_slice]), color='black')
 
-            MAXW_list, MINW_list = ext_list_selector(RFI, W[:, :, :, uniques[k]])
+            MAXW_list, MINW_list = ext_list_selector(RFI, H[:, :, :, uniques[k]])
 
             for n in range(self.UV.Npols):
                 ax = fig.add_subplot(gs[gs_loc[n][0], gs_loc[n][1]])
@@ -222,17 +242,11 @@ def vis_avg_catalog(RFI, outpath, band=[1.5 * 10**3, 10**5], flag_slice='All',
                                bl_slice=bl_slice, amp_avg=amp_avg)
 
     if plot_type is 'waterfall':
-        if RFI.UV.Npols > 1:
-            fig, ax = plt.subplots(figsize=(14, 8), nrows=2, ncols=2)
-        else:
-            fig, ax = plt.subplots(figsize=(14, 8))
+        fig, ax = ax_constructor(RFI)
         fig.suptitle('%s Visibility Difference Averages, %s First' %
                      (RFI.obs, amp_avg))
         for m in range(RFI.UV.Npols):
-            if RFI.UV.Npols > 1:
-                curr_ax = ax[m / 2][m % 2]
-            else:
-                curr_ax = ax
+            curr_ax = ax_chooser(RFI, m)
             plot_lib.image_plot(fig, curr_ax, data[:, 0, :, m],
                                 title='%s %s Flags %s Bls' %
                                 (RFI.pols[m], flag_slice, bl_slice),
@@ -246,15 +260,9 @@ def vis_avg_catalog(RFI, outpath, band=[1.5 * 10**3, 10**5], flag_slice='All',
         plt.close(fig)
     else:
         for m in range(RFI.UV.Ntimes - 1):
-            if RFI.UV.Npols > 1:
-                fig, ax = plt.subplots(figsize=(14, 8), nrows=2, ncols=2)
-            else:
-                fig, ax = plt.subplots(figsize=(14, 8))
+            fig, ax = ax_constructor(RFI)
             for n in range(RFI.UV.Npols):
-                if RFI.UV.Npols > 1:
-                    curr_ax = ax[n / 2][n % 2]
-                else:
-                    curr_ax = ax
+                curr_ax = ax_chooser(RFI, n)
                 plot_lib.line_plot(fig, curr_ax, ylabel=RFI.UV.vis_units,
                                    labels=['Affected Baselines', 'Unaffected Baselines'],
                                    zorder=[1, 2], xticks=xticks,
@@ -267,4 +275,54 @@ def vis_avg_catalog(RFI, outpath, band=[1.5 * 10**3, 10**5], flag_slice='All',
             fig.suptitle('%s Visibility Difference Average (%s First)' %
                          (RFI.obs, amp_avg))
             fig.savefig('%s%s_Vis_Avg_t%i.png' % (outpath, RFI.obs, m))
+            plt.close(fig)
+
+
+def ant_scatter_catalog(RFI, outpath, band, flag_slice='All'):
+    ant_locs = RFI.ant_scatter_prepare()
+    H, uniques = RFI.drill_hist_prepare(band, flag_slice='All', drill_type='freq')
+
+    for i in range(len(uniques)):
+        for k in range(len(RFI.UV.Ntimes - 1)):
+            fig, ax = ax_constructor(RFI)
+            fig.suptitle('RFI Antenna Lightup t%i f%.1f' % (k, RFI.UV.freq_array[0, uniques[i]]))
+            for m in range(len(RFI.UV.Npols)):
+                c = np.array(RFI.UV.Nants_telescope * ['b'])
+                c[H[:, k, m, uniques[i]] > 0] = 'r'
+                curr_ax = ax_chooser(RFI, m)
+                plot_lib.scatter_plot_2d(fig, curr_ax, ant_locs[:, 0], ant_locs[:, 1],
+                                         title=RFI.pols[m], xlabel='X (m)', ylabel='Y (m)',
+                                         c=c)
+            fig.savefig('%s%s_Ant_Scatter_f%i_t%i' % (outpath, RFI.obs, uniques[i], k))
+            plt.close(fig)
+
+
+def ant_pol_catalog(RFI, outpath, times=[], freqs=[], band=[]):
+
+    if band:
+        ind = RFI.reverse_index(band, flag_slice='All')
+        times = ind[0]
+        freqs = ind[3]
+
+    for (time, freq) in zip(times, freqs):
+        if not os.path.exists('%s%s_ant_pol_t%i_f%i.png' %
+                              (outpath, self.obs, time, freq)):
+
+            fig, ax = plt.subplots(figsize=(14, 8))
+            T = RFI.ant_pol_prepare(time, freq, amp=clip)
+            title = '%s Ant-Pol Drill t = %i f = %.1f Mhz ' % \
+                    (RFI.obs, time, RFI.UV.freq_array[0, freq] * 10 ** (-6))
+            vmax = np.amax(T)
+            if clip:
+                vmin = min(band)
+            else:
+                vmin = np.amin(T)
+
+            plot_lib.image_plot(fig, ax, T, vmin=vmin, vmax=vmax, title=title,
+                                aspect_ratio=1, xlabel='Antenna 2 Index',
+                                ylabel='Antenna 1 Index',
+                                cbar_label=RFI.UV.vis_units)
+
+            fig.savefig('%s%s_ant_pol_t%i_f%i.png' % (outpath, self.obs,
+                                                      time, freq))
             plt.close(fig)

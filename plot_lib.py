@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
-from matplotlib import cm
+from matplotlib import cm, use
+use('Agg')
 from matplotlib.ticker import FixedLocator, AutoMinorLocator
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
@@ -92,8 +93,8 @@ def image_plot(fig, ax, data, cmap=cm.plasma, vmin=None, vmax=None, title='',
     ax.set_aspect(aspect_ratio)
 
 
-def scatter_plot(self, fig, ax, x_data, y_data, title='', xlabel='',
-                 ylabel='', c=[]):
+def scatter_plot_2d(fig, ax, x_data, y_data, title='', xlabel='', ylabel='',
+                    c=[]):
 
     if c:
         ax.scatter(x, y, c=c)
@@ -102,3 +103,16 @@ def scatter_plot(self, fig, ax, x_data, y_data, title='', xlabel='',
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
+
+
+def scatter_plot_3d(fig, ax, x_data, y_data, z_data, title='', xlabel='',
+                    ylabel='', zlabel='', c=[]):
+
+    if c:
+        ax.scatter(x, y, z, c=c)
+    else:
+        ax.scatter(x, y, z)
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_zlabel(zlabel)
