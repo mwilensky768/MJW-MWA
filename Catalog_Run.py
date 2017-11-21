@@ -1,4 +1,4 @@
-import rfipy_restructure as rfi
+import rfipy as rfi
 import Catalog_Funcs as cf
 import argparse
 import glob
