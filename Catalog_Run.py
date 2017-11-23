@@ -5,9 +5,9 @@ import glob
 import numpy as np
 from matplotlib.ticker import FixedLocator, AutoMinorLocator
 
-obslist_path = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_8s_Autos/Diffuse_2015_Good_Pointings_Funky.txt'
-pathlist_path = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_8s_Autos/Diffuse_2015_Good_Pointings_Funky_paths.txt'
-outpath = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_8s_Autos/Catalogs/Good_Pointings/Funky/Vis_Avg/Amp_First/'
+obslist_path = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/S2_Zenith_Calcut_8s_Autos_Chirp.txt'
+pathlist_path = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/S2_Zenith_Calcut_8s_Autos_Chirp_paths.txt'
+outpath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Catalogs//Vis_Avg/Avg_First/Chirp/'
 flag_slices = ['All', ]
 write = {'Unflagged': False, 'All': False}
 writepath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Catalogs/Ant_Pol/Chirp_Arr/'
@@ -50,7 +50,7 @@ if not output_list:
     elif catalog_type is 'vis_avg':
         cf.vis_avg_catalog(RFI, outpath, band=band[flag_slices[0]], xticks=xticks,
                            flag_slice=flag_slices[0], yminors='auto', xminors=xminors,
-                           amp_avg='Amp')
+                           amp_avg='Avg')
     elif catalog_type is 'temperature':
         RFI.one_d_hist_prepare(flag_slice=flag_slices[2], bins=bins,
                                fit_window=fit_window, bin_window=bin_window,

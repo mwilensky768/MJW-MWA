@@ -52,7 +52,7 @@ def ax_constructor(RFI):
     return(fig, ax)
 
 
-def ax_chooser(RFI, m):
+def ax_chooser(RFI, ax, m):
 
     if RFI.UV.Npols > 1:
         curr_ax = ax[m / 2][m % 2]
@@ -246,7 +246,7 @@ def vis_avg_catalog(RFI, outpath, band=[1.5 * 10**3, 10**5], flag_slice='All',
         fig.suptitle('%s Visibility Difference Averages, %s First' %
                      (RFI.obs, amp_avg))
         for m in range(RFI.UV.Npols):
-            curr_ax = ax_chooser(RFI, m)
+            curr_ax = ax_chooser(RFI, ax, m)
             plot_lib.image_plot(fig, curr_ax, data[:, 0, :, m],
                                 title='%s %s Flags %s Bls' %
                                 (RFI.pols[m], flag_slice, bl_slice),
@@ -262,7 +262,7 @@ def vis_avg_catalog(RFI, outpath, band=[1.5 * 10**3, 10**5], flag_slice='All',
         for m in range(RFI.UV.Ntimes - 1):
             fig, ax = ax_constructor(RFI)
             for n in range(RFI.UV.Npols):
-                curr_ax = ax_chooser(RFI, n)
+                curr_ax = ax_chooser(RFI, ax, n)
                 plot_lib.line_plot(fig, curr_ax, ylabel=RFI.UV.vis_units,
                                    labels=['Affected Baselines', 'Unaffected Baselines'],
                                    zorder=[1, 2], xticks=xticks,
@@ -289,7 +289,7 @@ def ant_scatter_catalog(RFI, outpath, band, flag_slice='All'):
             for m in range(len(RFI.UV.Npols)):
                 c = np.array(RFI.UV.Nants_telescope * ['b'])
                 c[H[:, k, m, uniques[i]] > 0] = 'r'
-                curr_ax = ax_chooser(RFI, m)
+                curr_ax = ax_chooser(RFI, ax, m)
                 plot_lib.scatter_plot_2d(fig, curr_ax, ant_locs[:, 0], ant_locs[:, 1],
                                          title=RFI.pols[m], xlabel='X (m)', ylabel='Y (m)',
                                          c=c)
