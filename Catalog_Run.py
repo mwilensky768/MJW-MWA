@@ -5,9 +5,9 @@ import glob
 import numpy as np
 from matplotlib.ticker import FixedLocator, AutoMinorLocator
 
-obslist_path = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/S2_Zenith_Calcut_8s_Autos_Chirp.txt'
-pathlist_path = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/S2_Zenith_Calcut_8s_Autos_Chirp_paths.txt'
-outpath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Catalogs//Vis_Avg/Avg_First/Chirp/'
+obslist_path = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_8s_Autos/diffuse_survey_good_pointings.txt'
+pathlist_path = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_8s_Autos/diffuse_survey_good_pointings_paths.txt'
+outpath = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_8s_Autos/Catalogs/Good_Pointings/Vis_Avg/Amp_First/'
 flag_slices = ['All', ]
 write = {'Unflagged': False, 'All': False}
 writepath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Catalogs/Ant_Pol/Chirp_Arr/'
@@ -20,6 +20,7 @@ fit = {'Unflagged': True, 'All': False}
 bin_window = [0, 1e+03]
 fit_window = [0, 1e+12]
 clip = True
+amp_avg = 'Amp'
 
 with open(obslist_path) as f:
     obslist = f.read().split("\n")
@@ -50,7 +51,7 @@ if not output_list:
     elif catalog_type is 'vis_avg':
         cf.vis_avg_catalog(RFI, outpath, band=band[flag_slices[0]], xticks=xticks,
                            flag_slice=flag_slices[0], yminors='auto', xminors=xminors,
-                           amp_avg='Avg')
+                           amp_avg=amp_avg)
     elif catalog_type is 'temperature':
         RFI.one_d_hist_prepare(flag_slice=flag_slices[2], bins=bins,
                                fit_window=fit_window, bin_window=bin_window,
