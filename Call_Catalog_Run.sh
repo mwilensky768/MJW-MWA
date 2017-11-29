@@ -1,6 +1,6 @@
 #! /bin/bash
 #$ -V
-#$ -N Diffuse_Good_Pointings
+#$ -N S2_BB
 #$ -S /bin/bash
 
 echo JOBID ${JOB_ID}

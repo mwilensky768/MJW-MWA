@@ -5,9 +5,9 @@ import glob
 import numpy as np
 from matplotlib.ticker import FixedLocator, AutoMinorLocator
 
-obslist_path = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_8s_Autos/diffuse_survey_good_pointings.txt'
-pathlist_path = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_8s_Autos/diffuse_survey_good_pointings_paths.txt'
-outpath = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_8s_Autos/Catalogs/Good_Pointings/Vis_Avg/Amp_First/'
+obslist_path = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/S2_Zenith_Calcut_8s_Autos_Broadband.txt'
+pathlist_path = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/S2_Zenith_Calcut_8s_Autos_Broadband_paths.txt'
+outpath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Catalogs/Vis_Avg/Amp_First/Broadband/'
 flag_slices = ['All', ]
 write = {'Unflagged': False, 'All': False}
 writepath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Catalogs/Ant_Pol/Chirp_Arr/'
