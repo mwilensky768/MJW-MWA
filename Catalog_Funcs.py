@@ -297,7 +297,7 @@ def ant_scatter_catalog(RFI, outpath, band, flag_slice='All'):
             plt.close(fig)
 
 
-def ant_pol_catalog(RFI, outpath, times=[], freqs=[], band=[]):
+def ant_pol_catalog(RFI, outpath, times=[], freqs=[], band=[], clip=False):
 
     if band:
         ind = RFI.reverse_index(band, flag_slice='All')

@@ -12,8 +12,9 @@ flag_slices = ['All', ]
 write = {'Unflagged': False, 'All': False}
 writepath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Catalogs/Ant_Pol/Chirp_Arr/'
 bins = np.logspace(-3, 5, num=1001)
-catalog_type = 'vis_avg'
-plot_type = 'ant-time'
+fraction = True
+catalog_types = ['vis_avg', ]
+drill_type = 'time'
 band = {'Unflagged': 'fit', 'All': [2.25e+03, 1e+05]}
 auto_remove = True
 fit = {'Unflagged': True, 'All': False}
@@ -43,23 +44,26 @@ if not output_list:
     xticks.append(RFI.UV.Nfreqs - 1)
     xminors = AutoMinorLocator(4)
 
-    if catalog_type is 'waterfall':
-        RFI.rfi_catalog(outpath, write=write, writepath=writepath, bins=bins,
-                        band=band, flag_slices=flag_slices, plot_type=plot_type,
-                        fit=fit, fit_window=fit_window, bin_window=bin_window,
-                        fraction=False)
-    elif catalog_type is 'vis_avg':
+    if 'waterfall' in catalog_types:
+        cf.waterfall_catalog(RFI, outpath, write=write, writepath=writepath, bins=bins,
+                             band=band, flag_slices=flag_slices, plot_type=plot_type,
+                             fit=fit, bin_window=bin_window, fraction=fraction)
+    if 'drill' in catalog_types:
+        cf.drill_catalog(RFI, outpath, band=band, write=write,
+                         writepath=writepath, fit=fit, bins=bins,
+                         flag_slices=flag_slices, bin_window=bin_window,
+                         xticks=xticks, xminors=xminors, drill_type='time')
+    if 'vis_avg' in catalog_types:
         cf.vis_avg_catalog(RFI, outpath, band=band[flag_slices[0]], xticks=xticks,
                            flag_slice=flag_slices[0], yminors='auto', xminors=xminors,
                            amp_avg=amp_avg)
-    elif catalog_type is 'temperature':
-        RFI.one_d_hist_prepare(flag_slice=flag_slices[2], bins=bins,
-                               fit_window=fit_window, bin_window=bin_window,
-                               write=write, writepath=writepath)
-    elif catalog_type is 'ant-scatter':
-        RFI.ant_scatter(outpath, band=band['All'], flag_slice=flag_slices[0])
-    elif plot_type is 'ant-pol':
-        RFI.ant_pol_catalog(outpath, band=band['All'], clip=clip,
-                            write=write['Unflagged'], writepath=writepath)
+    if 'temperature' in catalog_types:
+        RFI.one_d_hist_prepare(flag_slice='Unflagged', bins=bins,
+                               bin_window=bin_window, write=True,
+                               writepath=writepath)
+    if 'ant-scatter' in catalog_types:
+        cf.ant_scatter_catalog(RFI, outpath, band['All'], flag_slice=flag_slices[0])
+    if 'ant-pol' in catalog types:
+        cf.ant_pol_catalog(RFI, outpath, band=band['All'], clip=clip)
 else:
     print('I already processed obs ' + str(obs))
