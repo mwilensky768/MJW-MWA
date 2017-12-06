@@ -1,7 +1,7 @@
 #!/bin/bash
 
-obs_file_name='/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/S2_Zenith_Calcut_Autos_Rogue_OBSIDS.txt'
-obs_path_file_name='/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/S2_Zenith_Calcut_Autos_Rogue_OBSIDS_paths.txt'
+obs_file_name='/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/S2_Zenith_Calcut_8s_Autos_Rogue_OBSIDS.txt'
+obs_path_file_name='/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/S2_Zenith_Calcut_8s_Autos_Rogue_OBSIDS_paths.txt'
 N_lines=$(wc -l ${obs_file_name})
 
 for i in {1..1}

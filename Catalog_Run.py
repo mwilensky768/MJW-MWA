@@ -5,8 +5,8 @@ import glob
 import numpy as np
 from matplotlib.ticker import FixedLocator, AutoMinorLocator
 
-obslist_path = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/S2_Zenith_Calcut_Autos_Rogue_OBSIDS.txt'
-pathlist_path = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/S2_Zenith_Calcut_Autos_Rogue_OBSIDS_paths.txt'
+obslist_path = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/S2_Zenith_Calcut_8s_Autos_Rogue_OBSIDS.txt'
+pathlist_path = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/S2_Zenith_Calcut_8s_Autos_Rogue_OBSIDS_paths.txt'
 outpath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Catalogs/Vis_Avg/Amp_First/Rogue/'
 flag_slices = ['All', ]
 write = {'Unflagged': False, 'All': False}
@@ -61,9 +61,9 @@ if not output_list:
         RFI.one_d_hist_prepare(flag_slice='Unflagged', bins=bins,
                                bin_window=bin_window, write=True,
                                writepath=writepath)
-    if 'ant-scatter' in catalog_types:
+    if 'ant_scatter' in catalog_types:
         cf.ant_scatter_catalog(RFI, outpath, band['All'], flag_slice=flag_slices[0])
-    if 'ant-pol' in catalog types:
+    if 'ant_pol' in catalog_types:
         cf.ant_pol_catalog(RFI, outpath, band=band['All'], clip=clip)
 else:
     print('I already processed obs ' + str(obs))
