@@ -5,9 +5,16 @@ from matplotlib.gridspec import GridSpec
 import plot_lib
 
 
-def band_constructor(counts, bins, fit):
+def band_constructor(counts, bins, labels, flag_slice):
 
-    max_loc = min(bins[counts == np.amax(counts)])
+    for k in range(len(counts)):
+        if labels[k] == flag_slice:
+            m = k
+
+    count = counts[m]
+    fit = counts[m + 1]
+
+    max_loc = min(bins[count == np.amax(count)])
     band = [min(bins[:-1][np.logical_and(fit < 1, bins[:-1] > max_loc)]),
             10 * max(bins)]
 
@@ -66,7 +73,7 @@ def ax_chooser(RFI, ax, m):
 def waterfall_catalog(RFI, outpath, band={}, write={}, writepath='', fit={},
                       bins=np.logspace(-3, 5, num=1001), fraction=True,
                       flag_slices=['Unflagged', 'All'], bin_window=[0, 1e+03],
-                      zorder={'Unflagged': 4, 'Unflagged Fit': 3, 'All Fit': 2, 'All': 1},
+                      zorder={'Unflagged': 3, 'Unflagged Fit': 4, 'All Fit': 2, 'All': 1},
                       xticks=None, xminors=None):
 
     counts = []
@@ -90,8 +97,7 @@ def waterfall_catalog(RFI, outpath, band={}, write={}, writepath='', fit={},
 
     for flag_slice in flag_slices:
         if band[flag_slice] is 'fit':
-            band[flag_slice] = band_constructor(counts[flag_slice], bins,
-                                                hist_fit[flag_slice])
+            band[flag_slice] = band_constructor(counts, bins, labels, flag_slice)
 
         W = RFI.waterfall_hist_prepare(band[flag_slice], fraction=fraction,
                                        flag_slice=flag_slice)
@@ -112,12 +118,12 @@ def waterfall_catalog(RFI, outpath, band={}, write={}, writepath='', fit={},
 
         for n in range(RFI.UV.Npols):
             ax = fig.add_subplot(gs[gs_loc[n][0], gs_loc[n][1]])
-            plot_lib.image_plot(fig, ax, W[:, 0, :, n], cmap=cm.coolwarm,
+            plot_lib.image_plot(fig, ax, W[:, 0, :, n], cmap=cm.cool,
                                 vmin=MINW_list[n], vmax=MAXW_list[n],
                                 title='%s %s' % (RFI.pols[n], flag_slice),
                                 aspect_ratio=3, cbar_label='Fraction RFI',
                                 xticks=xticks, xminors=xminors, yminors='auto',
-                                xticklabels=['%.1f' % (RFI.UV.freq_array[0, tick])
+                                xticklabels=['%.1f' % (RFI.UV.freq_array[0, tick] * 10**(-6))
                                              for tick in xticks])
 
         plt.tight_layout()
