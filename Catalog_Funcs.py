@@ -81,12 +81,11 @@ def waterfall_catalog(RFI, outpath, band={}, write={}, writepath='', fit={},
                                                            label=flag_slice)
 
         counts.append(count)
-        counts.append(hist_fit)
         labels.append(label)
-        labels.append('%s Fit' % (label))
+        if fit[flag_slice]:
+            counts.append(hist_fit)
+            labels.append('%s Fit' % (label))
 
-    labels = np.array(labels)[[item is not None for item in counts]]
-    counts = np.array(counts)[[item is not None for item in counts]]
     gs, gs_loc = grid_setup(RFI)
 
     for flag_slice in flag_slices:
