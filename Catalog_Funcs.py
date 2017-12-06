@@ -110,7 +110,7 @@ def waterfall_catalog(RFI, outpath, band={}, write={}, writepath='', fit={},
 
         MAXW_list, MINW_list = ext_list_selector(RFI, W[:, 0, :, :])
 
-        for n in range(self.UV.Npols):
+        for n in range(RFI.UV.Npols):
             ax = fig.add_subplot(gs[gs_loc[n][0], gs_loc[n][1]])
             plot_lib.image_plot(fig, ax, W[:, 0, :, n], cmap=cm.coolwarm,
                                 vmin=MINW_list[n], vmax=MAXW_list[n],
@@ -211,7 +211,7 @@ def drill_catalog(RFI, outpath, band={}, write={}, writepath='', fit={},
 
             MAXW_list, MINW_list = ext_list_selector(RFI, H[:, :, :, uniques[k]])
 
-            for n in range(self.UV.Npols):
+            for n in range(RFI.UV.Npols):
                 ax = fig.add_subplot(gs[gs_loc[n][0], gs_loc[n][1]])
                 if drill_type is 'time':
                     xticklabels = ['%.1f' % (RFI.UV.freq_array[0, tick])
@@ -308,7 +308,7 @@ def ant_pol_catalog(RFI, outpath, times=[], freqs=[], band=[], clip=False):
 
     for (time, freq) in zip(times, freqs):
         if not os.path.exists('%s%s_ant_pol_t%i_f%i.png' %
-                              (outpath, self.obs, time, freq)):
+                              (outpath, RFI.obs, time, freq)):
 
             fig, ax = plt.subplots(figsize=(14, 8))
             T = RFI.ant_pol_prepare(time, freq, amp=clip)
@@ -325,6 +325,6 @@ def ant_pol_catalog(RFI, outpath, times=[], freqs=[], band=[], clip=False):
                                 ylabel='Antenna 1 Index',
                                 cbar_label=RFI.UV.vis_units)
 
-            fig.savefig('%s%s_ant_pol_t%i_f%i.png' % (outpath, self.obs,
+            fig.savefig('%s%s_ant_pol_t%i_f%i.png' % (outpath, RFI.obs,
                                                       time, freq))
             plt.close(fig)
