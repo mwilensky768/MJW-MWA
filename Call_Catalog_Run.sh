@@ -1,6 +1,6 @@
 #! /bin/bash
 #$ -V
-#$ -N S2_Rogue
+#$ -N D_10s
 #$ -S /bin/bash
 
 echo JOBID ${JOB_ID}

@@ -37,7 +37,7 @@ args = parser.parse_args()
 
 obs = obslist[args.id - 1]
 inpath = pathlist[args.id - 1]
-output = outpath + str(obs) + '*.png'
+output = '%s%s*.png' % (outpath[catalog_types[0]], str(obs))
 output_list = glob.glob(output)
 
 if not output_list:
