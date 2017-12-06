@@ -258,12 +258,14 @@ def vis_avg_catalog(RFI, outpath, band=[1.5 * 10**3, 10**5], flag_slice='All',
                                 yticks=yticks, yminors=yminors)
         fig.savefig('%s%s_Vis_Avg_Waterfall.png' % (outpath, RFI.obs))
         plt.close(fig)
-    else:
+    elif plot_type is 'line':
         for m in range(RFI.UV.Ntimes - 1):
             fig, ax = ax_constructor(RFI)
             for n in range(RFI.UV.Npols):
                 curr_ax = ax_chooser(RFI, ax, n)
-                plot_lib.line_plot(fig, curr_ax, ylabel=RFI.UV.vis_units,
+                plot_lib.line_plot(fig, curr_ax,
+                                   [subdata[m, 0, :, n] for subdata in data],
+                                   ylabel=RFI.UV.vis_units,
                                    labels=['Affected Baselines', 'Unaffected Baselines'],
                                    zorder=[1, 2], xticks=xticks,
                                    xticklabels=['%.1f' % (10 ** (-6) *

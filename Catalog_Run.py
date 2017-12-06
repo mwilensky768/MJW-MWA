@@ -5,23 +5,26 @@ import glob
 import numpy as np
 from matplotlib.ticker import FixedLocator, AutoMinorLocator
 
-obslist_path = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/S2_Zenith_Calcut_8s_Autos_Rogue_OBSIDS.txt'
-pathlist_path = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/S2_Zenith_Calcut_8s_Autos_Rogue_OBSIDS_paths.txt'
-outpath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Catalogs/Vis_Avg/Amp_First/Rogue/'
-flag_slices = ['All', ]
+obslist_path = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/diffuse_survey_good_pointings.txt'
+pathlist_path = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/diffuse_survey_good_pointings_paths.txt'
+outpath = {'waterfall': '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/catalogs/freq_time/',
+           'vis_avg': '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/catalogs/vis_avg/waterfall/amp_first/'}
+flag_slices = ['All', 'Unflagged']
 write = {'Unflagged': False, 'All': False}
 writepath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Catalogs/Ant_Pol/Chirp_Arr/'
 bins = np.logspace(-3, 5, num=1001)
 fraction = True
-catalog_types = ['vis_avg', ]
+catalog_types = ['vis_avg', 'waterfall']
 drill_type = 'time'
-band = {'Unflagged': 'fit', 'All': [2.25e+03, 1e+05]}
+band = {'Unflagged': 'fit', 'All': [2e+03, 1e+05]}
 auto_remove = True
 fit = {'Unflagged': True, 'All': False}
-bin_window = [0, 1e+03]
+bin_window = [0, 2e+03]
 fit_window = [0, 1e+12]
 clip = True
 amp_avg = 'Amp'
+plot_type = 'waterfall'
+bad_time_indices = [0, -4, -3, -2, -1]
 
 with open(obslist_path) as f:
     obslist = f.read().split("\n")
@@ -39,24 +42,27 @@ output_list = glob.glob(output)
 
 if not output_list:
 
-    RFI = rfi.RFI(str(obs), inpath, auto_remove=auto_remove)
+    RFI = rfi.RFI(str(obs), inpath, auto_remove=auto_remove,
+                  bad_time_indices=bad_time_indices)
     xticks = [RFI.UV.Nfreqs * k / 6 for k in range(6)]
     xticks.append(RFI.UV.Nfreqs - 1)
     xminors = AutoMinorLocator(4)
 
     if 'waterfall' in catalog_types:
-        cf.waterfall_catalog(RFI, outpath, write=write, writepath=writepath, bins=bins,
-                             band=band, flag_slices=flag_slices, plot_type=plot_type,
-                             fit=fit, bin_window=bin_window, fraction=fraction)
+        cf.waterfall_catalog(RFI, outpath['waterfall'], write=write,
+                             writepath=writepath, bins=bins, band=band,
+                             flag_slices=flag_slices, plot_type=plot_type,
+                             fit=fit, bin_window=bin_window, fraction=fraction,
+                             xticks=xticks, xminors=xminors)
     if 'drill' in catalog_types:
         cf.drill_catalog(RFI, outpath, band=band, write=write,
                          writepath=writepath, fit=fit, bins=bins,
                          flag_slices=flag_slices, bin_window=bin_window,
                          xticks=xticks, xminors=xminors, drill_type='time')
     if 'vis_avg' in catalog_types:
-        cf.vis_avg_catalog(RFI, outpath, band=band[flag_slices[0]], xticks=xticks,
+        cf.vis_avg_catalog(RFI, outpath['vis_avg'], band=band[flag_slices[0]], xticks=xticks,
                            flag_slice=flag_slices[0], yminors='auto', xminors=xminors,
-                           amp_avg=amp_avg)
+                           amp_avg=amp_avg, plot_type=plot_type)
     if 'temperature' in catalog_types:
         RFI.one_d_hist_prepare(flag_slice='Unflagged', bins=bins,
                                bin_window=bin_window, write=True,
