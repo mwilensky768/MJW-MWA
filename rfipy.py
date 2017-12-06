@@ -172,6 +172,7 @@ class RFI:
     def waterfall_hist_prepare(self, band, flag_slice='Unflagged', fraction=True):
 
         ind = self.reverse_index(band, flag_slice=flag_slice)
+        H = np.zeros(self.data_array.shape)
         H[ind] = 1
         H = np.sum(H, axis=1)
         if fraction:
