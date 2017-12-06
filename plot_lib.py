@@ -12,7 +12,7 @@ def one_d_hist_plot(fig, ax, bin_edges, counts, zorder=[], labels=[], xlog=True,
     bin_widths = np.diff(bin_edges)
     bin_centers = bin_edges[:-1] + 0.5 * bin_widths
 
-    for i in range(len(count_labels)):
+    for i in range(len(labels)):
         ax.step(bin_centers, counts[i], where='mid', label=labels[i],
                 zorder=zorder[i])
 
