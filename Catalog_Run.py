@@ -51,8 +51,8 @@ if not output_list:
     if 'waterfall' in catalog_types:
         cf.waterfall_catalog(RFI, outpath['waterfall'], write=write,
                              writepath=writepath, bins=bins, band=band,
-                             flag_slices=flag_slices, plot_type=plot_type,
-                             fit=fit, bin_window=bin_window, fraction=fraction,
+                             flag_slices=flag_slices, fit=fit,
+                             bin_window=bin_window, fraction=fraction,
                              xticks=xticks, xminors=xminors)
     if 'drill' in catalog_types:
         cf.drill_catalog(RFI, outpath, band=band, write=write,
