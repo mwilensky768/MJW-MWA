@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.gridspec import GridSpec
 import plot_lib
+import scipy.linalg
 
 
 def band_constructor(counts, bins, labels, flag_slice):
@@ -67,6 +68,24 @@ def ax_chooser(RFI, ax, m):
         curr_ax = ax
 
     return(curr_ax)
+
+
+def linear_fit(x, y):
+
+    A = np.c_[x, np.ones(len(x))]
+    C, _, _, _ = scipy.linalg.lstsq(A, y)
+    fit = C[0] * x + C[1]
+
+    return(fit)
+
+
+def planar_fit(x, y, z):
+
+    A = np.c_[x, y, np.ones(len(x))]
+    C, _, _, _ = scipy.linalg.lstsq(A, y)
+    fit = C[0] * x + C[1] * y + C[2]
+
+    return(fit)
 
 
 def waterfall_catalog(RFI, outpath, band={}, write={}, writepath='', fit={},
@@ -241,10 +260,12 @@ def drill_catalog(RFI, outpath, band={}, write={}, writepath='', fit={},
 
 def vis_avg_catalog(RFI, outpath, band=[1.5 * 10**3, 10**5], flag_slice='All',
                     bl_slice='All', amp_avg='Amp', plot_type='waterfall',
-                    xticks=[], xminors=[], yticks=[], yminors=[]):
+                    xticks=[], xminors=[], yticks=[], yminors=[], write=False,
+                    writepath=''):
 
     data = RFI.vis_avg_prepare(band=band, flag_slice=flag_slice,
-                               bl_slice=bl_slice, amp_avg=amp_avg)
+                               bl_slice=bl_slice, amp_avg=amp_avg, write=write,
+                               writepath=writepath)
 
     if plot_type is 'waterfall':
         fig, ax = ax_constructor(RFI)
@@ -263,6 +284,7 @@ def vis_avg_catalog(RFI, outpath, band=[1.5 * 10**3, 10**5], flag_slice='All',
                                 yticks=yticks, yminors=yminors)
         fig.savefig('%s%s_Vis_Avg_Waterfall.png' % (outpath, RFI.obs))
         plt.close(fig)
+
     elif plot_type is 'line':
         for m in range(RFI.UV.Ntimes - 1):
             fig, ax = ax_constructor(RFI)

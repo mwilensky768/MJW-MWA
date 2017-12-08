@@ -1,6 +1,6 @@
 #! /bin/bash
 #$ -V
-#$ -N D_10s
+#$ -N D_10s_RFI_Free
 #$ -S /bin/bash
 
 echo JOBID ${JOB_ID}

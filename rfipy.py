@@ -233,7 +233,7 @@ class RFI:
         return(T)
 
     def vis_avg_prepare(self, band=[1.5 * 10**3, 10**5], flag_slice='All',
-                        bl_slice='All', amp_avg='Amp'):
+                        bl_slice='All', amp_avg='Amp', write=False, writepath=''):
 
         if amp_avg is 'Amp':
             values = np.absolute(self.data_array)
@@ -241,6 +241,8 @@ class RFI:
             values = self.data_array
         if bl_slice is 'All':
             avg = np.absolute(np.mean(values, axis=1))
+            if write:
+                np.save('%s%s_Vis_Avg_%s.npy' % (writepath, self.obs, amp_avg), avg)
             return(avg)
         else:
             ind = self.reverse_index(band, flag_slice=flag_slice)

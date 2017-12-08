@@ -5,26 +5,47 @@ import glob
 import numpy as np
 from matplotlib.ticker import FixedLocator, AutoMinorLocator
 
-obslist_path = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/diffuse_survey_good_pointings.txt'
-pathlist_path = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/diffuse_survey_good_pointings_paths.txt'
+"""Input/Output keywords"""
+
+catalog_types = ['vis_avg', ]
+obslist_path = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/Diffuse_2015_GP_10s_Autos_RFI_Free.txt'
+pathlist_path = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/Diffuse_2015_GP_10s_Autos_RFI_Free_paths.txt'
 outpath = {'waterfall': '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/catalogs/freq_time/',
            'vis_avg': '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/catalogs/vis_avg/waterfall/amp_first/'}
+
+"""Object Keywords"""
+
+bad_time_indices = [0, -4, -3, -2, -1]
+auto_remove = True
+
+"""Misc. Keywords"""
+
 flag_slices = ['All', 'Unflagged']
 write = {'Unflagged': False, 'All': False}
 writepath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Catalogs/Ant_Pol/Chirp_Arr/'
 bins = np.logspace(-3, 5, num=1001)
-fraction = True
-catalog_types = ['vis_avg', 'waterfall']
-drill_type = 'time'
 band = {'Unflagged': 'fit', 'All': [2e+03, 1e+05]}
-auto_remove = True
 fit = {'Unflagged': True, 'All': False}
 bin_window = [0, 2e+03]
-fit_window = [0, 1e+12]
-clip = True
+
+"""Waterfall Keywords"""
+
+fraction = True
+
+"""Drill Keywords"""
+
+drill_type = 'time'
+
+"""Vis_Avg Keywords"""
+
 amp_avg = 'Amp'
 plot_type = 'waterfall'
-bad_time_indices = [0, -4, -3, -2, -1]
+vis_avg_write = True
+vis_avg_writepath = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/catalogs/vis_avg/waterfall/amp_first/arrays/'
+
+"""Ant_Pol Keywords"""
+
+clip = True
 
 with open(obslist_path) as f:
     obslist = f.read().split("\n")
@@ -62,7 +83,8 @@ if not output_list:
     if 'vis_avg' in catalog_types:
         cf.vis_avg_catalog(RFI, outpath['vis_avg'], band=band[flag_slices[0]], xticks=xticks,
                            flag_slice=flag_slices[0], yminors='auto', xminors=xminors,
-                           amp_avg=amp_avg, plot_type=plot_type)
+                           amp_avg=amp_avg, plot_type=plot_type, write=vis_avg_write,
+                           writepath=vis_avg_writepath)
     if 'temperature' in catalog_types:
         RFI.one_d_hist_prepare(flag_slice='Unflagged', bins=bins,
                                bin_window=bin_window, write=True,
