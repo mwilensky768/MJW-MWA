@@ -7,7 +7,7 @@ from matplotlib.ticker import FixedLocator, AutoMinorLocator
 
 """Input/Output keywords"""
 
-catalog_types = ['vis_avg', ]
+catalog_types = ['vis_avg', 'waterfall']
 obslist_path = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/Diffuse_2015_GP_10s_Autos_RFI_Free.txt'
 pathlist_path = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/Diffuse_2015_GP_10s_Autos_RFI_Free_paths.txt'
 outpath = {'waterfall': '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/catalogs/freq_time/',
@@ -21,8 +21,8 @@ auto_remove = True
 """Misc. Keywords"""
 
 flag_slices = ['All', 'Unflagged']
-write = {'Unflagged': False, 'All': False}
-writepath = '/nfs/eor-00/h1/mwilensk/S2_Zenith_Calcut_8s_Autos/Catalogs/Ant_Pol/Chirp_Arr/'
+write = {'Unflagged': True, 'All': False}
+writepath = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/temperatures/'
 bins = np.logspace(-3, 5, num=1001)
 band = {'Unflagged': 'fit', 'All': [2e+03, 1e+05]}
 fit = {'Unflagged': True, 'All': False}
