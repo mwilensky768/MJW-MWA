@@ -33,9 +33,9 @@ def one_d_hist_plot(fig, ax, bin_edges, counts, zorder=[], labels=[], xlog=True,
         ax.set_yscale('linear')
 
 
-def line_plot(self, fig, ax, data, title='Visibility Difference Average',
+def line_plot(fig, ax, data, title='Visibility Difference Average',
               xlabel='Frequency (Mhz)', ylabel='Visibility Amplitude',
-              zorder=[], labels=[], xticklabels=[]):  # Please pass data as a list
+              zorder=[], labels=[], xticks=[], xticklabels=[], xminors=[]):  # Please pass data as a list
 
     for k in range(len(data)):
         ax.plot(data[k], label=labels[k], zorder=zorder[k])
@@ -44,22 +44,29 @@ def line_plot(self, fig, ax, data, title='Visibility Difference Average',
     ax.set_ylabel(ylabel)
     ax.set_xlabel(xlabel)
     ax.legend()
+    if xticks:
+        ax.set_xticks(xticks)
     if xticklabels:
         ax.set_xticklabels(xticklabels)
+    if xminors:
+        ax.xaxis.set_minor_locator(xminors)
 
 
 def image_plot(fig, ax, data, cmap=cm.plasma, vmin=None, vmax=None, title='',
                aspect_ratio=3, xlabel='Frequency (Mhz)', ylabel='Time Pair',
                cbar_label='Counts RFI', xticks=[], yticks=[], xminors=None,
-               yminors=None, xticklabels=None, yticklabels=None):
+               yminors=None, xticklabels=None, yticklabels=None, zero_mask=True,
+               mask_color='white'):
 
-    data = np.ma.masked_equal(data, 0)
+    if zero_mask:
+        data = np.ma.masked_equal(data, 0)
+
     cmap = cmap
-    cmap.set_bad(color='white')
+    cmap.set_bad(color=mask_color)
 
-    if not vmin:
+    if vmin is None:
         vmin = np.amin(data)
-    if not vmax:
+    if vmax is None:
         vmax = np.amax(data)
 
     cax = ax.imshow(data, cmap=cmap, vmin=vmin, vmax=vmax)

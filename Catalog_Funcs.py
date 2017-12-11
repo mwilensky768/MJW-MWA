@@ -70,13 +70,16 @@ def ax_chooser(RFI, ax, m):
     return(curr_ax)
 
 
-def linear_fit(x, y):
+def polynomial_fit(x, y, order=1):
 
-    A = np.c_[x, np.ones(len(x))]
+    basis = [x**(n) for n in range(order)]
+    basis.append(np.ones(len(x)))
+
+    A = np.concatenate(basis, axis=1)
     C, _, _, _ = scipy.linalg.lstsq(A, y)
-    fit = C[0] * x + C[1]
+    fit = np.sum(np.array([C[n] * x**(order - n) for n in range(order + 1)]))
 
-    return(fit)
+    return(C, fit)
 
 
 def planar_fit(x, y, z):
@@ -85,7 +88,7 @@ def planar_fit(x, y, z):
     C, _, _, _ = scipy.linalg.lstsq(A, y)
     fit = C[0] * x + C[1] * y + C[2]
 
-    return(fit)
+    return(C, fit)
 
 
 def waterfall_catalog(RFI, outpath, band={}, write={}, writepath='', fit={},

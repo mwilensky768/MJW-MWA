@@ -7,7 +7,7 @@ from matplotlib.ticker import FixedLocator, AutoMinorLocator
 
 """Input/Output keywords"""
 
-catalog_types = ['vis_avg', 'waterfall']
+catalog_types = ['temperature', ]
 obslist_path = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/Diffuse_2015_GP_10s_Autos_RFI_Free.txt'
 pathlist_path = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/Diffuse_2015_GP_10s_Autos_RFI_Free_paths.txt'
 outpath = {'waterfall': '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/catalogs/freq_time/',
@@ -86,7 +86,7 @@ if not output_list:
                            amp_avg=amp_avg, plot_type=plot_type, write=vis_avg_write,
                            writepath=vis_avg_writepath)
     if 'temperature' in catalog_types:
-        RFI.one_d_hist_prepare(flag_slice='Unflagged', bins=bins,
+        RFI.one_d_hist_prepare(flag_slice='All', bins=bins,
                                bin_window=bin_window, write=True,
                                writepath=writepath)
     if 'ant_scatter' in catalog_types:
