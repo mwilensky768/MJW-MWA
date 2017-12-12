@@ -86,7 +86,7 @@ if not output_list:
                            amp_avg=amp_avg, plot_type=plot_type, write=vis_avg_write,
                            writepath=vis_avg_writepath)
     if 'temperature' in catalog_types:
-        RFI.one_d_hist_prepare(flag_slice='All', bins=bins,
+        RFI.one_d_hist_prepare(flag_slice='All', bins=bins, fit=True,
                                bin_window=bin_window, write=True,
                                writepath=writepath)
     if 'ant_scatter' in catalog_types:
