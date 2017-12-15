@@ -57,7 +57,7 @@ xticklabels = ['%.1f' % (10 ** (-6) * freqs[tick]) for tick in xticks]
 xminors = AutoMinorLocator(4)
 pol_titles = ['XX', 'YY', 'XY', 'YX']
 
-# Make the fits/interpolations
+# Make the fits
 for m in range(4):
     for n in range(avg.shape[0]):
         # With bad_chans removed, there are 264 fine channels, 2/3 of which is 176

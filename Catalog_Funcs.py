@@ -15,7 +15,7 @@ def band_constructor(counts, bins, labels, flag_slice):
     count = counts[m]
     fit = counts[m + 1]
 
-    max_loc = min(bins[count == np.amax(count)])
+    max_loc = min(bins[:-1][count == np.amax(count)])
     band = [min(bins[:-1][np.logical_and(fit < 1, bins[:-1] > max_loc)]), max(bins)]
 
     return(band)

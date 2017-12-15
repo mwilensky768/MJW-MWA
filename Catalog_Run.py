@@ -7,22 +7,22 @@ from matplotlib.ticker import FixedLocator, AutoMinorLocator
 
 """Input/Output keywords"""
 
-catalog_types = ['temperature', ]
+catalog_types = ['temperature', 'vis_avg']
 obslist_path = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/Diffuse_2015_GP_10s_Autos_RFI_Free.txt'
 pathlist_path = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/Diffuse_2015_GP_10s_Autos_RFI_Free_paths.txt'
-outpath = {'waterfall': '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/catalogs/freq_time/',
-           'vis_avg': '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/catalogs/vis_avg/waterfall/amp_first/'}
+outpath = {'waterfall': '/nfs/eor-00/h1/mwilensk/Diffuse_2015_12s_Autos/catalogs/freq_time/',
+           'vis_avg': '/nfs/eor-00/h1/mwilensk/Diffuse_2015_12s_Autos/catalogs/vis_avg/waterfall/amp_first/'}
 
 """Object Keywords"""
 
-bad_time_indices = [0, -4, -3, -2, -1]
+bad_time_indices = [0, -5, -4, -3, -2, -1]
 auto_remove = True
 
 """Misc. Keywords"""
 
 flag_slices = ['All', 'Unflagged']
 write = {'Unflagged': True, 'All': False}
-writepath = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/temperatures/'
+writepath = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_12s_Autos/temperatures/vis_var/'
 bins = np.logspace(-3, 5, num=1001)
 band = {'Unflagged': 'fit', 'All': [2e+03, 1e+05]}
 fit = {'Unflagged': True, 'All': False}
@@ -41,7 +41,7 @@ drill_type = 'time'
 amp_avg = 'Amp'
 plot_type = 'waterfall'
 vis_avg_write = True
-vis_avg_writepath = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/catalogs/vis_avg/waterfall/amp_first/arrays/'
+vis_avg_writepath = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_12s_Autos/temperatures/vis_avg/'
 
 """Ant_Pol Keywords"""
 

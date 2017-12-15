@@ -4,6 +4,20 @@ use('Agg')
 from matplotlib.ticker import FixedLocator, AutoMinorLocator
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
+import matplotlib.colors as colors
+
+
+class MidpointNormalize(colors.Normalize):
+
+    def __init__(self, vmin=None, vmax=None, midpoint=None, clip=False):
+        self.midpoint = midpoint
+        colors.Normalize.__init__(self, vmin, vmax, clip)
+
+    def __call__(self, value, clip=None):
+        # I'm ignoring masked values and all kinds of edge cases to make a
+        # simple example...
+        x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
+        return np.ma.masked_array(np.interp(value, x, y), np.isnan(value))
 
 
 def one_d_hist_plot(fig, ax, bin_edges, counts, zorder=[], labels=[], xlog=True,
@@ -69,7 +83,11 @@ def image_plot(fig, ax, data, cmap=cm.plasma, vmin=None, vmax=None, title='',
     if vmax is None:
         vmax = np.amax(data)
 
-    cax = ax.imshow(data, cmap=cmap, vmin=vmin, vmax=vmax)
+    if cmap is cm.coolwarm:
+        cax = ax.imshow(data, cmap=cmap, clim=(vmin, vmax),
+                        norm=MidpointNormalize(midpoint=0,vmin=vmin, vmax=vmax))
+    else:
+        cax = ax.imshow(data, cmap=cmap, vmin=vmin, vmax=vmax)
     cbar = fig.colorbar(cax, ax=ax)
     cbar.set_label(cbar_label)
 
@@ -104,9 +122,9 @@ def scatter_plot_2d(fig, ax, x_data, y_data, title='', xlabel='', ylabel='',
                     c=[]):
 
     if c:
-        ax.scatter(x, y, c=c)
+        ax.scatter(x_data, y_data, c=c)
     else:
-        ax.scatter(x, y)
+        ax.scatter(x_data, y_data)
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
