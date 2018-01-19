@@ -7,26 +7,26 @@ from matplotlib.ticker import FixedLocator, AutoMinorLocator
 
 """Input/Output keywords"""
 
-catalog_types = ['temperature', 'vis_avg']
-obslist_path = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/Diffuse_2015_GP_10s_Autos_RFI_Free.txt'
-pathlist_path = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_10s_Autos/Diffuse_2015_GP_10s_Autos_RFI_Free_paths.txt'
-outpath = {'waterfall': '/nfs/eor-00/h1/mwilensk/Diffuse_2015_12s_Autos/catalogs/freq_time/',
-           'vis_avg': '/nfs/eor-00/h1/mwilensk/Diffuse_2015_12s_Autos/catalogs/vis_avg/waterfall/amp_first/'}
+catalog_types = ['vis_avg', 'waterfall']
+obslist_path = '/nfs/eor-00/h1/mwilensk/Golden_Set/Golden_Set_OBSIDS.txt'
+pathlist_path = '/nfs/eor-00/h1/mwilensk/Golden_Set/Golden_Set_OBSIDS_paths.txt'
+outpath = {'waterfall': '/nfs/eor-00/h1/mwilensk/Golden_Set_8s_Autos/Catalogs/Freq_Time/All/',
+           'vis_avg': '/nfs/eor-00/h1/mwilensk/Golden_Set_8s_Autos/Catalogs/Vis_Avg/All/'}
 
 """Object Keywords"""
 
-bad_time_indices = [0, -5, -4, -3, -2, -1]
+bad_time_indices = [0, -3, -2, -1]
 auto_remove = True
 
 """Misc. Keywords"""
 
 flag_slices = ['All', 'Unflagged']
-write = {'Unflagged': True, 'All': False}
-writepath = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_12s_Autos/temperatures/vis_var/'
-bins = np.logspace(-3, 5, num=1001)
-band = {'Unflagged': 'fit', 'All': [2e+03, 1e+05]}
+write = {'Unflagged': True, 'All': True}
+writepath = '/nfs/eor-00/h1/mwilensk/Golden_Set_8s_Autos/Temperatures/Vis_Var/All/'
+bins = 'auto'
+band = {'Unflagged': 'fit', 'All': [1e+03, 1e+05]}
 fit = {'Unflagged': True, 'All': False}
-bin_window = [0, 2e+03]
+bin_window = [0, 1e+03]
 
 """Waterfall Keywords"""
 
@@ -41,7 +41,7 @@ drill_type = 'time'
 amp_avg = 'Amp'
 plot_type = 'waterfall'
 vis_avg_write = True
-vis_avg_writepath = '/nfs/eor-00/h1/mwilensk/Diffuse_2015_12s_Autos/temperatures/vis_avg/'
+vis_avg_writepath = '/nfs/eor-00/h1/mwilensk/Golden_Set_8s_Autos/Temperatures/Vis_Avg/All/'
 
 """Ant_Pol Keywords"""
 
@@ -58,7 +58,7 @@ args = parser.parse_args()
 
 obs = obslist[args.id - 1]
 inpath = pathlist[args.id - 1]
-output = '%s%s*.png' % (writepath, str(obs))
+output = '%s%s*.npy' % (vis_avg_writepath, str(obs))
 output_list = glob.glob(output)
 
 if not output_list:
