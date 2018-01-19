@@ -100,13 +100,13 @@ def waterfall_catalog(RFI, outpath, band={}, write={}, writepath='', fit={},
     counts = []
     labels = []
     for flag_slice in flag_slices:
-        count, _, hist_fit, label = RFI.one_d_hist_prepare(flag_slice=flag_slice,
-                                                           fit=fit[flag_slice],
-                                                           write=write[flag_slice],
-                                                           bins=bins,
-                                                           writepath=writepath,
-                                                           bin_window=bin_window,
-                                                           label=flag_slice)
+        count, bins, hist_fit, label = RFI.one_d_hist_prepare(flag_slice=flag_slice,
+                                                              fit=fit[flag_slice],
+                                                              write=write[flag_slice],
+                                                              bins=bins,
+                                                              writepath=writepath,
+                                                              bin_window=bin_window,
+                                                              label=flag_slice)
 
         counts.append(count)
         labels.append(label)
