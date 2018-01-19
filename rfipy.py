@@ -233,7 +233,8 @@ class RFI:
         return(T)
 
     def vis_avg_prepare(self, band=[1.5 * 10**3, 10**5], flag_slice='All',
-                        bl_slice='All', amp_avg='Amp', write=False, writepath=''):
+                        bl_slice='All', amp_avg='Amp', write=False, writepath='',
+                        template=None):
 
         if amp_avg is 'Amp':
             values = np.absolute(self.data_array)

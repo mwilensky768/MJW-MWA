@@ -49,7 +49,8 @@ def one_d_hist_plot(fig, ax, bin_edges, counts, zorder=[], labels=[], xlog=True,
 
 def line_plot(fig, ax, data, title='Visibility Difference Average',
               xlabel='Frequency (Mhz)', ylabel='Visibility Amplitude',
-              zorder=[], labels=[], xticks=[], xticklabels=[], xminors=[]):  # Please pass data as a list
+              zorder=[], labels=[], xticks=[], xticklabels=[], xminors=[],
+              legend=True):  # Please pass data as a list
 
     for k in range(len(data)):
         ax.plot(data[k], label=labels[k], zorder=zorder[k])
@@ -57,7 +58,8 @@ def line_plot(fig, ax, data, title='Visibility Difference Average',
     ax.set_title(title)
     ax.set_ylabel(ylabel)
     ax.set_xlabel(xlabel)
-    ax.legend()
+    if legend:
+        ax.legend()
     if xticks:
         ax.set_xticks(xticks)
     if xticklabels:
@@ -119,7 +121,7 @@ def image_plot(fig, ax, data, cmap=cm.plasma, vmin=None, vmax=None, title='',
 
 
 def scatter_plot_2d(fig, ax, x_data, y_data, title='', xlabel='', ylabel='',
-                    c=[]):
+                    c=[], ylim=[]):
 
     if c:
         ax.scatter(x_data, y_data, c=c)
@@ -128,6 +130,8 @@ def scatter_plot_2d(fig, ax, x_data, y_data, title='', xlabel='', ylabel='',
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
+    if ylim:
+        ax.set_ylim(ylim)
 
 
 def scatter_plot_3d(fig, ax, x_data, y_data, z_data, title='', xlabel='',

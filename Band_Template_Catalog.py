@@ -9,10 +9,10 @@ from matplotlib.ticker import FixedLocator, AutoMinorLocator
 # Input information
 obslist_path = '/Users/mike_e_dubs/MWA/Obs_Lists/Diffuse_2015_GP_10s_Autos_RFI_Free.txt'
 freq_array_path = '/Users/mike_e_dubs/python_stuff/MJW-MWA/Useful_Information/MWA_Highband_Freq_Array.npy'
-avg_dir = '/Users/mike_e_dubs/MWA/Temperatures/Diffuse_2015_10s_Autos/RFI_Free/averages/'
-temp_dir = '/Users/mike_e_dubs/MWA/Temperatures/Diffuse_2015_10s_Autos/RFI_Free/temperatures/'
-plot_dir = '/Users/mike_e_dubs/MWA/Catalogs/Diffuse_2015_10s_Autos/Vis_Avg/Template/RFI_Free/'
-out_array_dir = '/Users/mike_e_dubs/MWA/Temperatures/Diffuse_2015_10s_Autos/RFI_Free/max_fit_arrays/'
+avg_dir = '/Users/mike_e_dubs/MWA/Temperatures/Diffuse_2015_12s_Autos/RFI_Free/vis_avg/'
+temp_dir = '/Users/mike_e_dubs/MWA/Temperatures/Diffuse_2015_12s_Autos/RFI_Free/vis_var/'
+plot_dir = '/Users/mike_e_dubs/MWA/Catalogs/Diffuse_2015_12s_Autos/Vis_Avg/Template/RFI_Free/'
+out_array_dir = '/Users/mike_e_dubs/MWA/Temperatures/Diffuse_2015_12s_Autos/RFI_Free/max_fit_arrays/'
 with open(obslist_path) as f:
     obslist = f.read().split("\n")
 
@@ -28,9 +28,9 @@ xminors = AutoMinorLocator(4)
 
 # These data will be used to make a scaling parameter scheme...
 max_loc_array = np.zeros(len(obslist))
-fit_coeff_array = np.zeros([len(obslist), 2, 2, 4])
-fit_centers_coeff_array = np.zeros([len(obslist), 2, 2, 4])
-fit_edges_coeff_array = np.zeros([len(obslist), 2, 2, 4])
+fit_coeff_array = np.zeros([len(obslist), 2, 4])
+fit_centers_coeff_array = np.zeros([len(obslist), 2, 4])
+fit_edges_coeff_array = np.zeros([len(obslist), 2, 4])
 
 for n in range(len(obslist)):
     # Load deep waterfall and histogram arrays
@@ -89,14 +89,14 @@ for n in range(len(obslist)):
     for m in range(avg.shape[2]):
         # With bad_chans removed, there are 264 fine channels, 2/3 of which is 176
         # For this data set do not need the DGJ...
-        fit_coeff_array[n, 0, :, m] = np.polyfit(x, y[:, m], deg)
-        fit[:, m] = np.sum(np.array([fit_coeff_array[n, 0, k, m] * freqs ** (1 - k) for k in range(1 + deg)]), axis=0)
+        fit_coeff_array[n, :, m] = np.polyfit(x, y[:, m], deg)
+        fit[:, m] = np.sum(np.array([fit_coeff_array[n, k, m] * freqs ** (1 - k) for k in range(1 + deg)]), axis=0)
         y_centers = mean[bool_ind_centers, m] - fit[bool_ind_centers, m]
         y_edges = mean[bool_ind_edges, m] - fit[bool_ind_edges, m]
-        fit_centers_coeff_array[n, 0, :, m] = np.polyfit(x_centers, y_centers, deg)
-        fit_edges_coeff_array[n, 0, :, m] = np.polyfit(x_edges, y_edges, deg)
-        fit_centers[:, m] = np.sum(np.array([fit_centers_coeff_array[n, 0, k, m] * freqs ** (1 - k) for k in range(1 + deg)]), axis=0)
-        fit_edges[:, m] = np.sum(np.array([fit_edges_coeff_array[n, 0, k, m] * freqs ** (1 - k) for k in range(1 + deg)]), axis=0)
+        fit_centers_coeff_array[n, :, m] = np.polyfit(x_centers, y_centers, deg)
+        fit_edges_coeff_array[n, :, m] = np.polyfit(x_edges, y_edges, deg)
+        fit_centers[:, m] = np.sum(np.array([fit_centers_coeff_array[n, k, m] * freqs ** (1 - k) for k in range(1 + deg)]), axis=0)
+        fit_edges[:, m] = np.sum(np.array([fit_edges_coeff_array[n, k, m] * freqs ** (1 - k) for k in range(1 + deg)]), axis=0)
 
     # Create excess, ratio, and residual data
     excess = avg - template

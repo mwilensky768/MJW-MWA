@@ -95,7 +95,7 @@ def waterfall_catalog(RFI, outpath, band={}, write={}, writepath='', fit={},
                       bins=np.logspace(-3, 5, num=1001), fraction=True,
                       flag_slices=['Unflagged', 'All'], bin_window=[0, 1e+03],
                       zorder={'Unflagged': 3, 'Unflagged Fit': 4, 'All Fit': 2, 'All': 1},
-                      xticks=None, xminors=None):
+                      xticks=None, xminors=None, aspect_ratio=3):
 
     counts = []
     labels = []
@@ -138,17 +138,23 @@ def waterfall_catalog(RFI, outpath, band={}, write={}, writepath='', fit={},
         MAXW_list, MINW_list = ext_list_selector(RFI, W[:, 0, :, :])
 
         for n in range(RFI.UV.Npols):
+            if fraction:
+                cbar_label = 'Fraction RFI'
+            else:
+                cbar_label = 'Counts RFI'
             ax = fig.add_subplot(gs[gs_loc[n][0], gs_loc[n][1]])
             plot_lib.image_plot(fig, ax, W[:, 0, :, n], cmap=cm.cool,
                                 vmin=MINW_list[n], vmax=MAXW_list[n],
                                 title='%s %s' % (RFI.pols[n], flag_slice),
-                                aspect_ratio=3, cbar_label='Fraction RFI',
+                                aspect_ratio=aspect_ratio, cbar_label=cbar_label,
                                 xticks=xticks, xminors=xminors, yminors='auto',
                                 xticklabels=['%.1f' % (RFI.UV.freq_array[0, tick] * 10**(-6))
                                              for tick in xticks])
 
         plt.tight_layout()
-        fig.savefig('%s%s_freq_time_%s.png' % (outpath, RFI.obs, flag_slice))
+        fig.savefig('%s%s_freq_time_%s_%.1f_%.1f.png' %
+                    (outpath, RFI.obs, flag_slice, min(band[flag_slice]),
+                     max(band[flag_slice])))
 
         plt.close(fig)
 
@@ -264,7 +270,7 @@ def drill_catalog(RFI, outpath, band={}, write={}, writepath='', fit={},
 def vis_avg_catalog(RFI, outpath, band=[1.5 * 10**3, 10**5], flag_slice='All',
                     bl_slice='All', amp_avg='Amp', plot_type='waterfall',
                     xticks=[], xminors=[], yticks=[], yminors=[], write=False,
-                    writepath=''):
+                    writepath='', aspect_ratio=3):
 
     data = RFI.vis_avg_prepare(band=band, flag_slice=flag_slice,
                                bl_slice=bl_slice, amp_avg=amp_avg, write=write,
@@ -284,7 +290,8 @@ def vis_avg_catalog(RFI, outpath, band=[1.5 * 10**3, 10**5], flag_slice='All',
                                 xticklabels=['%.1f' %
                                              (10 ** (-6) * RFI.UV.freq_array[0, int(tick)])
                                              for tick in xticks],
-                                yticks=yticks, yminors=yminors)
+                                yticks=yticks, yminors=yminors,
+                                aspect_ratio=aspect_ratio)
         fig.savefig('%s%s_Vis_Avg_Waterfall.png' % (outpath, RFI.obs))
         plt.close(fig)
 
