@@ -172,7 +172,7 @@ class RFI:
     def waterfall_hist_prepare(self, band, flag_slice='Unflagged', fraction=True):
 
         ind = self.reverse_index(band, flag_slice=flag_slice)
-        H = np.zeros(self.data_array.shape)
+        H = np.zeros(self.data_array.shape, dtype=int)
         H[ind] = 1
         H = np.sum(H, axis=1)
         if fraction:
@@ -232,30 +232,22 @@ class RFI:
 
         return(T)
 
-    def vis_avg_prepare(self, band=[1.5 * 10**3, 10**5], flag_slice='All',
-                        bl_slice='All', amp_avg='Amp', write=False, writepath='',
-                        template=None):
+    def vis_avg_prepare(self, flag_slice='All', amp_avg='Amp', write=False,
+                        writepath=''):
 
         if amp_avg is 'Amp':
             values = np.absolute(self.data_array)
         elif amp_avg is 'Avg':
             values = self.data_array
-        if bl_slice is 'All':
-            avg = np.absolute(np.mean(values, axis=1))
-            if write:
-                np.save('%s%s_Vis_Avg_%s.npy' % (writepath, self.obs, amp_avg), avg)
-            return(avg)
-        else:
-            ind = self.reverse_index(band, flag_slice=flag_slice)
-            unique_bls = np.unique(ind[1])
-            bool_ind = np.zeros(self.UV.Nbls, dtype=bool)
-            for bl in unique_bls:
-                bool_ind[bl] = 1
-            avg_affected = np.mean(values[:, bool_ind, :, :, :], axis=1)
-            avg_unaffected = np.mean(values[:, np.logical_not(bool_ind), :, :, :],
-                                     axis=1)
 
-            return(avg_affected, avg_unaffected)
+        flags = self.flag_operations(flag_slice)
+        values[np.logical_not(flags)] = np.nan
+        avg = np.absolute(np.nanmean(values, axis=1))
+
+        if write:
+            np.save('%s%s_Vis_Avg_%s_%s.npy' %
+                    (writepath, self.obs, amp_avg, flag_slice), avg)
+        return(avg)
 
     def ant_scatter_prepare(self):
 

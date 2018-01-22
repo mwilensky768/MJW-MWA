@@ -267,54 +267,29 @@ def drill_catalog(RFI, outpath, band={}, write={}, writepath='', fit={},
             plt.close(fig)
 
 
-def vis_avg_catalog(RFI, outpath, band=[1.5 * 10**3, 10**5], flag_slice='All',
-                    bl_slice='All', amp_avg='Amp', plot_type='waterfall',
+def vis_avg_catalog(RFI, outpath, flag_slice='All', amp_avg='Amp',
                     xticks=[], xminors=[], yticks=[], yminors=[], write=False,
                     writepath='', aspect_ratio=3):
 
-    data = RFI.vis_avg_prepare(band=band, flag_slice=flag_slice,
-                               bl_slice=bl_slice, amp_avg=amp_avg, write=write,
+    data = RFI.vis_avg_prepare(flag_slice=flag_slice, amp_avg=amp_avg, write=write,
                                writepath=writepath)
 
-    if plot_type is 'waterfall':
-        fig, ax = ax_constructor(RFI)
-        fig.suptitle('%s Visibility Difference Averages, %s First' %
-                     (RFI.obs, amp_avg))
-        for m in range(RFI.UV.Npols):
-            curr_ax = ax_chooser(RFI, ax, m)
-            plot_lib.image_plot(fig, curr_ax, data[:, 0, :, m],
-                                title='%s %s Flags %s Bls' %
-                                (RFI.pols[m], flag_slice, bl_slice),
-                                cbar_label='%s' % (RFI.UV.vis_units),
-                                xticks=xticks, xminors=xminors,
-                                xticklabels=['%.1f' %
-                                             (10 ** (-6) * RFI.UV.freq_array[0, int(tick)])
-                                             for tick in xticks],
-                                yticks=yticks, yminors=yminors,
-                                aspect_ratio=aspect_ratio)
-        fig.savefig('%s%s_Vis_Avg_Waterfall.png' % (outpath, RFI.obs))
-        plt.close(fig)
-
-    elif plot_type is 'line':
-        for m in range(RFI.UV.Ntimes - 1):
-            fig, ax = ax_constructor(RFI)
-            for n in range(RFI.UV.Npols):
-                curr_ax = ax_chooser(RFI, ax, n)
-                plot_lib.line_plot(fig, curr_ax,
-                                   [subdata[m, 0, :, n] for subdata in data],
-                                   ylabel=RFI.UV.vis_units,
-                                   labels=['Affected Baselines', 'Unaffected Baselines'],
-                                   zorder=[1, 2], xticks=xticks,
-                                   xticklabels=['%.1f' % (10 ** (-6) *
-                                                          RFI.UV.freq_array[0, 0] +
-                                                          RFI.UV.channel_width *
-                                                          tick) for ticks in xticks],
-                                   data=[subdata[m, 0, :, n] for subdata in data],
-                                   title='%s %s Flags' % (RFI.pols[n], flag_slice))
-            fig.suptitle('%s Visibility Difference Average (%s First)' %
-                         (RFI.obs, amp_avg))
-            fig.savefig('%s%s_Vis_Avg_t%i.png' % (outpath, RFI.obs, m))
-            plt.close(fig)
+    fig, ax = ax_constructor(RFI)
+    fig.suptitle('%s Incoherent Nosie Spectrum' % (RFI.obs))
+    for m in range(RFI.UV.Npols):
+        curr_ax = ax_chooser(RFI, ax, m)
+        plot_lib.image_plot(fig, curr_ax, data[:, 0, :, m],
+                            title='%s %s Flags %s Bls' %
+                            (RFI.pols[m], flag_slice, bl_slice),
+                            cbar_label='%s' % (RFI.UV.vis_units), xticks=xticks,
+                            xminors=xminors,
+                            xticklabels=['%.1f' %
+                                         (10 ** (-6) * RFI.UV.freq_array[0, int(tick)])
+                                         for tick in xticks],
+                            yticks=yticks, yminors=yminors,
+                            aspect_ratio=aspect_ratio)
+    fig.savefig('%s%s_Vis_Avg_Waterfall.png' % (outpath, RFI.obs))
+    plt.close(fig)
 
 
 def ant_scatter_catalog(RFI, outpath, band, flag_slice='All'):
@@ -365,3 +340,25 @@ def ant_pol_catalog(RFI, outpath, times=[], freqs=[], band=[], clip=False):
             fig.savefig('%s%s_ant_pol_t%i_f%i.png' % (outpath, RFI.obs,
                                                       time, freq))
             plt.close(fig)
+
+
+def flag_catalog(RFI, outpath, flag_slices=['Flagged', ], xticks=[], xminors=[]):
+    for flag_slice in flag_slices:
+        flags = RFI.flag_operations(flag_slice)
+        flags = np.sum(flags, axis=1)
+
+        fig, ax = ax_constructor(RFI)
+        fig.suptitle('%s Visibility Difference Flag Map (%s)' %
+                     (RFI.obs, flag_slice))
+
+        for m in range(RFI.UV.Npols):
+            curr_ax = ax_chooser(RFI, ax, m)
+
+            plot_lib.image_plot(fig, curr_ax, flags, cmap=cm.cool,
+                                title=RFI.pols[m],
+                                xticks=xticks, xminors=xminors,
+                                xticklabels=['%.1f' % ((10 ** (-6)) *
+                                             RFI.UV.freq_array[0, tick]) for
+                                             tick in xticks])
+
+        fig.savefig('%s%s_flag_map_%s.png' % (outpath, RFI.obs, flag_slice))
