@@ -275,12 +275,11 @@ def vis_avg_catalog(RFI, outpath, flag_slice='All', amp_avg='Amp',
                                writepath=writepath)
 
     fig, ax = ax_constructor(RFI)
-    fig.suptitle('%s Incoherent Nosie Spectrum' % (RFI.obs))
+    fig.suptitle('%s Incoherent Nosie Spectrum, %s Baselines' % (RFI.obs, flag_slice))
     for m in range(RFI.UV.Npols):
         curr_ax = ax_chooser(RFI, ax, m)
         plot_lib.image_plot(fig, curr_ax, data[:, 0, :, m],
-                            title='%s %s Flags %s Bls' %
-                            (RFI.pols[m], flag_slice, bl_slice),
+                            title='%s' % (RFI.pols[m]),
                             cbar_label='%s' % (RFI.UV.vis_units), xticks=xticks,
                             xminors=xminors,
                             xticklabels=['%.1f' %
