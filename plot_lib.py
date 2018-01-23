@@ -81,13 +81,13 @@ def image_plot(fig, ax, data, cmap=cm.plasma, vmin=None, vmax=None, title='',
     cmap.set_bad(color=mask_color)
 
     if vmin is None:
-        vmin = np.amin(data)
+        vmin = np.nanmin(data)
     if vmax is None:
-        vmax = np.amax(data)
+        vmax = np.nanmax(data)
 
     if cmap is cm.coolwarm:
         cax = ax.imshow(data, cmap=cmap, clim=(vmin, vmax),
-                        norm=MidpointNormalize(midpoint=0,vmin=vmin, vmax=vmax))
+                        norm=MidpointNormalize(midpoint=0, vmin=vmin, vmax=vmax))
     else:
         cax = ax.imshow(data, cmap=cmap, vmin=vmin, vmax=vmax)
     cbar = fig.colorbar(cax, ax=ax)
