@@ -95,6 +95,7 @@ if not output_list:
     if 'ant_pol' in catalog_types:
         cf.ant_pol_catalog(RFI, outpath, band=band['All'], clip=clip)
     if 'flag' in catalog_types:
-        cf.flag_catalog(RFI, outpath, flag_slices=flag_slices)
+        cf.flag_catalog(RFI, outpath, flag_slices=flag_slices, xticks=xticks,
+                        xminors=xminors)
 else:
     print('I already processed obs ' + str(obs))
