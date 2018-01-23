@@ -353,7 +353,7 @@ def flag_catalog(RFI, outpath, flag_slices=['Flagged', ], xticks=[], xminors=[])
         for m in range(RFI.UV.Npols):
             curr_ax = ax_chooser(RFI, ax, m)
 
-            plot_lib.image_plot(fig, curr_ax, flags, cmap=cm.cool,
+            plot_lib.image_plot(fig, curr_ax, flags[:, 0, :, m], cmap=cm.cool,
                                 title=RFI.pols[m],
                                 xticks=xticks, xminors=xminors,
                                 xticklabels=['%.1f' % ((10 ** (-6)) *
