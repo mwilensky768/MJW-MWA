@@ -59,7 +59,7 @@ args = parser.parse_args()
 
 obs = obslist[args.id - 1]
 inpath = pathlist[args.id - 1]
-output = '%s%s*.png' % (outpath['vis_avg'], str(obs))
+output = '%s%s*.png' % ('/nfs/eor-00/h1/mwilensk/Golden_Set_8s_Autos/Catalogs/Vis_Avg/Flagged/', str(obs))
 output_list = glob.glob(output)
 
 if not output_list:
