@@ -27,7 +27,7 @@ class RFI:
                      range(self.UV.Npols)]
 
         if bad_time_indices:
-            times = [self.UV.time_array[k * self.UV.Nbls] for k in range(self.UV.Ntimes)]
+            times = np.unique(self.UV.time_array).tolist()
             bad_times = []
             for k in bad_time_indices:
                 bad_times.append(times[k])
