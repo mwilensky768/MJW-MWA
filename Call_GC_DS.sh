@@ -1,6 +1,6 @@
 #! /bin/bash
 #$ -V
-#$ -N GS_RFI
+#$ -N GC_DS
 #$ -S /bin/bash
 
 echo JOBID ${JOB_ID}
