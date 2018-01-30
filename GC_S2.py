@@ -31,7 +31,7 @@ bin_window = [0, 4e+03]
 
 """Waterfall Keywords"""
 
-fraction = True
+fraction = False
 
 """Drill Keywords"""
 

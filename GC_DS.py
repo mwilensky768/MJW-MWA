@@ -9,7 +9,7 @@ from matplotlib.ticker import FixedLocator, AutoMinorLocator
 
 catalog_types = ['waterfall', 'vis_avg', 'flag']
 obslist_path = '/nfs/eor-00/h1/mwilensk/Grand_Catalog/Diffuse_2015_8s_Autos/sidelobe_survey_obsIDs.txt'
-pathlist_path = '/nfs/eor-00/h1/mwilensk/Grand_Catalog/Diffuse_2015_Autos/sidelobe_survey_obsIDs_paths.txt'
+pathlist_path = '/nfs/eor-00/h1/mwilensk/Grand_Catalog/Diffuse_2015_8s_Autos/sidelobe_survey_obsIDs_paths.txt'
 outpath = {'waterfall': '/nfs/eor-00/h1/mwilensk/Grand_Catalog/Diffuse_2015_8s_Autos/Freq_Time/',
            'vis_avg': '/nfs/eor-00/h1/mwilensk/Grand_Catalog/Diffuse_2015_8s_Autos/Vis_Avg/',
            'flag': '/nfs/eor-00/h1/mwilensk/Grand_Catalog/Diffuse_2015_8s_Autos/Flags/'}
@@ -31,7 +31,7 @@ bin_window = [0, 2e+03]
 
 """Waterfall Keywords"""
 
-fraction = True
+fraction = False
 
 """Drill Keywords"""
 
