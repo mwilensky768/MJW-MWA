@@ -1,5 +1,6 @@
 import requests
 import time
+import os
 
 obslist_dir = '/Users/mike_e_dubs/MWA/Obs_Lists/'
 GC_dir = '/Users/mike_e_dubs/MWA/Catalogs/Grand_Catalog/'
@@ -19,9 +20,14 @@ outdir_list = [GS_outdir, LR_outdir, S2_outdir, DS_outdir]
 
 baseurl = 'http://mwa-metadata01.pawsey.org.au/observation/skymap/?obs_id='
 
-for k in range(4):
+for k in range(3, 4):
     with open(txt_list[k]) as f:
         obslist = f.read().split("\n")
+
+    print(k)
+
+    if k == 3:
+        obslist = obslist[885:]
 
     for obs in obslist:
         img_data = requests.get(baseurl + obs).content

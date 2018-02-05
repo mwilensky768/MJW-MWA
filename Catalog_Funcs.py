@@ -269,7 +269,7 @@ def drill_catalog(RFI, outpath, band={}, write={}, writepath='', fit={},
 
 def vis_avg_catalog(RFI, outpath, flag_slice='All', amp_avg='Amp',
                     xticks=[], xminors=[], yticks=[], yminors=[], write=False,
-                    writepath='', aspect_ratio=3):
+                    writepath='', aspect_ratio=3, invalid_mask=False):
 
     data = RFI.vis_avg_prepare(flag_slice=flag_slice, amp_avg=amp_avg, write=write,
                                writepath=writepath)
@@ -286,7 +286,7 @@ def vis_avg_catalog(RFI, outpath, flag_slice='All', amp_avg='Amp',
                                          (10 ** (-6) * RFI.UV.freq_array[0, int(tick)])
                                          for tick in xticks],
                             yticks=yticks, yminors=yminors,
-                            aspect_ratio=aspect_ratio)
+                            aspect_ratio=aspect_ratio, invalid_mask=invalid_mask)
     fig.savefig('%s%s_Vis_Avg_Waterfall.png' % (outpath, RFI.obs))
     plt.close(fig)
 

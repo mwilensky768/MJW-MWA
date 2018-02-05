@@ -7,11 +7,11 @@ from matplotlib.ticker import FixedLocator, AutoMinorLocator
 
 """Input/Output keywords"""
 
-catalog_types = ['waterfall', 'vis_avg', 'flag']
+catalog_types = ['vis_avg', ]
 obslist_path = '/nfs/eor-00/h1/mwilensk/Grand_Catalog/S2_Zenith_8s_Autos/season2_zenith_calcut.txt'
 pathlist_path = '/nfs/eor-00/h1/mwilensk/Grand_Catalog/S2_Zenith_8s_Autos/season2_zenith_calcut_paths.txt'
 outpath = {'waterfall': '/nfs/eor-00/h1/mwilensk/Grand_Catalog/S2_Zenith_8s_Autos/Freq_Time/',
-           'vis_avg': '/nfs/eor-00/h1/mwilensk/Grand_Catalog/S2_Zenith_8s_Autos/Vis_Avg/',
+           'vis_avg': '/nfs/eor-00/h1/mwilensk/Grand_Catalog/S2_Zenith_8s_Autos/Vis_Avg/Unflagged/',
            'flag': '/nfs/eor-00/h1/mwilensk/Grand_Catalog/S2_Zenith_8s_Autos/Flags/'}
 
 """Object Keywords"""
@@ -41,7 +41,8 @@ drill_type = 'time'
 
 amp_avg = 'Amp'
 vis_avg_write = True
-vis_avg_writepath = '/nfs/eor-00/h1/mwilensk/Grand_Catalog/S2_Zenith_8s_Autos/Vis_Avg/Averages/'
+vis_avg_writepath = '/nfs/eor-00/h1/mwilensk/Grand_Catalog/S2_Zenith_8s_Autos/Vis_Avg/Unflagged/Averages/'
+invalid_mask = True
 
 """Ant_Pol Keywords"""
 
@@ -58,7 +59,7 @@ args = parser.parse_args()
 
 obs = obslist[args.id - 1]
 inpath = pathlist[args.id - 1]
-output = '%s%s*.png' % ('/nfs/eor-00/h1/mwilensk/Grand_Catalog/S2_Zenith_8s_Autos/Flags/', str(obs))
+output = '%s%s*.png' % ('/nfs/eor-00/h1/mwilensk/Grand_Catalog/S2_Zenith_8s_Autos/Vis_Avg/Unflagged/', str(obs))
 output_list = glob.glob(output)
 
 if not output_list:

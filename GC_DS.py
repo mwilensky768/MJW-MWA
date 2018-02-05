@@ -7,11 +7,11 @@ from matplotlib.ticker import FixedLocator, AutoMinorLocator
 
 """Input/Output keywords"""
 
-catalog_types = ['waterfall', 'vis_avg', 'flag']
+catalog_types = ['vis_avg', ]
 obslist_path = '/nfs/eor-00/h1/mwilensk/Grand_Catalog/Diffuse_2015_8s_Autos/sidelobe_survey_obsIDs.txt'
 pathlist_path = '/nfs/eor-00/h1/mwilensk/Grand_Catalog/Diffuse_2015_8s_Autos/sidelobe_survey_obsIDs_paths.txt'
 outpath = {'waterfall': '/nfs/eor-00/h1/mwilensk/Grand_Catalog/Diffuse_2015_8s_Autos/Freq_Time/',
-           'vis_avg': '/nfs/eor-00/h1/mwilensk/Grand_Catalog/Diffuse_2015_8s_Autos/Vis_Avg/',
+           'vis_avg': '/nfs/eor-00/h1/mwilensk/Grand_Catalog/Diffuse_2015_8s_Autos/Vis_Avg/Unflagged/',
            'flag': '/nfs/eor-00/h1/mwilensk/Grand_Catalog/Diffuse_2015_8s_Autos/Flags/'}
 
 """Object Keywords"""
@@ -21,7 +21,7 @@ auto_remove = True
 
 """Misc. Keywords"""
 
-flag_slices = ['All', 'Unflagged']
+flag_slices = ['Unflagged', ]
 write = {'Unflagged': True, 'All': True}
 writepath = '/nfs/eor-00/h1/mwilensk/Grand_Catalog/Diffuse_2015_8s_Autos/Freq_Time/Variances/'
 bins = 'auto'
@@ -41,7 +41,8 @@ drill_type = 'time'
 
 amp_avg = 'Amp'
 vis_avg_write = True
-vis_avg_writepath = '/nfs/eor-00/h1/mwilensk/Grand_Catalog/Diffuse_2015_8s_Autos/Vis_Avg/Averages/'
+vis_avg_writepath = '/nfs/eor-00/h1/mwilensk/Grand_Catalog/Diffuse_2015_8s_Autos/Vis_Avg/Unflagged/Averages/'
+invalid_mask = True
 
 """Ant_Pol Keywords"""
 
@@ -58,7 +59,7 @@ args = parser.parse_args()
 
 obs = obslist[args.id - 1]
 inpath = pathlist[args.id - 1]
-output = '%s%s*.png' % ('/nfs/eor-00/h1/mwilensk/Grand_Catalog/Diffuse_2015_8s_Autos/Flags/', str(obs))
+output = '%s%s*.png' % ('/nfs/eor-00/h1/mwilensk/Grand_Catalog/Diffuse_2015_8s_Autos/Vis_Avg/Unflagged/', str(obs))
 output_list = glob.glob(output)
 
 if not output_list:
@@ -84,7 +85,7 @@ if not output_list:
         cf.vis_avg_catalog(RFI, outpath['vis_avg'], xticks=xticks,
                            flag_slice=flag_slices[0], yminors='auto',
                            xminors=xminors, amp_avg=amp_avg, write=vis_avg_write,
-                           writepath=vis_avg_writepath)
+                           writepath=vis_avg_writepath, invalid_mask=invalid_mask)
     if 'temperature' in catalog_types:
         RFI.one_d_hist_prepare(flag_slice='All', bins=bins, fit=True,
                                bin_window=bin_window, write=True,

@@ -72,10 +72,12 @@ def image_plot(fig, ax, data, cmap=cm.plasma, vmin=None, vmax=None, title='',
                aspect_ratio=3, xlabel='Frequency (Mhz)', ylabel='Time Pair',
                cbar_label='Counts RFI', xticks=[], yticks=[], xminors=None,
                yminors=None, xticklabels=None, yticklabels=None, zero_mask=True,
-               mask_color='white'):
+               mask_color='white', invalid_mask=False):
 
     if zero_mask:
         data = np.ma.masked_equal(data, 0)
+    if invalid_mask:
+        data = np.ma.masked_invalid(data)
 
     cmap = cmap
     cmap.set_bad(color=mask_color)
