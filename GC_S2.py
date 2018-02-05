@@ -21,7 +21,7 @@ auto_remove = True
 
 """Misc. Keywords"""
 
-flag_slices = ['All', 'Unflagged']
+flag_slices = ['Unflagged', ]
 write = {'Unflagged': True, 'All': True}
 writepath = '/nfs/eor-00/h1/mwilensk/Grand_Catalog/S2_Zenith_8s_Autos/Freq_Time/Variances/'
 bins = 'auto'
