@@ -20,6 +20,19 @@ class MidpointNormalize(colors.Normalize):
         return np.ma.masked_array(np.interp(value, x, y), np.isnan(value))
 
 
+def four_panel_tf_setup(freq_array):
+    fig, ax = plt.subplots(figsize=(14, 8), nrows=2, ncols=2)
+    pols = ['XX', 'YY', 'XY', 'YX']
+    Nfreqs = len(freq_array)
+    xticks = [Nfreqs * k / 6 for k in range(6)]
+    xticks.append(Nfreqs - 1)
+    xminors = AutoMinorLocator(4)
+    yminors = 'auto'
+    xticklabels = ['%.1f' % (freq_array[tick] * 10 ** (-6)) for tick in xticks]
+
+    return(fig, ax, pols, xticks, xticks, xminors, yminors, xticklabels)
+
+
 def one_d_hist_plot(fig, ax, bin_edges, counts, zorder=[], labels=[], xlog=True,
                     ylog=True, xlabel='Amplitude', ylabel='Counts', title=''):
 
