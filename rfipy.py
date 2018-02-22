@@ -176,7 +176,7 @@ class RFI:
         H[ind] = 1
         H = np.sum(H, axis=1)
         if fraction:
-            H /= float(self.UV.Nbls)
+            H = H.astype(float) / self.UV.Nbls
 
         return(H)
 

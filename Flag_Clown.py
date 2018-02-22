@@ -10,7 +10,7 @@ obs_str = ['t30_t36', 't18_t24']
 for n in range(2):
 
     Cal = pyuvdata.UVCal()
-    Cal.read_fhd_cal('/Users/mike_e_dubs/MWA/FHD/fhd_mjw_Aug23_Jan2018/calibration/1061313128_f181.2_f187.5_t30_t36_cal.sav',
+    Cal.read_fhd_cal('/Users/mike_e_dubs/MWA/FHD/fhd_mjw_Aug23_Jan2018/calibration/1061313128_f181.2_f187.5_%s_cal.sav' % (obs_str[n]),
                      '/Users/mike_e_dubs/MWA/FHD/fhd_mjw_Aug23_Jan2018/metadata/1061313128_f181.2_f187.5_%s_obs.sav' % (obs_str[n]))
 
     UV = pyuvdata.UVData()
@@ -27,8 +27,6 @@ for n in range(2):
         ant1_ind.append(UV.ant_1_array[inds])
         ant2_ind.append(UV.ant_2_array[inds])
     ant_ind = [np.array(ant1_ind), np.array(ant2_ind)]
-
-    print(ant1_ind, ant2_ind)
 
     H = np.zeros([UV.Nants_telescope, UV.Nfreqs, UV.Npols, UV.Ntimes], dtype=int)
 
