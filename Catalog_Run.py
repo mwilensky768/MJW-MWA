@@ -25,9 +25,9 @@ flag_slices = ['All', 'Unflagged']
 write = {'Unflagged': False, 'All': False}
 writepath = '/nfs/eor-00/h1/mwilensk/Golden_Set_8s_Autos/Temperatures/Vis_Var/All/'
 bins = 'auto'
-band = {'Unflagged': 'fit', 'All': [1e+03, 1e+05], 'Flagged': [0, 1e6]}
+band = {'Unflagged': 'fit', 'All': [2e+03, 1e+05], 'Flagged': [0, 1e6]}
 fit = {'Unflagged': True, 'All': False}
-bin_window = [0, 1e+03]
+bin_window = [0, 2e+03]
 
 """Waterfall Keywords"""
 
