@@ -267,28 +267,32 @@ def drill_catalog(RFI, outpath, band={}, write={}, writepath='', fit={},
             plt.close(fig)
 
 
-def vis_avg_catalog(RFI, outpath, flag_slice='All', amp_avg='Amp',
+def vis_avg_catalog(RFI, outpath, flag_slices=['All', ], amp_avg='Amp',
                     xticks=[], xminors=[], yticks=[], yminors=[], write=False,
                     writepath='', aspect_ratio=3, invalid_mask=False):
 
-    data = RFI.vis_avg_prepare(flag_slice=flag_slice, amp_avg=amp_avg, write=write,
-                               writepath=writepath)
+    plot_titles = {'All': 'All Baselines', 'Unflagged': 'Post-Flagging'}
 
-    fig, ax = ax_constructor(RFI)
-    fig.suptitle('%s Incoherent Noise Spectrum, %s Baselines' % (RFI.obs, flag_slice))
-    for m in range(RFI.UV.Npols):
-        curr_ax = ax_chooser(RFI, ax, m)
-        plot_lib.image_plot(fig, curr_ax, data[:, 0, :, m],
-                            title='%s' % (RFI.pols[m]),
-                            cbar_label='%s' % (RFI.UV.vis_units), xticks=xticks,
-                            xminors=xminors,
-                            xticklabels=['%.1f' %
-                                         (10 ** (-6) * RFI.UV.freq_array[0, int(tick)])
-                                         for tick in xticks],
-                            yticks=yticks, yminors=yminors,
-                            aspect_ratio=aspect_ratio, invalid_mask=invalid_mask)
-    fig.savefig('%s%s_Vis_Avg_Waterfall.png' % (outpath, RFI.obs))
-    plt.close(fig)
+    for flag_slice in flag_slices:
+        data = RFI.vis_avg_prepare(flag_slice=flag_slice, amp_avg=amp_avg, write=write,
+                                   writepath=writepath)
+
+        fig, ax = ax_constructor(RFI)
+        fig.suptitle('%s Incoherent Noise Spectrum, %s' %
+                     (RFI.obs, plot_titles[flag_slice]))
+        for m in range(RFI.UV.Npols):
+            curr_ax = ax_chooser(RFI, ax, m)
+            plot_lib.image_plot(fig, curr_ax, data[:, 0, :, m],
+                                title='%s' % (RFI.pols[m]),
+                                cbar_label='%s' % (RFI.UV.vis_units), xticks=xticks,
+                                xminors=xminors,
+                                xticklabels=['%.1f' %
+                                             (10 ** (-6) * RFI.UV.freq_array[0, int(tick)])
+                                             for tick in xticks],
+                                yticks=yticks, yminors=yminors,
+                                aspect_ratio=aspect_ratio, invalid_mask=invalid_mask)
+        fig.savefig('%s%s_Vis_Avg_Waterfall_%s.png' % (outpath, RFI.obs, flag_slice))
+        plt.close(fig)
 
 
 def ant_scatter_catalog(RFI, outpath, band, flag_slice='All'):

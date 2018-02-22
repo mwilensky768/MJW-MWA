@@ -7,22 +7,22 @@ from matplotlib.ticker import FixedLocator, AutoMinorLocator
 
 """Input/Output keywords"""
 
-catalog_types = ['vis_avg', 'flag']
-obslist_path = '/nfs/eor-00/h1/mwilensk/Golden_Set/Golden_Set_OBSIDS.txt'
-pathlist_path = '/nfs/eor-00/h1/mwilensk/Golden_Set/Golden_Set_OBSIDS_paths.txt'
-outpath = {'waterfall': '/nfs/eor-00/h1/mwilensk/Golden_Set_8s_Autos/Catalogs/Freq_Time/All/',
-           'vis_avg': '/nfs/eor-00/h1/mwilensk/Golden_Set_8s_Autos/Catalogs/Vis_Avg/Flagged/',
-           'flag': '/nfs/eor-00/h1/mwilensk/Golden_Set_8s_Autos/Catalogs/Flags/Flagged/'}
+catalog_types = ['INS', 'flag', 'waterfall']
+obslist_path = '/nfs/eor-00/h1/mwilensk/P2_Bad_Obs/badobs_list_wenyang.txt'
+pathlist_path = '/nfs/eor-00/h1/mwilensk/P2_Bad_Obs/badobs_list_wenyang_paths.txt'
+outpath = {'waterfall': '/nfs/eor-00/h1/mwilensk/P2_Bad_Obs/Catalogs/Freq_Time/',
+           'INS': '/nfs/eor-00/h1/mwilensk/P2_Bad_Obs/Catalogs/INS/',
+           'flag': '/nfs/eor-00/h1/mwilensk/P2_Bad_Obs/Catalogs/Flags/'}
 
 """Object Keywords"""
 
-bad_time_indices = [0, -3, -2, -1]
+bad_time_indices = [0, -1]
 auto_remove = True
 
 """Misc. Keywords"""
 
-flag_slices = ['Flagged', ]
-write = {'Unflagged': True, 'All': True}
+flag_slices = ['All', 'Unflagged']
+write = {'Unflagged': False, 'All': False}
 writepath = '/nfs/eor-00/h1/mwilensk/Golden_Set_8s_Autos/Temperatures/Vis_Var/All/'
 bins = 'auto'
 band = {'Unflagged': 'fit', 'All': [1e+03, 1e+05], 'Flagged': [0, 1e6]}
@@ -37,12 +37,12 @@ fraction = True
 
 drill_type = 'time'
 
-"""Vis_Avg Keywords"""
+"""INS Keywords"""
 
 amp_avg = 'Amp'
-plot_type = 'waterfall'
 vis_avg_write = False
 vis_avg_writepath = '/nfs/eor-00/h1/mwilensk/Golden_Set_8s_Autos/Temperatures/Vis_Avg/All/'
+invalid_mask = False
 
 """Ant_Pol Keywords"""
 
@@ -57,9 +57,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument("id", type=int)
 args = parser.parse_args()
 
+"""Filesystem Stuff"""
+
 obs = obslist[args.id - 1]
 inpath = pathlist[args.id - 1]
-output = '%s%s*.png' % ('/nfs/eor-00/h1/mwilensk/Golden_Set_8s_Autos/Catalogs/Vis_Avg/Flagged/', str(obs))
+output = '%s%s*.png' % ('/nfs/eor-00/h1/mwilensk/P2_Bad_Obs/Catalogs/Flags/', str(obs))
 output_list = glob.glob(output)
 
 if not output_list:
@@ -81,11 +83,11 @@ if not output_list:
                          writepath=writepath, fit=fit, bins=bins,
                          flag_slices=flag_slices, bin_window=bin_window,
                          xticks=xticks, xminors=xminors, drill_type='time')
-    if 'vis_avg' in catalog_types:
-        cf.vis_avg_catalog(RFI, outpath['vis_avg'], xticks=xticks,
-                           flag_slice=flag_slices[0], yminors='auto',
+    if 'INS' in catalog_types:
+        cf.vis_avg_catalog(RFI, outpath['INS'], xticks=xticks,
+                           flag_slice=flag_slices, yminors='auto',
                            xminors=xminors, amp_avg=amp_avg, write=vis_avg_write,
-                           writepath=vis_avg_writepath)
+                           writepath=vis_avg_writepath, invalid_mask=invalid_mask)
     if 'temperature' in catalog_types:
         RFI.one_d_hist_prepare(flag_slice='All', bins=bins, fit=True,
                                bin_window=bin_window, write=True,
@@ -95,7 +97,6 @@ if not output_list:
     if 'ant_pol' in catalog_types:
         cf.ant_pol_catalog(RFI, outpath, band=band['All'], clip=clip)
     if 'flag' in catalog_types:
-        cf.flag_catalog(RFI, outpath['flag'], flag_slices=flag_slices, xticks=xticks,
-                        xminors=xminors)
+        cf.flag_catalog(RFI, outpath['flag'], xticks=xticks, xminors=xminors)
 else:
     print('I already processed obs ' + str(obs))
