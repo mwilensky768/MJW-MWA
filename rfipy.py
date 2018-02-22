@@ -1,7 +1,5 @@
 import numpy as np
 import pyuvdata as pyuv
-from matplotlib import cm, use
-use('Agg')
 from math import floor, ceil, log10
 import os
 import scipy.linalg
@@ -52,10 +50,13 @@ class RFI:
 
             self.UV.select(freq_chans=[x for x in range(self.UV.Nfreqs) if x not in
                                        LEdges and x not in REdges])
-
-        self.data_array = np.diff(np.reshape(self.UV.data_array,
-                                  [self.UV.Ntimes, self.UV.Nbls, self.UV.Nspws,
-                                   self.UV.Nfreqs, self.UV.Npols]), axis=0)
+        cond = np.all([self.UV.baseline_array[:self.UV.Nbls] ==
+                       self.UV.baseline_array[k * self.UV.Nbls:(k + 1) * self.UV.Nbls]
+                       for k in range(self.UV.Ntimes)])
+        assert cond, 'Baseline array slices do not match!'
+        self.UV.data_array = np.diff(np.reshape(self.UV.data_array,
+                                     [self.UV.Ntimes, self.UV.Nbls, self.UV.Nspws,
+                                      self.UV.Nfreqs, self.UV.Npols]), axis=0)
 
     def flag_operations(self, flag_slice='Unflagged'):
 
