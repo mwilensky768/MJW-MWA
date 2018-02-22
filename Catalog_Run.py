@@ -85,7 +85,7 @@ if not output_list:
                          xticks=xticks, xminors=xminors, drill_type='time')
     if 'INS' in catalog_types:
         cf.vis_avg_catalog(RFI, outpath['INS'], xticks=xticks,
-                           flag_slice=flag_slices, yminors='auto',
+                           flag_slices=flag_slices, yminors='auto',
                            xminors=xminors, amp_avg=amp_avg, write=vis_avg_write,
                            writepath=vis_avg_writepath, invalid_mask=invalid_mask)
     if 'temperature' in catalog_types:
