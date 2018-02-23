@@ -9,7 +9,9 @@ fil = open('/Users/mike_e_dubs/MWA/Obs_Lists/PPD_Obs.txt', 'w')
 
 for subdir in subdir_dict:
     for typ in subdir_dict[subdir]:
-        obslist = np.array(glob.glob('%s%s%s*.png' % (basedir, subdir, typ)))
+        obslist = glob.glob('%s%s%s*.png' % (basedir, subdir, typ))
+        obslist.sort()
+        obslist = np.array(obslist)
         obslist = obslist[range(0, len(obslist), 2)]
         obs_start = len(basedir) + len(subdir) + len(typ)
         obs_end = obs_start + 10
