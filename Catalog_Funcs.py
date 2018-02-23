@@ -8,8 +8,8 @@ import scipy.linalg
 
 def band_constructor(counts, bins, labels, flag_slice):
 
-    for k in range(len(counts)):
-        if labels[k] == flag_slice:
+    for k, label in enumerate(labels):
+        if label == flag_slice:
             m = k
 
     count = counts[m]
@@ -23,7 +23,7 @@ def band_constructor(counts, bins, labels, flag_slice):
 
 def ext_list_selector(RFI, W):
 
-    if RFI.UV.Npols > 1:
+    if RFI.UV.Npols == 4:
         MAXW_list = range(4)
         MAXW_list[:2] = [max([np.amax(W[:, :, l]) for l in [0, 1]]) for m in [0, 1]]
         MAXW_list[2:4] = [max([np.amax(W[:, :, l]) for l in [2, 3]]) for m in [0, 1]]
@@ -31,18 +31,27 @@ def ext_list_selector(RFI, W):
         MINW_list = range(4)
         MINW_list[:2] = [min([np.amin(W[:, :, l]) for l in [0, 1]]) for m in [0, 1]]
         MINW_list[2:4] = [min([np.amin(W[:, :, l]) for l in [2, 3]]) for m in [0, 1]]
+    elif RFI.UV.Npols == 2:
+        MAXW_list = range(2)
+        MAXW_list = [max([np.amaxW[:, :, l] for l in [0, 1]]) for m in [0, 1]]
+
+        MINW_list = range(2)
+        MINW_list = [min([np.amaxW[:, :, l] for l in [0, 1]]) for m in [0, 1]]
     else:
-        MAXW_list = [np.amax(W[:, 0, :, :]), ]
-        MINW_list = [np.amin(W[:, 0, :, :]), ]
+        MAXW_list = [np.amax(W[:, :, 0]), ]
+        MINW_list = [np.amin(W[:, :, 0]), ]
 
     return(MAXW_list, MINW_list)
 
 
 def grid_setup(RFI):
 
-    if RFI.UV.Npols > 1:
+    if RFI.UV.Npols == 4:
         gs = GridSpec(3, 2)
         gs_loc = [[1, 0], [1, 1], [2, 0], [2, 1]]
+    elif RFI.UV.Npols == 2:
+        gs = GridSpec(2, 2)
+        gs_loc = [[1, 0], [1, 1]]
     else:
         gs = GridSpec(2, 1)
         gs_loc = [[1, 0], ]
@@ -52,8 +61,10 @@ def grid_setup(RFI):
 
 def ax_constructor(RFI):
 
-    if RFI.UV.Npols > 1:
+    if RFI.UV.Npols == 4:
         fig, ax = plt.subplots(figsize=(14, 8), nrows=2, ncols=2)
+    elif RFI.UV.Npols == 2:
+        fig, ax = plt.subplots(figsize=(14, 8), nrows=2)
     else:
         fig, ax = plt.subplots(figsize=(14, 8))
 
@@ -62,8 +73,10 @@ def ax_constructor(RFI):
 
 def ax_chooser(RFI, ax, m):
 
-    if RFI.UV.Npols > 1:
+    if RFI.UV.Npols == 4:
         curr_ax = ax[m / 2][m % 2]
+    elif RFI.UV.Npols == 2:
+        curr_ax = ax[m]
     else:
         curr_ax = ax
 
@@ -267,15 +280,15 @@ def drill_catalog(RFI, outpath, band={}, write={}, writepath='', fit={},
             plt.close(fig)
 
 
-def vis_avg_catalog(RFI, outpath, flag_slices=['All', ], amp_avg='Amp',
-                    xticks=[], xminors=[], yticks=[], yminors=[], write=False,
-                    writepath='', aspect_ratio=3, invalid_mask=False):
+def INS_catalog(RFI, outpath, flag_slices=['All', ], amp_avg='Amp',
+                xticks=[], xminors=[], yticks=[], yminors=[], write=False,
+                writepath='', aspect_ratio=3, invalid_mask=False):
 
     plot_titles = {'All': 'All Baselines', 'Unflagged': 'Post-Flagging'}
 
     for flag_slice in flag_slices:
-        data = RFI.vis_avg_prepare(flag_slice=flag_slice, amp_avg=amp_avg, write=write,
-                                   writepath=writepath)
+        data = RFI.INS_prepare(flag_slice=flag_slice, amp_avg=amp_avg, write=write,
+                               writepath=writepath)
 
         fig, ax = ax_constructor(RFI)
         fig.suptitle('%s Incoherent Noise Spectrum, %s' %
@@ -345,10 +358,18 @@ def ant_pol_catalog(RFI, outpath, times=[], freqs=[], band=[], clip=False):
             plt.close(fig)
 
 
-def flag_catalog(RFI, outpath, flag_slices=['Flagged', ], xticks=[], xminors=[]):
+def flag_catalog(RFI, outpath, flag_slices=['Flagged', ], xticks=None,
+                 xminors=None, fraction=True):
+    """
+    Generate waterfall plots of flags, summed over baselines. In other words,
+    how many baselines at a given time-pair/freq/pol were of a certain flag variety.
+    Set fraction=True for the fraction of baselines.
+    """
     for flag_slice in flag_slices:
         flags = RFI.flag_operations(flag_slice)
         flags = np.sum(flags, axis=1)
+        if fraction:
+            flags = flags.astype(float) / RFI.UV.Nbls
 
         fig, ax = ax_constructor(RFI)
         fig.suptitle('%s Visibility Difference Flag Map (%s)' %

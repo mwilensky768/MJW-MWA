@@ -84,10 +84,10 @@ if not output_list:
                          flag_slices=flag_slices, bin_window=bin_window,
                          xticks=xticks, xminors=xminors, drill_type='time')
     if 'INS' in catalog_types:
-        cf.vis_avg_catalog(RFI, outpath['INS'], xticks=xticks,
-                           flag_slices=flag_slices, yminors='auto',
-                           xminors=xminors, amp_avg=amp_avg, write=vis_avg_write,
-                           writepath=vis_avg_writepath, invalid_mask=invalid_mask)
+        cf.INS_catalog(RFI, outpath['INS'], xticks=xticks,
+                       flag_slices=flag_slices, yminors='auto',
+                       xminors=xminors, amp_avg=amp_avg, write=vis_avg_write,
+                       writepath=vis_avg_writepath, invalid_mask=invalid_mask)
     if 'temperature' in catalog_types:
         RFI.one_d_hist_prepare(flag_slice='All', bins=bins, fit=True,
                                bin_window=bin_window, write=True,
