@@ -34,7 +34,8 @@ def four_panel_tf_setup(freq_array):
 
 
 def one_d_hist_plot(fig, ax, bin_edges, counts, zorder=[], labels=[], xlog=True,
-                    ylog=True, xlabel='Amplitude', ylabel='Counts', title=''):
+                    ylog=True, xlabel='Amplitude', ylabel='Counts', title='',
+                    legend=True):
 
     bin_widths = np.diff(bin_edges)
     bin_centers = bin_edges[:-1] + 0.5 * bin_widths
@@ -44,10 +45,12 @@ def one_d_hist_plot(fig, ax, bin_edges, counts, zorder=[], labels=[], xlog=True,
                 zorder=zorder[i])
 
     ax.set_ylim([10**(-1), 10 * max([np.amax(x) for x in counts])])
-    ax.legend()
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
+
+    if legend:
+        ax.legend()
 
     if xlog:
         ax.set_xscale('log', nonposy='clip')
