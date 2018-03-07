@@ -327,6 +327,7 @@ def INS_catalog(RFI, outpath, flag_slices=['All', ], amp_avg='Amp',
         fig_hist.savefig('%s%s_INS_hist_%s.png' % (outpath, RFI.obs, flag_slice))
         plt.close(fig)
         plt.close(fig_diff)
+        plt.close(fig_hist)
 
 
 def ant_scatter_catalog(RFI, outpath, band, flag_slice='All'):
