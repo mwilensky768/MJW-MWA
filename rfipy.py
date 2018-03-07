@@ -1,6 +1,6 @@
 import numpy as np
 import pyuvdata as pyuv
-from math import floor, ceil, log10
+from math import floor, ceil, log10, pi
 import os
 import scipy.linalg
 
@@ -94,15 +94,64 @@ class RFI:
 
         return(A)
 
+    def rayleigh_fit(bins, values, flags, write=False, writepath='',
+                     flag_slice='All', bin_window=[0, 1e3], fit_type='rayleigh'):
+
+        bin_widths = np.diff(bins)
+        bin_centers = bins[:-1] + 0.5 * bin_widths
+        fit = np.zeros(len(bins) - 1)
+
+        if fit_type is 'rayleigh':
+            m = np.copy(fit)
+            if write:
+                sigma_array = np.zeros(values.shape[3])
+            # Calculate maximum likelihood estimator for each frequency and polarization
+            for l in range(values.shape[4]):
+                for k in range(values.shape[3]):
+                    n, bins = np.histogram(values[:, :, :, k, l][flags[:, :, :, k, l]], bins=bins)
+                    N = np.sum(n)
+                    m += n
+                    # Only use data within the fit window
+                    data_cond = np.logical_and(np.logical_and(min(bin_window) < values[:, :, :, k, l],
+                                               values[:, :, :, k, l] < max(bin_window)), flags[:, :, :, k, l])
+                    N_fit = np.count_nonzero(data_cond)
+                    # Do not calculate a sigma if nothing belonging to the flag slice is in the window
+                    if N_fit > 0:
+                        # Calculate the MLE and histogram according to the MLE
+                        sigma = np.sqrt(0.5 * np.sum(values[:, :, :, k, l][data_cond]**2) / N_fit)
+                        fit += N_fit * bin_widths * (1 / sigma**2) * bin_centers * \
+                            np.exp(-bin_centers**2 / (2 * sigma ** 2))
+                        if write:
+                            sigma_array[k] = sigma
+                    elif write:
+                        sigma = 0
+                        sigma_array[k] = sigma
+                if write:
+                    np.save('%s%s_%s_sigma_%s.npy' % (writepath, self.obs,
+                                                      flag_slice,
+                                                      self.pols[l]),
+                            sigma_array)
+        if fit_type is 'normal':
+            data_cond = np.logical_and(np.logical_and(min(bin_window) < values,
+                                                      values < max(bin_window)),
+                                       flags)
+            N = len(values[data_cond])
+            mu = np.mean(values[data_cond])
+            sigma_sq = np.var(values[data_cond])
+            fit = N * bin_widths / np.sqrt(2 * pi * sigma_sq) * \
+                np.exp(-((bin_centers - mu) ** 2) / sigma_sq)
+
+        return(m, fit)
+
     def one_d_hist_prepare(self, flag_slice='Unflagged', time_drill=None,
                            freq_drill=None, freq_exc=None, time_exc=None,
-                           bins=None, fit=False, bin_window=[0, 1e+03],
-                           write=False, writepath='', label=''):
+                           bins=None, fit='rayleigh', bin_window=[0, 1e+03],
+                           write=False, writepath='', label='', pol_drill=None):
         """
-        This function makes one_d amplitude histograms. You may choose to make
-        histograms for a single time or frequency using time_drill and freq_drill
-        respectively, or you may exclude a single time or frequency using time_exc
-        or freq_exc respectively.
+        This function makes one_d visibility difference amplitude histograms.
+        You may choose to make histograms for a single time or frequency using
+        time_drill and freq_drill respectively, or you may exclude a single time
+        or frequency using time_exc or freq_exc respectively.
 
         You may choose the bins by giving a sequence of bin edges, or 1000
         logarithmically spaced bins will be generated automatically.
@@ -137,6 +186,9 @@ class RFI:
                                      values[:, :, :, freq_exc + 1:, :]), axis=3)
             flags = np.concatenate((flags[:, :, :, :freq_exc, :],
                                     flags[:, :, :, freq_exc + 1:, :]), axis=3)
+        if pol_drill:
+            values = values[:, :, :, :, pol_drill:pol_drill + 1]
+            flags = flags[:, :, :, :, pol_drill:pol_drill + 1]
 
         # Generate the bins or keep the selectred ones
         if bins is None:
@@ -148,45 +200,11 @@ class RFI:
 
         # Generate a fit if desired
         if fit:
-            bin_widths = np.diff(bins)
-            bin_centers = bins[:-1] + 0.5 * bin_widths
-            fit = np.zeros(len(bins) - 1)
-            m = np.copy(fit)
-            if write:
-                sigma_array = np.zeros(values.shape[3])
-            # Calculate maximum likelihood estimator for each frequency and polarization
-            for l in range(values.shape[4]):
-                for k in range(values.shape[3]):
-                    temp_values = values[:, :, :, k, l].flatten()
-                    temp_flags = flags[:, :, :, k, l].flatten()
-                    temp_values = temp_values[temp_flags > 0]
-                    n, bins = np.histogram(temp_values, bins=bins)
-                    m += n
-                    # Only use data within the fit window
-                    data_cond = np.logical_and(min(bin_window) < temp_values,
-                                               temp_values < max(bin_window))
-                    N_fit = len(temp_values[data_cond])
-                    # Do not calculate a sigma if nothing is in the window
-                    if N_fit > 0:
-                        sigma = np.sqrt(0.5 * np.sum(temp_values[data_cond]**2) / N_fit)
-                        fit += N * bin_widths * (1 / sigma**2) * bin_centers * \
-                            np.exp(-bin_centers**2 / (2 * sigma ** 2))
-                        if write:
-                            sigma_array[k] = sigma
-                    elif write:
-                        sigma = 0
-                        sigma_array[k] = sigma
-                if write:
-                    np.save('%s%s_%s_sigma_%s.npy' % (writepath, self.obs,
-                                                      flag_slice,
-                                                      self.pols[l]),
-                            sigma_array)
-
+            m, bins = hist_fit(bins, values, flags, fit_type=fit, write=write,
+                               writepath=writepath, flag_slice=flag_slice,
+                               bin_window=bin_window)
         else:
-            values = values.flatten()
-            flags = flags.flatten()
-            values = values[flags > 0]
-            m, bins = np.histogram(values, bins=bins)
+            m, bins = np.histogram(values[flags], bins=bins)
             fit = None
 
         # Write out the function returns
@@ -296,13 +314,20 @@ class RFI:
             values = self.UV.data_array
 
         flags = self.flag_operations(flag_slice)
-        values[np.logical_not(flags)] = np.nan
-        avg = np.absolute(np.nanmean(values, axis=1))
+        values = np.ma.masked_array(values)
+        values[np.logical_not(flags)] = np.ma.masked
+        avg = np.absolute(np.mean(values, axis=1))
+        frac_diff = avg / np.mean(avg, axis=0) - 1
+        n, bins = np.histogram(frac_diff.flatten())
+        sig = np.sqrt((4 - pi) / (pi * self.UV.Nbls))
+        _, fit = self.hist_fit(bins, frac_diff, np.logical_not(frac_diff.mask),
+                               bin_window=[-4 * sig, 4 * sig], fit_type='normal')
 
         if write:
             np.save('%s%s_Vis_Avg_%s_%s.npy' %
                     (writepath, self.obs, amp_avg, flag_slice), avg)
-        return(avg)
+
+        return(avg, frac_diff, n, bins, fit)
 
     def ant_scatter_prepare(self):
 

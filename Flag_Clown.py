@@ -10,11 +10,11 @@ obs_str = ['t30_t36', 't18_t24']
 for n in range(2):
 
     Cal = pyuvdata.UVCal()
-    Cal.read_fhd_cal('/Users/mike_e_dubs/MWA/FHD/fhd_mjw_Aug23_Jan2018/calibration/1061313128_f181.2_f187.5_%s_cal.sav' % (obs_str[n]),
-                     '/Users/mike_e_dubs/MWA/FHD/fhd_mjw_Aug23_Jan2018/metadata/1061313128_f181.2_f187.5_%s_obs.sav' % (obs_str[n]))
+    Cal.read_fhd_cal('/Users/mike_e_dubs/MWA/FHD/fhd_mjw_Aug23_Jan2018/calibration/1061313128_%s_flag_mod_cal.sav' % (obs_str[n]),
+                     '/Users/mike_e_dubs/MWA/FHD/fhd_mjw_Aug23_Jan2018/metadata/1061313128_%s_flag_mod_obs.sav' % (obs_str[n]))
 
     UV = pyuvdata.UVData()
-    UV.read_uvfits('/Users/mike_e_dubs/MWA/Data/smaller_uvfits/1061313128_f181.2_f187.5_%s.uvfits' % (obs_str[n]))
+    UV.read_uvfits('/Users/mike_e_dubs/MWA/Data/smaller_uvfits/1061313128_%s_flag_mod.uvfits' % (obs_str[n]))
 
     blt_inds = [k for k in range(UV.Nblts) if UV.ant_1_array[k] != UV.ant_2_array[k]]
     UV.select(blt_inds=blt_inds)
@@ -60,5 +60,5 @@ for n in range(2):
                             xticks=xticks, xminors=xminors, xticklabels=xticklabels,
                             zero_mask=False)
 
-    fig_Cal.savefig('/Users/mike_e_dubs/MWA/FHD/Flag_Comparison/%s_Cal_Flags.png' % (obs_str[n]))
-    fig_UV.savefig('/Users/mike_e_dubs/MWA/FHD/Flag_Comparison/%s_COTTER_Flags.png' % (obs_str[n]))
+    fig_Cal.savefig('/Users/mike_e_dubs/MWA/FHD/Flag_Comparison/%s_flag_mod_Cal_Flags.png' % (obs_str[n]))
+    fig_UV.savefig('/Users/mike_e_dubs/MWA/FHD/Flag_Comparison/%s_flag_mod_v2_COTTER_Flags.png' % (obs_str[n]))

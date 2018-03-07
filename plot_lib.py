@@ -108,6 +108,8 @@ def image_plot(fig, ax, data, cmap=cm.plasma, vmin=None, vmax=None, title='',
                         norm=MidpointNormalize(midpoint=0, vmin=vmin, vmax=vmax))
     else:
         cax = ax.imshow(data, cmap=cmap, vmin=vmin, vmax=vmax)
+
+    cmap.set_bad(color=mask_color)
     cbar = fig.colorbar(cax, ax=ax)
     cbar.set_label(cbar_label)
 
