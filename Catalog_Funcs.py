@@ -287,25 +287,46 @@ def INS_catalog(RFI, outpath, flag_slices=['All', ], amp_avg='Amp',
     plot_titles = {'All': 'All Baselines', 'Unflagged': 'Post-Flagging'}
 
     for flag_slice in flag_slices:
-        data = RFI.INS_prepare(flag_slice=flag_slice, amp_avg=amp_avg, write=write,
-                               writepath=writepath)
+        INS, frac_diff, n, bins, fit = RFI.INS_prepare(flag_slice=flag_slice,
+                                                       amp_avg=amp_avg,
+                                                       write=write,
+                                                       writepath=writepath)
 
         fig, ax = ax_constructor(RFI)
+        fig_diff, ax_diff = ax_constructor(RFI)
+        fig_hist, ax_hist = plt.subplots(figsize(14, 8))
+
         fig.suptitle('%s Incoherent Noise Spectrum, %s' %
                      (RFI.obs, plot_titles[flag_slice]))
+        fig_diff.suptitle('%s Incoherent Noise Spectrum Fractional Deviation from Mean, %s' %
+                          (RFI.obs, plot_titles[flag_slice]))
+        plot_lib.one_d_hist_plot(fig_hist, ax_hist, bins, [n, fit], zorder=[2, 1],
+                                 labels=['Data', 'Fit'], xlog=False, xlabel='Fraction',
+                                 title='Incoherent Noise Spectrum Fractional Deviation Histogram')
         for m in range(RFI.UV.Npols):
             curr_ax = ax_chooser(RFI, ax, m)
-            plot_lib.image_plot(fig, curr_ax, data[:, 0, :, m],
-                                title='%s' % (RFI.pols[m]),
-                                cbar_label='%s' % (RFI.UV.vis_units), xticks=xticks,
-                                xminors=xminors,
+            curr_ax_diff = ax_chooser(RFI, ax_diff, m)
+            plot_lib.image_plot(fig, curr_ax, INS[:, 0, :, m],
+                                title=RFI.pols[m], cbar_label=RFI.UV.vis_units,
+                                xticks=xticks, xminors=xminors,
                                 xticklabels=['%.1f' %
                                              (10 ** (-6) * RFI.UV.freq_array[0, int(tick)])
                                              for tick in xticks],
                                 yticks=yticks, yminors=yminors,
                                 aspect_ratio=aspect_ratio, invalid_mask=invalid_mask)
-        fig.savefig('%s%s_Vis_Avg_Waterfall_%s.png' % (outpath, RFI.obs, flag_slice))
+            plot_lib.image_plot(fig_diff, curr_ax_diff, frac_diff[:, 0, :, m],
+                                title=RFI.pols[m], cbar_label='Fraction',
+                                xticks=xticks, xminors=xminors,
+                                xticklabels=['%.1f' %
+                                             (10 ** (-6) * RFI.UV.freq_array[0, int(tick)])
+                                             for tick in xticks],
+                                yticks=yticks, yminors=yminors,
+                                aspect_ratio=aspect_ratio, invalid_mask=invalid_mask)
+        fig.savefig('%s%s_INS_%s.png' % (outpath, RFI.obs, flag_slice))
+        fig_diff.savefig('%s%s_INS_frac_diff_%s.png' % (outpath, RFI.obs, flag_slice))
+        fig_hist.savefig('%s%s_INS_hist_%s.png' % (outpath, RFI.obs, flag_slice))
         plt.close(fig)
+        plt.close(fig_diff)
 
 
 def ant_scatter_catalog(RFI, outpath, band, flag_slice='All'):
