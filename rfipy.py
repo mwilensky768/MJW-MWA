@@ -1,8 +1,10 @@
 import numpy as np
 import pyuvdata as pyuv
-from math import floor, ceil, log10, pi
+from math import floor, ceil, log10, pi, log, sqrt
 import os
 import scipy.linalg
+import SumThreshold as ST
+from scipy.special import erfinv
 
 
 class RFI:
@@ -94,8 +96,8 @@ class RFI:
 
         return(A)
 
-    def rayleigh_fit(bins, values, flags, write=False, writepath='',
-                     flag_slice='All', bin_window=[0, 1e3], fit_type='rayleigh'):
+    def hist_fit(self, bins, values, flags, write=False, writepath='',
+                 flag_slice='All', bin_window=[0, 1e3], fit_type='rayleigh'):
 
         bin_widths = np.diff(bins)
         bin_centers = bins[:-1] + 0.5 * bin_widths
@@ -140,6 +142,7 @@ class RFI:
             sigma_sq = np.var(values[data_cond])
             fit = N * bin_widths / np.sqrt(2 * pi * sigma_sq) * \
                 np.exp(-((bin_centers - mu) ** 2) / sigma_sq)
+            m = np.histogram(values.flatten())
 
         return(m, fit)
 
@@ -200,9 +203,9 @@ class RFI:
 
         # Generate a fit if desired
         if fit:
-            m, bins = hist_fit(bins, values, flags, fit_type=fit, write=write,
-                               writepath=writepath, flag_slice=flag_slice,
-                               bin_window=bin_window)
+            m, fit = self.hist_fit(bins, values, flags, write=write,
+                                   writepath=writepath, flag_slice=flag_slice,
+                                   bin_window=bin_window, fit_type=fit)
         else:
             m, bins = np.histogram(values[flags], bins=bins)
             fit = None
@@ -316,18 +319,45 @@ class RFI:
         flags = self.flag_operations(flag_slice)
         values = np.ma.masked_array(values)
         values[np.logical_not(flags)] = np.ma.masked
-        avg = np.absolute(np.mean(values, axis=1))
-        frac_diff = avg / np.mean(avg, axis=0) - 1
-        n, bins = np.histogram(frac_diff.flatten())
-        sig = np.sqrt((4 - pi) / (pi * self.UV.Nbls))
+        INS = np.absolute(np.mean(values, axis=1))
+        frac_diff = INS / np.mean(INS, axis=0) - 1
+        n, bins = np.histogram(frac_diff[np.logical_not(frac_diff.mask)], bins='auto')
+        # This is how far out the data should extend if purely noisy
+        bin_max = sqrt((pi - 4) / (pi * self.UV.Nbls) * 2 *
+                       log(sqrt(pi) / (4 * np.prod(INS.shape) ** (2.0 / 3) * erfinv(0.5))))
         _, fit = self.hist_fit(bins, frac_diff, np.logical_not(frac_diff.mask),
-                               bin_window=[-4 * sig, 4 * sig], fit_type='normal')
+                               bin_window=[-bin_max, bin_max], fit_type='normal')
 
         if write:
-            np.save('%s%s_Vis_Avg_%s_%s.npy' %
-                    (writepath, self.obs, amp_avg, flag_slice), avg)
+            np.ma.dump(INS, '%s%s_%s_%s_INS.npy' %
+                       (writepath, self.obs, flag_slice, amp_avg))
+            np.ma.dump(frac_diff, '%s%s_%s_%s_frac_diff.npy' %
+                       (writepath, self.obs, flag_slice, amp_avg))
+            np.save('%s%s_%s_%s_counts.npy' %
+                    (writepath, self.obs, flag_slice, amp_avg), n)
+            np.save('%s%s_%s_%s_bins.npy' %
+                    (writepath, self.obs, flag_slice, amp_avg), bins)
+            np.save('%s%s_%s_%s_fit.npy' %
+                    (writepath, self.obs, flag_slice, amp_avg), fit)
 
-        return(avg, frac_diff, n, bins, fit)
+        return(INS, frac_diff, n, bins, fit)
+
+    def INS_outlier_flag(self, flag_slice='All', amp_avg='Amp', write=False,
+                         writepath=''):
+
+        # Prepare a noise spectrum
+        INS, frac_diff, _, _, _ = self.INS_prepare(flag_slice=flag_slice,
+                                                   amp_avg=amp_avg,
+                                                   write=write, writepath=writepath)
+        # This is how far noisy data will extend
+        bin_max = sqrt((pi - 4) / (pi * self.UV.Nbls) * 2 *
+                       log(sqrt(pi) / (4 * np.prod(INS.shape) ** (2.0 / 3) * erfinv(0.5))))
+        # Flag the greatest outlier and recalculate the frac_diff in each iteration to determine new outliers
+        while np.max(frac_diff) > bin_max:
+            INS[np.argmax(frac_diff)] = np.ma.masked
+            frac_diff = INS / np.mean(INS, axis=0) - 1
+
+        return(INS, frac_diff)
 
     def ant_scatter_prepare(self):
 

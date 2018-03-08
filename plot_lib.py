@@ -16,8 +16,9 @@ class MidpointNormalize(colors.Normalize):
     def __call__(self, value, clip=None):
         # I'm ignoring masked values and all kinds of edge cases to make a
         # simple example...
+        result, is_scalar = self.process_value(value)
         x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
-        return np.ma.masked_array(np.interp(value, x, y), np.isnan(value))
+        return np.ma.array(np.interp(value, x, y), mask=result.mask, copy=False)
 
 
 def four_panel_tf_setup(freq_array):
@@ -88,7 +89,7 @@ def image_plot(fig, ax, data, cmap=cm.plasma, vmin=None, vmax=None, title='',
                aspect_ratio=3, xlabel='Frequency (Mhz)', ylabel='Time Pair',
                cbar_label='Counts RFI', xticks=[], yticks=[], xminors=None,
                yminors=None, xticklabels=None, yticklabels=None, zero_mask=True,
-               mask_color='white', invalid_mask=False):
+               mask_color='black', invalid_mask=False):
 
     if zero_mask:
         data = np.ma.masked_equal(data, 0)
@@ -96,7 +97,6 @@ def image_plot(fig, ax, data, cmap=cm.plasma, vmin=None, vmax=None, title='',
         data = np.ma.masked_invalid(data)
 
     cmap = cmap
-    cmap.set_bad(color=mask_color)
 
     if vmin is None:
         vmin = np.nanmin(data)
