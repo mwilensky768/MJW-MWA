@@ -1,14 +1,14 @@
 import numpy as np
 
 
-def SIROperator(FMi, Agg):  # Takes a flag mask ( COLUMN vector) and aggression param. (number) as input
+def SIROperator(FMi, Agg):  # Takes a (1-d) flag mask and aggression param. (scalar) as input
 
     N = len(FMi)
 
     Psi = FMi.astype(float) + Agg - 1  # Initialize psi (this is a temp. array)
     M = np.zeros(N, float)  # Initialize M (this is also temp.)
 
-    for n in range(0, N - 1):  # Define M as in AOFlagger paper
+    for n in range(N - 1):  # Define M as in AOFlagger paper
         M[n + 1] = M[n] + Psi[n]
 
     P = np.zeros(N, int)  # Initialize P - this is a temp. array which is to be constructed so that M(P(n)) = min M(i), 0 <= i <= n (perhaps to be called the "latest min index")
@@ -28,7 +28,7 @@ def SIROperator(FMi, Agg):  # Takes a flag mask ( COLUMN vector) and aggression 
 
     FMf = np.zeros(N, int)  # Initialize output flag mask
 
-    for n in range(0, N):  # Ask important flagging question
+    for n in range(N):  # Ask important flagging question
         if M[Q[n]] - M[P[n]] >= 0:
             FMf[n] = 1
         else:

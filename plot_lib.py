@@ -31,18 +31,24 @@ def four_panel_tf_setup(freq_array):
     yminors = 'auto'
     xticklabels = ['%.1f' % (freq_array[tick] * 10 ** (-6)) for tick in xticks]
 
-    return(fig, ax, pols, xticks, xticks, xminors, yminors, xticklabels)
+    return(fig, ax, pols, xticks, xminors, yminors, xticklabels)
 
 
-def one_d_hist_plot(fig, ax, bin_edges, counts, zorder=[], labels=[], xlog=True,
+def one_d_hist_plot(fig, ax, bin_edges, counts, zorder=None, labels=None, xlog=True,
                     ylog=True, xlabel='Amplitude', ylabel='Counts', title='',
                     legend=True):
+    # Must give counts in a list
 
     bin_widths = np.diff(bin_edges)
     bin_centers = bin_edges[:-1] + 0.5 * bin_widths
 
-    for i in range(len(labels)):
-        ax.step(bin_centers, counts[i], where='mid', label=labels[i],
+    if not zorder:
+        zorder = range(len(counts))
+    if not labels:
+        labels = len(counts) * ['']
+
+    for i, count in enumerate(counts):
+        ax.step(bin_centers, count, where='mid', label=labels[i],
                 zorder=zorder[i])
 
     ax.set_ylim([10**(-1), 10 * max([np.amax(x) for x in counts])])
@@ -89,7 +95,7 @@ def image_plot(fig, ax, data, cmap=cm.plasma, vmin=None, vmax=None, title='',
                aspect_ratio=3, xlabel='Frequency (Mhz)', ylabel='Time Pair',
                cbar_label='Counts RFI', xticks=[], yticks=[], xminors=None,
                yminors=None, xticklabels=None, yticklabels=None, zero_mask=True,
-               mask_color='black', invalid_mask=False):
+               mask_color='white', invalid_mask=False):
 
     if zero_mask:
         data = np.ma.masked_equal(data, 0)

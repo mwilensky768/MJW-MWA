@@ -4,7 +4,9 @@ from math import floor, ceil, log10, pi, log, sqrt
 import os
 import scipy.linalg
 import SumThreshold as ST
+import SIR as SIR
 from scipy.special import erfinv
+import rfiutil
 
 
 class RFI:
@@ -96,72 +98,25 @@ class RFI:
 
         return(A)
 
-    def hist_fit(self, bins, values, flags, write=False, writepath='',
-                 flag_slice='All', bin_window=[0, 1e3], fit_type='rayleigh'):
-
-        bin_widths = np.diff(bins)
-        bin_centers = bins[:-1] + 0.5 * bin_widths
-        fit = np.zeros(len(bins) - 1)
-
-        if fit_type is 'rayleigh':
-            m = np.copy(fit)
-            if write:
-                sigma_array = np.zeros(values.shape[3])
-            # Calculate maximum likelihood estimator for each frequency and polarization
-            for l in range(values.shape[4]):
-                for k in range(values.shape[3]):
-                    n, bins = np.histogram(values[:, :, :, k, l][flags[:, :, :, k, l]], bins=bins)
-                    N = np.sum(n)
-                    m += n
-                    # Only use data within the fit window
-                    data_cond = np.logical_and(np.logical_and(min(bin_window) < values[:, :, :, k, l],
-                                               values[:, :, :, k, l] < max(bin_window)), flags[:, :, :, k, l])
-                    N_fit = np.count_nonzero(data_cond)
-                    # Do not calculate a sigma if nothing belonging to the flag slice is in the window
-                    if N_fit > 0:
-                        # Calculate the MLE and histogram according to the MLE
-                        sigma = np.sqrt(0.5 * np.sum(values[:, :, :, k, l][data_cond]**2) / N_fit)
-                        fit += N_fit * bin_widths * (1 / sigma**2) * bin_centers * \
-                            np.exp(-bin_centers**2 / (2 * sigma ** 2))
-                        if write:
-                            sigma_array[k] = sigma
-                    elif write:
-                        sigma = 0
-                        sigma_array[k] = sigma
-                if write:
-                    np.save('%s%s_%s_sigma_%s.npy' % (writepath, self.obs,
-                                                      flag_slice,
-                                                      self.pols[l]),
-                            sigma_array)
-        if fit_type is 'normal':
-            data_cond = np.logical_and(np.logical_and(min(bin_window) < values,
-                                                      values < max(bin_window)),
-                                       flags)
-            N = len(values[data_cond])
-            mu = np.mean(values[data_cond])
-            sigma_sq = np.var(values[data_cond])
-            fit = N * bin_widths / np.sqrt(2 * pi * sigma_sq) * \
-                np.exp(-((bin_centers - mu) ** 2) / sigma_sq)
-            m = np.histogram(values.flatten())
-
-        return(m, fit)
-
-    def one_d_hist_prepare(self, flag_slice='Unflagged', time_drill=None,
-                           freq_drill=None, freq_exc=None, time_exc=None,
+    def one_d_hist_prepare(self, flag_slice='All', time_ind=slice(None),
+                           bl_ind=slice(None), spw_ind=0,
+                           freq_ind=slice(None), pol_ind=slice(None),
                            bins=None, fit='rayleigh', bin_window=[0, 1e+03],
-                           write=False, writepath='', label='', pol_drill=None):
+                           writepath=''):
         """
         This function makes one_d visibility difference amplitude histograms.
-        You may choose to make histograms for a single time or frequency using
-        time_drill and freq_drill respectively, or you may exclude a single time
-        or frequency using time_exc or freq_exc respectively.
+        You may choose to histogram only subsets of the data using the set of ind
+        keywords. You may pass indices or slice objects. Default is all the data.
+
+        You may give it a flag_slice. 'Unflagged' gives data not reported as
+        contaminated. 'Flagged' gives data reported as contaminated.
 
         You may choose the bins by giving a sequence of bin edges, or 1000
         logarithmically spaced bins will be generated automatically.
 
         You may opt for a rayleigh superposition fit (by maximum likelihood
-        estimation) by setting fit=True and choosing an amplitude window over
-        which to fit. Give it bounds.
+        estimation) by setting fit='rayleigh' and choosing an amplitude window over
+        which to fit (bin_window). Give it bounds.
 
         You may opt to write out the function returns, in which case set the
         write and writepath keywords appropriately.
@@ -169,29 +124,8 @@ class RFI:
         You may give it a label, for plot legends.
         """
 
-        flags = self.flag_operations(flag_slice=flag_slice)
-        values = np.absolute(self.UV.data_array)
-
-        # Drill or exclude specific times/frequencies
-        if time_drill:
-            values = values[time_drill:time_drill + 1, :, :, :, :]
-            flags = flags[time_drill:time_drill + 1, :, :, :, :]
-        if time_exc:
-            values = np.concatenate((values[:time_exc, :, :, :, :],
-                                     values[time_exc + 1:, :, :, :, :]), axis=0)
-            flags = np.concatenate((flags[:time_exc, :, :, :, :],
-                                    flags[time_exc + 1:, :, :, :, :]), axis=0)
-        if freq_drill:
-            values = values[:, :, :, freq_drill:freq_drill + 1, :]
-            flags = flags[:, :, :, freq_drill:freq_drill + 1, :]
-        if freq_exc:
-            values = np.concatenate((values[:, :, :, :freq_exc, :],
-                                     values[:, :, :, freq_exc + 1:, :]), axis=3)
-            flags = np.concatenate((flags[:, :, :, :freq_exc, :],
-                                    flags[:, :, :, freq_exc + 1:, :]), axis=3)
-        if pol_drill:
-            values = values[:, :, :, :, pol_drill:pol_drill + 1]
-            flags = flags[:, :, :, :, pol_drill:pol_drill + 1]
+        flags = self.flag_operations(flag_slice=flag_slice)[time_ind, bl_ind, spw_ind, freq_ind, pol_ind]
+        values = np.absolute(self.UV.data_array)[time_ind, bl_ind, spw_ind, freq_ind, pol_ind]
 
         # Generate the bins or keep the selectred ones
         if bins is None:
@@ -203,20 +137,20 @@ class RFI:
 
         # Generate a fit if desired
         if fit:
-            m, fit = self.hist_fit(bins, values, flags, write=write,
-                                   writepath=writepath, flag_slice=flag_slice,
-                                   bin_window=bin_window, fit_type=fit)
+            m, fit = rfiutil.hist_fit(self.obs, bins, values, flags, writepath=writepath,
+                                      flag_slice=flag_slice, bin_window=bin_window,
+                                      fit_type=fit)
         else:
             m, bins = np.histogram(values[flags], bins=bins)
             fit = None
 
         # Write out the function returns
-        if write:
-            np.save('%s%s_%s_hist.npy' % (writepath, self.obs, flag_slice), m)
-            np.save('%s%s_%s_bins.npy' % (writepath, self.obs, flag_slice), bins)
-            np.save('%s%s_%s_fit.npy' % (writepath, self.obs, flag_slice), fit)
+        base = '%s%s_%s_spw%i' % (writepath, self.obs, flag_slice, spw_ind)
+        np.save('%s_hist.npy' % (base), m)
+        np.save('%s_bins.npy' % (base), bins)
+        np.save('%s_fit.npy' % (base), fit)
 
-        return(m, bins, fit, label)
+        return(m, bins, fit)
 
     def reverse_index(self, band, flag_slice='Unflagged'):
         # Find vis. differences within a certain amplitude band of the chosen flag slice
@@ -227,15 +161,18 @@ class RFI:
         ind = np.where((min(band) < values) & (values < max(band)) & (flags > 0))
         return(ind)
 
-    def waterfall_hist_prepare(self, band, flag_slice='Unflagged', fraction=True):
+    def waterfall_hist_prepare(self, band, flag_slice='Unflagged', fraction=True,
+                               writepath=''):
         # Generate a time-frequency histogram from reverse_index (sum over baselines)
 
         ind = self.reverse_index(band, flag_slice=flag_slice)
         H = np.zeros(self.UV.data_array.shape, dtype=int)
         H[ind] = 1
-        H = np.sum(H, axis=1)
+        H = H.sum(axis=1)
         if fraction:
             H = H.astype(float) / self.UV.Nbls
+        np.save('%s%s_%s_whist.npy' % (writepath, self.obs, flag_slice),
+                H)
 
         return(H)
 
@@ -304,8 +241,7 @@ class RFI:
 
         return(T)
 
-    def INS_prepare(self, flag_slice='All', amp_avg='Amp', write=False,
-                    writepath=''):
+    def INS_prepare(self, flag_slice='All', amp_avg='Amp', writepath=''):
         """
         Generate an incoherent noise spectrum. The amp_avg keyword determines
         the order of amplitude vs. average.
@@ -320,44 +256,23 @@ class RFI:
         values = np.ma.masked_array(values)
         values[np.logical_not(flags)] = np.ma.masked
         INS = np.absolute(np.mean(values, axis=1))
-        frac_diff = INS / np.mean(INS, axis=0) - 1
+        frac_diff = INS / INS.mean(axis=0) - 1
         n, bins = np.histogram(frac_diff[np.logical_not(frac_diff.mask)], bins='auto')
+
         # This is how far out the data should extend if purely noisy
         bin_max = sqrt((pi - 4) / (pi * self.UV.Nbls) * 2 *
-                       log(sqrt(pi) / (4 * np.prod(INS.shape) ** (2.0 / 3) * erfinv(0.5))))
-        _, fit = self.hist_fit(bins, frac_diff, np.logical_not(frac_diff.mask),
-                               bin_window=[-bin_max, bin_max], fit_type='normal')
+                       log(sqrt(pi) / (4 * len(INS[~INS.mask]) ** (2.0 / 3) * erfinv(0.5))))
+        _, fit = rfiutil.hist_fit(self.obs, bins, frac_diff, np.logical_not(frac_diff.mask),
+                                  bin_window=[-bin_max, bin_max], fit_type='normal')
 
-        if write:
-            np.ma.dump(INS, '%s%s_%s_%s_INS.npy' %
-                       (writepath, self.obs, flag_slice, amp_avg))
-            np.ma.dump(frac_diff, '%s%s_%s_%s_frac_diff.npy' %
-                       (writepath, self.obs, flag_slice, amp_avg))
-            np.save('%s%s_%s_%s_counts.npy' %
-                    (writepath, self.obs, flag_slice, amp_avg), n)
-            np.save('%s%s_%s_%s_bins.npy' %
-                    (writepath, self.obs, flag_slice, amp_avg), bins)
-            np.save('%s%s_%s_%s_fit.npy' %
-                    (writepath, self.obs, flag_slice, amp_avg), fit)
+        base = '%s%s_%s_%s' % (writepath, self.obs, flag_slice, amp_avg)
+        np.ma.dump(INS, '%s_INS.npym' % (base))
+        np.ma.dump(frac_diff, '%s_INS_frac_diff.npym' % (base))
+        np.save('%s_INS_counts.npy' % (base), n)
+        np.save('%s_INS_bins.npy' % (base), bins)
+        np.save('%s_INS_fit.npy' % (base), fit)
 
         return(INS, frac_diff, n, bins, fit)
-
-    def INS_outlier_flag(self, flag_slice='All', amp_avg='Amp', write=False,
-                         writepath=''):
-
-        # Prepare a noise spectrum
-        INS, frac_diff, _, _, _ = self.INS_prepare(flag_slice=flag_slice,
-                                                   amp_avg=amp_avg,
-                                                   write=write, writepath=writepath)
-        # This is how far noisy data will extend
-        bin_max = sqrt((pi - 4) / (pi * self.UV.Nbls) * 2 *
-                       log(sqrt(pi) / (4 * np.prod(INS.shape) ** (2.0 / 3) * erfinv(0.5))))
-        # Flag the greatest outlier and recalculate the frac_diff in each iteration to determine new outliers
-        while np.max(frac_diff) > bin_max:
-            INS[np.argmax(frac_diff)] = np.ma.masked
-            frac_diff = INS / np.mean(INS, axis=0) - 1
-
-        return(INS, frac_diff)
 
     def ant_scatter_prepare(self):
 
@@ -365,7 +280,7 @@ class RFI:
         A = np.c_[self.UV.antenna_positions[:, 0],
                   self.UV.antenna_positions[:, 1],
                   np.ones(len(self.UV.Nants_telescope))]
-        C, _, _, _ = scipy.linalg.lstsq(A, self.UV.antenna_positions[:, 3])
+        C, _, _, _ = scipy.linalg.lstsq(A, self.UV.antenna_positions[:, 2])
 
         # Construct the normal vector to the plane and normalize it
         n = np.array([-C[0], -C[1], 1])

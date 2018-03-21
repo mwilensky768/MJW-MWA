@@ -1,9 +1,13 @@
 import numpy as np
+from matplotlib import use
+use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.gridspec import GridSpec
 import plot_lib
 import scipy.linalg
+import rfiutil
+import os
 
 
 def band_constructor(counts, bins, labels, flag_slice):
@@ -15,7 +19,7 @@ def band_constructor(counts, bins, labels, flag_slice):
     count = counts[m]
     fit = counts[m + 1]
 
-    max_loc = min(bins[:-1][count == np.amax(count)])
+    max_loc = min(bins[:-1][count.argmax()])
     band = [min(bins[:-1][np.logical_and(fit < 1, bins[:-1] > max_loc)]), max(bins)]
 
     return(band)
@@ -104,72 +108,91 @@ def planar_fit(x, y, z):
     return(C, fit)
 
 
-def waterfall_catalog(RFI, outpath, band={}, write={}, writepath='', fit_type={},
+def make_outdirs(outpath, flag_slice, spw_sep=True, m=None):
+
+    if spw_sep:
+        writepath = '%s%s/spw%i/arrs/' % (outpath, flag_slice, m)
+        figpath = '%s%s/spw%i/figs/' % (outpath, flag_slice, m)
+    else:
+        writepath = '%s%s/all_spw/arrs/' % (outpath, flag_slice)
+        figpath = '%s%s/all_spw/figs/' % (outpath, flag_slice)
+    if not os.path.exists(writepath):
+        os.makedirs(writepath)
+    if not os.path.exists(figpath):
+        os.makedirs(figpath)
+
+    return(writepath, figpath)
+
+
+def waterfall_catalog(RFI, outpath, band={}, fit_type={},
                       bins=np.logspace(-3, 5, num=1001), fraction=True,
                       flag_slices=['Unflagged', 'All'], bin_window=[0, 1e+03],
-                      zorder={'Unflagged': 3, 'Unflagged Fit': 4, 'All Fit': 2, 'All': 1},
-                      xticks=None, xminors=None, aspect_ratio=3):
+                      aspect_ratio=3):
 
-    counts = []
-    labels = []
-    for flag_slice in flag_slices:
-        count, bins, hist_fit, label = RFI.one_d_hist_prepare(flag_slice=flag_slice,
-                                                              fit=fit_type[flag_slice],
-                                                              write=write[flag_slice],
-                                                              bins=bins,
-                                                              writepath=writepath,
-                                                              bin_window=bin_window,
-                                                              label=flag_slice)
+    """
+    """
 
-        counts.append(count)
-        labels.append(label)
-        if fit_type[flag_slice]:
-            counts.append(hist_fit)
-            labels.append('%s Fit' % (label))
+    zorder = {'Unflagged': 3, 'Unflagged Fit': 4, 'All Fit': 2, 'All': 1}
+    for m in range(RFI.UV.Nspws):
+        counts = []
+        labels = []
+        for flag_slice in flag_slices:
+            writepath, figpath = make_outdirs(outpath, flag_slice, m=m)
+            count, bins, hist_fit = RFI.one_d_hist_prepare(flag_slice=flag_slice,
+                                                           fit=fit_type[flag_slice],
+                                                           bins=bins,
+                                                           writepath=writepath,
+                                                           bin_window=bin_window,
+                                                           spw_ind=m)
 
-    gs, gs_loc = grid_setup(RFI)
+            counts.append(count)
+            labels.append(flag_slice)
+            if fit_type[flag_slice]:
+                counts.append(hist_fit)
+                labels.append('%s Fit' % (flag_slice))
 
-    for flag_slice in flag_slices:
-        if band[flag_slice] is 'fit':
-            band[flag_slice] = band_constructor(counts, bins, labels, flag_slice)
+        gs, gs_loc = grid_setup(RFI)
 
-        W = RFI.waterfall_hist_prepare(band[flag_slice], fraction=fraction,
-                                       flag_slice=flag_slice)
+        for flag_slice in flag_slices:
+            if band[flag_slice] is 'fit':
+                band[flag_slice] = band_constructor(counts, bins, labels, flag_slice)
 
-        fig = plt.figure(figsize=(14, 8))
-        ax = fig.add_subplot(gs[0, :])
+            W = RFI.waterfall_hist_prepare(band[flag_slice], fraction=fraction,
+                                           flag_slice=flag_slice, writepath=writepath)
 
-        plot_lib.one_d_hist_plot(fig, ax, bins, counts, labels=labels,
-                                 zorder=[zorder[label] for label in labels],
-                                 xlabel='Amplitude (%s)' % (RFI.UV.vis_units),
-                                 title='%s Visibility Difference Histogram' %
-                                 (RFI.obs))
+            fig = plt.figure(figsize=(14, 8))
+            ax = fig.add_subplot(gs[0, :])
 
-        ax.axvline(x=min(band[flag_slice]), color='black')
-        ax.axvline(x=max(band[flag_slice]), color='black')
+            plot_lib.one_d_hist_plot(fig, ax, bins, counts, labels=labels,
+                                     zorder=[zorder[label] for label in labels],
+                                     xlabel='Amplitude (%s)' % (RFI.UV.vis_units),
+                                     title='%s Visibility Difference Histogram' %
+                                     (RFI.obs))
 
-        MAXW_list, MINW_list = ext_list_selector(RFI, W[:, 0, :, :])
+            ax.axvline(x=min(band[flag_slice]), color='black')
+            ax.axvline(x=max(band[flag_slice]), color='black')
 
-        for n in range(RFI.UV.Npols):
-            if fraction:
-                cbar_label = 'Fraction RFI'
-            else:
-                cbar_label = 'Counts RFI'
-            ax = fig.add_subplot(gs[gs_loc[n][0], gs_loc[n][1]])
-            plot_lib.image_plot(fig, ax, W[:, 0, :, n], cmap=cm.cool,
-                                vmin=MINW_list[n], vmax=MAXW_list[n],
-                                title='%s %s' % (RFI.pols[n], flag_slice),
-                                aspect_ratio=aspect_ratio, cbar_label=cbar_label,
-                                xticks=xticks, xminors=xminors, yminors='auto',
-                                xticklabels=['%.1f' % (RFI.UV.freq_array[0, tick] * 10**(-6))
-                                             for tick in xticks])
+            MAXW_list, MINW_list = ext_list_selector(RFI, W[:, m, :, :])
+            _, _, _, xticks, xminors, _, xticklabels = plot_lib.four_panel_tf_setup(RFI.UV.freq_array[m, :])
 
-        plt.tight_layout()
-        fig.savefig('%s%s_freq_time_%s_%.1f_%.1f.png' %
-                    (outpath, RFI.obs, flag_slice, min(band[flag_slice]),
-                     max(band[flag_slice])))
+            for n, pol in enumerate(RFI.pols):
+                if fraction:
+                    cbar_label = 'Fraction RFI'
+                else:
+                    cbar_label = 'Counts RFI'
+                ax = fig.add_subplot(gs[gs_loc[n][0], gs_loc[n][1]])
+                plot_lib.image_plot(fig, ax, W[:, m, :, n], cmap=cm.cool,
+                                    vmin=MINW_list[n], vmax=MAXW_list[n],
+                                    title='%s %s' % (pol, flag_slice),
+                                    aspect_ratio=aspect_ratio, cbar_label=cbar_label,
+                                    xticks=xticks, xminors=xminors, yminors='auto',
+                                    xticklabels=xticklabels, mask_color='white')
 
-        plt.close(fig)
+            plt.tight_layout()
+            fig.savefig('%s%s_waterfall_%s.png' %
+                        (figpath, RFI.obs, flag_slice))
+
+            plt.close(fig)
 
 
 def drill_catalog(RFI, outpath, band={}, write={}, writepath='', fit={},
@@ -177,6 +200,10 @@ def drill_catalog(RFI, outpath, band={}, write={}, writepath='', fit={},
                   flag_slices=['Unflagged', 'All'], bin_window=[0, 1e+03],
                   zorder={'Unflagged': 4, 'Unflagged Fit': 3, 'All Fit': 2, 'All': 1},
                   xticks=None, xminors=None, drill_type='time'):
+
+    """
+    Do not use this function right now.
+    """
 
     gs, gs_loc = grid_setup(RFI)
 
@@ -280,57 +307,77 @@ def drill_catalog(RFI, outpath, band={}, write={}, writepath='', fit={},
             plt.close(fig)
 
 
-def INS_catalog(RFI, outpath, flag_slices=['All', ], amp_avg='Amp',
-                xticks=[], xminors=[], yticks=[], yminors=[], write=False,
-                writepath='', aspect_ratio=3, invalid_mask=False):
+def INS_catalog(RFI, outpath, flag_slices=['All', ], amp_avg='Amp', aspect_ratio=3,
+                invalid_mask=False, mask=True):
+
+    """
+    Makes incoherent noise spectra for an obs. Requires a target directory.
+
+    flag_slices: Compute the INS depending on which members of the visibility pairs were flagged
+                 All, Flagged (boolean or), Unflagged (Neither seen as contaminated by COTTER)
+    amp_avg: 'Amp' = average the amplitudes of the differences
+             'Avg' = average the differences, then take the amplitude
+    aspect_ratio: You will want to modify this if different than 80kHz
+    invalid_mask: choose to mask nan's should they be present (they shouldn't be)
+    mask: Choose to flag the outputs according to predictions made by the Central Limit Theorem
+          This option is experimental right now and very incomplete
+    """
 
     plot_titles = {'All': 'All Baselines', 'Unflagged': 'Post-Flagging'}
+    flag_titles = ['', 'Masked']
 
     for flag_slice in flag_slices:
-        INS, frac_diff, n, bins, fit = RFI.INS_prepare(flag_slice=flag_slice,
-                                                       amp_avg=amp_avg,
-                                                       write=write,
-                                                       writepath=writepath)
 
-        fig, ax = ax_constructor(RFI)
-        fig_diff, ax_diff = ax_constructor(RFI)
-        fig_hist, ax_hist = plt.subplots(figsize=(14, 8))
+        writepath, figpath = make_outdirs(outpath, flag_slice, spw_sep=False)
 
-        fig.suptitle('%s Incoherent Noise Spectrum, %s' %
-                     (RFI.obs, plot_titles[flag_slice]))
-        fig_diff.suptitle('%s Incoherent Noise Spectrum Fractional Deviation from Mean, %s' %
-                          (RFI.obs, plot_titles[flag_slice]))
-        plot_lib.one_d_hist_plot(fig_hist, ax_hist, bins, [n, fit], zorder=[2, 1],
-                                 labels=['Data', 'Fit'], xlog=False, xlabel='Fraction',
-                                 title='Incoherent Noise Spectrum Fractional Deviation Histogram')
-        for m in range(RFI.UV.Npols):
-            curr_ax = ax_chooser(RFI, ax, m)
-            curr_ax_diff = ax_chooser(RFI, ax_diff, m)
-            plot_lib.image_plot(fig, curr_ax, INS[:, 0, :, m],
-                                title=RFI.pols[m], cbar_label=RFI.UV.vis_units,
-                                xticks=xticks, xminors=xminors,
-                                xticklabels=['%.1f' %
-                                             (10 ** (-6) * RFI.UV.freq_array[0, int(tick)])
-                                             for tick in xticks],
-                                yticks=yticks, yminors=yminors,
-                                aspect_ratio=aspect_ratio, invalid_mask=invalid_mask,
-                                zero_mask=False)
-            plot_lib.image_plot(fig_diff, curr_ax_diff, frac_diff[:, 0, :, m],
-                                cmap=cm.coolwarm, title=RFI.pols[m],
-                                cbar_label='Fraction', xticks=xticks,
-                                xminors=xminors,
-                                xticklabels=['%.1f' %
-                                             (10 ** (-6) * RFI.UV.freq_array[0, int(tick)])
-                                             for tick in xticks],
-                                yticks=yticks, yminors=yminors,
-                                aspect_ratio=aspect_ratio, invalid_mask=invalid_mask,
-                                zero_mask=False)
-        fig.savefig('%s%s_INS_%s.png' % (outpath, RFI.obs, flag_slice))
-        fig_diff.savefig('%s%s_INS_frac_diff_%s.png' % (outpath, RFI.obs, flag_slice))
-        fig_hist.savefig('%s%s_INS_hist_%s.png' % (outpath, RFI.obs, flag_slice))
-        plt.close(fig)
-        plt.close(fig_diff)
-        plt.close(fig_hist)
+        INS, frac_diff, n, bins, fit = \
+            RFI.INS_prepare(flag_slice=flag_slice, amp_avg=amp_avg,
+                            writepath=writepath)
+
+        for p in range(1 + mask):
+            if p > 0:
+                INS, frac_diff, n, bins, fit = \
+                    rfiutil.INS_outlier_flag(RFI.obs, INS, frac_diff, RFI.UV.Nbls,
+                                             flag_slice=flag_slice, amp_avg=amp_avg,
+                                             writepath=writepath)
+
+            fig_hist, ax_hist = plt.subplots(figsize=(14, 8))
+            plot_lib.one_d_hist_plot(fig_hist, ax_hist, bins, [n, fit], zorder=[2, 1],
+                                     labels=['Data', 'Fit'], xlog=False, xlabel='Fraction',
+                                     title='Incoherent Noise Spectrum Fractional Deviation Histogram %s' % (flag_titles[p]))
+
+            for k in range(RFI.UV.Nspws):
+                fig, ax = ax_constructor(RFI)
+                _, _, _, xticks, xminors, yminors, xticklabels = plot_lib.four_panel_tf_setup(RFI.UV.freq_array[k, :])
+                fig_diff, ax_diff = ax_constructor(RFI)
+
+                fig.suptitle('%s Incoherent Noise Spectrum, %s %s' %
+                             (RFI.obs, plot_titles[flag_slice], flag_titles[p]))
+                fig_diff.suptitle('%s Incoherent Noise Spectrum Fractional Deviation from Mean, %s %s' %
+                                  (RFI.obs, plot_titles[flag_slice], flag_titles[p]))
+
+                for m, pol in enumerate(RFI.pols):
+                    curr_ax = ax_chooser(RFI, ax, m)
+                    curr_ax_diff = ax_chooser(RFI, ax_diff, m)
+                    plot_lib.image_plot(fig, curr_ax, INS[:, k, :, m],
+                                        title=pol, cbar_label=RFI.UV.vis_units,
+                                        xticks=xticks, xminors=xminors,
+                                        xticklabels=xticklabels, yminors=yminors,
+                                        aspect_ratio=aspect_ratio, invalid_mask=invalid_mask,
+                                        zero_mask=False)
+                    plot_lib.image_plot(fig_diff, curr_ax_diff, frac_diff[:, k, :, m],
+                                        cmap=cm.coolwarm, title=pol,
+                                        cbar_label='Fraction', xticks=xticks,
+                                        xminors=xminors, xticklabels=xticklabels,
+                                        yminors=yminors, aspect_ratio=aspect_ratio,
+                                        invalid_mask=invalid_mask, zero_mask=False)
+                base = '%s%s_spw%i_%s_%s' % (figpath, RFI.obs, k, flag_slice, flag_titles[p])
+                fig.savefig('%s_INS.png' % (base))
+                fig_diff.savefig('%s_INS_frac_diff.png' % (base))
+                fig_hist.savefig('%s_INS_hist.png' % (base))
+                plt.close(fig)
+                plt.close(fig_diff)
+                plt.close(fig_hist)
 
 
 def ant_scatter_catalog(RFI, outpath, band, flag_slice='All'):
