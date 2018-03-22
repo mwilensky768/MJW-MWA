@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import use
 use('Agg')
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.gridspec import GridSpec
@@ -458,3 +459,35 @@ def flag_catalog(RFI, outpath, flag_slices=['Flagged', ], xticks=None,
                                              tick in xticks])
 
         fig.savefig('%s%s_flag_map_%s.png' % (outpath, RFI.obs, flag_slice))
+
+
+def bl_scatter_catalog(RFI, outpath, mask, vmin=None, vmax=None, cmap=cm.plasma):
+    """
+    You must have at least numpy 1.13 to run this!
+    """
+    ind = np.where(mask)
+    ind_arr = np.unique(np.vstack((ind[0:2])), axis=0)
+
+    for k in range(len(ind[0])):
+        fig, ax = ax_constructor(RFI)
+        fig.suptitle('Baseline Scatter Plot t = %i, f = %.1f Mhz' %
+                     (ind[0][k], RFI.UV.freq_array[ind[1][k], ind[2][k]] * 10**(-6)))
+        figpath = '%s/spw%i/' % (outpath, ind[1][k])
+        if not os.path.exists:
+            os.makedirs(figpath)
+        for m, pol in enumerate(RFI.pols):
+            curr_ax = ax_chooser(RFI, ax, m)
+            if vmin is None:
+                vmin = np.absolute(RFI.data_array[ind[0][k], :, ind[1][k], ind[2][k], m])[np.absolute(RFI.data_array[ind[0][k], :, ind[1][k], ind[2][k], m]) > 0].min()
+            if vmax is None:
+                vmax = np.absolute(RFI.data_array[ind[0][k], :, ind[1][k], ind[2][k], m]).max()
+            plot_lib.scatter_plot_2d(fig, curr_ax,
+                                     RFI.UV.uvw_array[ind[0][k] * RFI.UV.Nbls:ind[0][k] * (RFI.UV.Nbls + 1), 0],
+                                     RFI.UV.uvw_array[ind[0][k] * RFI.UV.Nbls:ind[0][k] * (RFI.UV.Nbls + 1), 1],
+                                     title=pol, xlabel='$\lambda u$ (m)', ylabel='$\lambda v$ (m)',
+                                     c=np.absolute(RFI.data_array[ind[0][k], :, ind[1][k], ind[2][k], m]),
+                                     cmap=cmap, vmin=vmin, vmax=vmax,
+                                     norm=matplotlib.colors(LogNorm(vmin=vmin, vmax=vmax)),
+                                     cbar_label=RFI.UV.vis_units)
+
+        fig.savefig('%s%s_bl_scat_t%i_f%i.png' % (figpath, RFI.obs, ind[0][k], ind[2][k]))

@@ -147,26 +147,26 @@ def image_plot(fig, ax, data, cmap=cm.plasma, vmin=None, vmax=None, title='',
 
 
 def scatter_plot_2d(fig, ax, x_data, y_data, title='', xlabel='', ylabel='',
-                    c=[], ylim=[]):
+                    c=None, ylim=None, cmap=None, vmin=None, vmax=None, norm=None,
+                    cbar_label=None):
 
-    if c:
-        ax.scatter(x_data, y_data, c=c)
-    else:
-        ax.scatter(x_data, y_data)
+    cax = ax.scatter(x_data, y_data, c=c, cmap=cmap, vmin=vmin, vmax=vmax, norm=norm)
+
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
+    if cmap is not None:
+        cbar = fig.colorbar(cax, ax=ax)
+        cbar.set_label(cbar_label)
     if ylim:
         ax.set_ylim(ylim)
 
 
 def scatter_plot_3d(fig, ax, x_data, y_data, z_data, title='', xlabel='',
-                    ylabel='', zlabel='', c=[]):
+                    ylabel='', zlabel='', c=None, cmap=None, vmin=None,
+                    vmax=None):
 
-    if c:
-        ax.scatter(x, y, z, c=c)
-    else:
-        ax.scatter(x, y, z)
+    ax.scatter(x, y, z, c=c, cmap=cmap, vmin=vmin, vmax=vmax)
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)

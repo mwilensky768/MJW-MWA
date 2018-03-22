@@ -106,7 +106,8 @@ class RFI:
         """
         This function makes one_d visibility difference amplitude histograms.
         You may choose to histogram only subsets of the data using the set of ind
-        keywords. You may pass indices or slice objects. Default is all the data.
+        keywords. You may pass indices or slice objects. Default is all the data
+        in the 0th spectral window.
 
         You may give it a flag_slice. 'Unflagged' gives data not reported as
         contaminated. 'Flagged' gives data reported as contaminated.
@@ -115,13 +116,11 @@ class RFI:
         logarithmically spaced bins will be generated automatically.
 
         You may opt for a rayleigh superposition fit (by maximum likelihood
-        estimation) by setting fit='rayleigh' and choosing an amplitude window over
-        which to fit (bin_window). Give it bounds.
+        estimation) by setting fit='rayleigh' and choosing an amplitude window
+        over which to fit (bin_window). Give it bounds for data usage if there is
+        suspected RFI.
 
-        You may opt to write out the function returns, in which case set the
-        write and writepath keywords appropriately.
-
-        You may give it a label, for plot legends.
+        Set the writepath keyword for writing out function returns.
         """
 
         flags = self.flag_operations(flag_slice=flag_slice)[time_ind, bl_ind, spw_ind, freq_ind, pol_ind]
@@ -274,36 +273,16 @@ class RFI:
 
         return(INS, frac_diff, n, bins, fit)
 
-    def ant_scatter_prepare(self):
+    def bl_scatter_prepare(self, bins=None):
+        """
+        Given a set of indices for the data array, set up a scatter plot with
+        marked baselines. Indices will typically come from flagging the INS.
+        """
 
-        # Do the least squares fit
-        A = np.c_[self.UV.antenna_positions[:, 0],
-                  self.UV.antenna_positions[:, 1],
-                  np.ones(len(self.UV.Nants_telescope))]
-        C, _, _, _ = scipy.linalg.lstsq(A, self.UV.antenna_positions[:, 2])
+        if bins is None:
+            MIN = np.amin(values[values > 0])
+            MAX = np.amax(values)
+            bins = np.logspace(floor(log10(MIN)), ceil(log10(MAX)), num=1001)
 
-        # Construct the normal vector to the plane and normalize it
-        n = np.array([-C[0], -C[1], 1])
-        n = n / np.sqrt(np.sum(n * n))
-
-        # Construct original basis vectors
-        x = np.array([1, 0, 0])
-        y = np.array([0, 1, 0])
-
-        # Perform Graham-Schmidt
-        u = x - np.sum(n * x) * n
-        u = u / np.sqrt(np.sum(u * u))
-
-        v = y - np.sum(n * y) * n - np.sum(u * y) * u
-        v = v / np.sqrt(np.sum(v * v))
-
-        # Construct transformation matrix
-        B = np.c_[u, v, n]
-
-        # Transform the antenna locations
-        ant_locs = np.transpose(self.UV.antenna_positions)
-        for k in range(len(self.UV.Nants_telescope)):
-            ant_locs[:, k] = np.matmult(B, ant_locs[:, k])
-        ant_locs = np.transpose(ant_locs)[:, :2]
-
-        return(ant_locs)
+        dig = np.digitize(np.absolute(self.data_array), bins)
+        return(dig, bins)
