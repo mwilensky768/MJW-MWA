@@ -142,10 +142,10 @@ def INS_outlier_flag(obs, INS, frac_diff, Nbls, flag_slice='All', amp_avg='Amp',
                       bin_window=[-bin_max, bin_max], fit_type='normal')
 
     base = '%s%s_%s_%s' % (writepath, obs, flag_slice, amp_avg)
-    np.ma.dump(INS, '%s_INS.npym' % (base))
-    np.ma.dump(frac_diff, '%s_INS_frac_diff.npym' % (base))
-    np.save('%s_INS_counts.npy' % (base), n)
-    np.save('%s_INS_bins.npy' % (base), bins)
-    np.save('%s_INS_fit.npy' % (base), fit)
+    np.ma.dump(INS, '%s_INS_mask.npym' % (base))
+    np.ma.dump(frac_diff, '%s_INS_frac_diff_mask.npym' % (base))
+    np.save('%s_INS_counts_mask.npy' % (base), n)
+    np.save('%s_INS_bins_mask.npy' % (base), bins)
+    np.save('%s_INS_fit_mask.npy' % (base), fit)
 
     return(INS, frac_diff, n, bins, fit)

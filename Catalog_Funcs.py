@@ -190,9 +190,8 @@ def waterfall_catalog(RFI, outpath, band={}, fit_type={},
                                     xticklabels=xticklabels, mask_color='white')
 
             plt.tight_layout()
-            fig.savefig('%s%s_waterfall_%s.png' %
-                        (figpath, RFI.obs, flag_slice))
-
+            fig.savefig('%s%s_waterfall_%s.png' % (figpath, RFI.obs, flag_slice))
+            print('I saved the fig')
             plt.close(fig)
 
 
@@ -373,6 +372,7 @@ def INS_catalog(RFI, outpath, flag_slices=['All', ], amp_avg='Amp', aspect_ratio
                                         yminors=yminors, aspect_ratio=aspect_ratio,
                                         invalid_mask=invalid_mask, zero_mask=False)
                 base = '%s%s_spw%i_%s_%s' % (figpath, RFI.obs, k, flag_slice, flag_titles[p])
+                print(INS.shape)
                 fig.savefig('%s_INS.png' % (base))
                 fig_diff.savefig('%s_INS_frac_diff.png' % (base))
                 fig_hist.savefig('%s_INS_hist.png' % (base))
@@ -472,7 +472,7 @@ def bl_scatter_catalog(RFI, outpath, mask, vmin=None, vmax=None, cmap=cm.plasma)
         fig, ax = ax_constructor(RFI)
         fig.suptitle('Baseline Scatter Plot t = %i, f = %.1f Mhz' %
                      (ind[0][k], RFI.UV.freq_array[ind[1][k], ind[2][k]] * 10**(-6)))
-        figpath = '%s/spw%i/' % (outpath, ind[1][k])
+        figpath = '%s/All/spw%i/figs/' % (outpath, ind[1][k])
         if not os.path.exists:
             os.makedirs(figpath)
         for m, pol in enumerate(RFI.pols):

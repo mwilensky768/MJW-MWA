@@ -60,7 +60,7 @@ def one_d_hist_plot(fig, ax, bin_edges, counts, zorder=None, labels=None, xlog=T
         ax.legend()
 
     if xlog:
-        ax.set_xscale('log', nonposy='clip')
+        ax.set_xscale('log', nonposx='clip')
     else:
         ax.set_xscale('linear')
 

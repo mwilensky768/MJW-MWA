@@ -272,17 +272,3 @@ class RFI:
         np.save('%s_INS_fit.npy' % (base), fit)
 
         return(INS, frac_diff, n, bins, fit)
-
-    def bl_scatter_prepare(self, bins=None):
-        """
-        Given a set of indices for the data array, set up a scatter plot with
-        marked baselines. Indices will typically come from flagging the INS.
-        """
-
-        if bins is None:
-            MIN = np.amin(values[values > 0])
-            MAX = np.amax(values)
-            bins = np.logspace(floor(log10(MIN)), ceil(log10(MAX)), num=1001)
-
-        dig = np.digitize(np.absolute(self.data_array), bins)
-        return(dig, bins)
