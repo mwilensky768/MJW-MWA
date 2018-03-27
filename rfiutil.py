@@ -117,7 +117,7 @@ def hist_fit(obs, bins, values, flags, writepath='',
         mu = np.mean(values[data_cond])
         sigma_sq = np.var(values[data_cond])
         fit = N * bin_widths / np.sqrt(2 * pi * sigma_sq) * \
-            np.exp(-((bin_centers - mu) ** 2) / sigma_sq)
+            np.exp(-((bin_centers - mu) ** 2) / (2 * sigma_sq))
         m = np.histogram(values.flatten())
 
     return(m, fit)
