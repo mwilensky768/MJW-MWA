@@ -190,8 +190,7 @@ def waterfall_catalog(RFI, outpath, band={}, fit_type={},
                                     xticklabels=xticklabels, mask_color='white')
 
             plt.tight_layout()
-            fig.savefig('%s%s_waterfall_%s.png' %
-                        (figpath, RFI.obs, flag_slice))
+            fig.savefig('%s%s_waterfall_%s.png' % (figpath, RFI.obs, flag_slice))
 
             plt.close(fig)
 
@@ -466,28 +465,30 @@ def bl_scatter_catalog(RFI, outpath, mask, vmin=None, vmax=None, cmap=cm.plasma)
     You must have at least numpy 1.13 to run this!
     """
     ind = np.where(mask)
-    ind_arr = np.unique(np.vstack((ind[0:2])), axis=0)
 
-    for k in range(len(ind[0])):
+    ind_arr = np.unique(np.vstack((ind[0:3])), axis=1)
+
+    for k in range(ind_arr.shape[1]):
         fig, ax = ax_constructor(RFI)
         fig.suptitle('Baseline Scatter Plot t = %i, f = %.1f Mhz' %
-                     (ind[0][k], RFI.UV.freq_array[ind[1][k], ind[2][k]] * 10**(-6)))
-        figpath = '%s/spw%i/' % (outpath, ind[1][k])
-        if not os.path.exists:
+                     (ind_arr[0][k], RFI.UV.freq_array[ind_arr[1][k], ind_arr[2][k]] * 10**(-6)))
+        figpath = '%sAll/spw%i/figs/' % (outpath, ind[1][k])
+        if not os.path.exists(figpath):
             os.makedirs(figpath)
         for m, pol in enumerate(RFI.pols):
             curr_ax = ax_chooser(RFI, ax, m)
             if vmin is None:
-                vmin = np.absolute(RFI.data_array[ind[0][k], :, ind[1][k], ind[2][k], m])[np.absolute(RFI.data_array[ind[0][k], :, ind[1][k], ind[2][k], m]) > 0].min()
+                vmin = np.absolute(RFI.UV.data_array[ind_arr[0][k], :, ind_arr[1][k], ind_arr[2][k], m])[np.absolute(RFI.UV.data_array[ind_arr[0][k], :, ind_arr[1][k], ind_arr[2][k], m]) > 0].min()
             if vmax is None:
-                vmax = np.absolute(RFI.data_array[ind[0][k], :, ind[1][k], ind[2][k], m]).max()
+                vmax = np.absolute(RFI.UV.data_array[ind_arr[0][k], :, ind_arr[1][k], ind_arr[2][k], m]).max()
             plot_lib.scatter_plot_2d(fig, curr_ax,
-                                     RFI.UV.uvw_array[ind[0][k] * RFI.UV.Nbls:ind[0][k] * (RFI.UV.Nbls + 1), 0],
-                                     RFI.UV.uvw_array[ind[0][k] * RFI.UV.Nbls:ind[0][k] * (RFI.UV.Nbls + 1), 1],
+                                     RFI.UV.uvw_array[ind_arr[0][k] * RFI.UV.Nbls:(ind_arr[0][k] + 1) * RFI.UV.Nbls, 0],
+                                     RFI.UV.uvw_array[ind_arr[0][k] * RFI.UV.Nbls:(ind_arr[0][k] + 1) * RFI.UV.Nbls, 1],
                                      title=pol, xlabel='$\lambda u$ (m)', ylabel='$\lambda v$ (m)',
-                                     c=np.absolute(RFI.data_array[ind[0][k], :, ind[1][k], ind[2][k], m]),
+                                     c=np.absolute(RFI.UV.data_array[ind_arr[0][k], :, ind_arr[1][k], ind_arr[2][k], m]),
                                      cmap=cmap, vmin=vmin, vmax=vmax,
-                                     norm=matplotlib.colors(LogNorm(vmin=vmin, vmax=vmax)),
+                                     norm=matplotlib.colors.LogNorm(vmin=vmin, vmax=vmax),
                                      cbar_label=RFI.UV.vis_units)
 
-        fig.savefig('%s%s_bl_scat_t%i_f%i.png' % (figpath, RFI.obs, ind[0][k], ind[2][k]))
+        fig.savefig('%s%s_bl_scat_t%i_spw%i_f%i.png' % (figpath, RFI.obs, ind_arr[0][k], ind_arr[1][k], ind_arr[2][k]))
+        plt.close(fig)
