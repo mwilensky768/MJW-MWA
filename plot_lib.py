@@ -72,8 +72,13 @@ def one_d_hist_plot(fig, ax, bin_edges, counts, zorder=None, labels=None, xlog=T
 
 def line_plot(fig, ax, data, title='Visibility Difference Average',
               xlabel='Frequency (Mhz)', ylabel='Visibility Amplitude',
-              zorder=[], labels=[], xticks=[], xticklabels=[], xminors=[],
+              zorder=None, labels=None, xticks=None, xticklabels=None, xminors=None,
               legend=True):  # Please pass data as a list
+
+    if not zorder:
+        zorder = range(len(data))
+    if not labels:
+        labels = 4 * ['']
 
     for k in range(len(data)):
         ax.plot(data[k], label=labels[k], zorder=zorder[k])
@@ -148,13 +153,18 @@ def image_plot(fig, ax, data, cmap=cm.plasma, vmin=None, vmax=None, title='',
 
 def scatter_plot_2d(fig, ax, x_data, y_data, title='', xlabel='', ylabel='',
                     c=None, ylim=None, cmap=None, vmin=None, vmax=None, norm=None,
-                    cbar_label=None):
+                    cbar_label=None, s=None, xticks=None, yticks=None):
 
-    cax = ax.scatter(x_data, y_data, c=c, cmap=cmap, vmin=vmin, vmax=vmax, norm=norm)
+    cax = ax.scatter(x_data, y_data, c=c, cmap=cmap, vmin=vmin, vmax=vmax, norm=norm,
+                     s=s)
 
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
+    if xticks is not None:
+        ax.set_xticks(xticks)
+    if yticks is not None:
+        ax.set_yticks(yticks)
     if cmap is not None:
         cbar = fig.colorbar(cax, ax=ax)
         cbar.set_label(cbar_label)

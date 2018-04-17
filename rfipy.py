@@ -272,3 +272,38 @@ class RFI:
         np.save('%s_INS_fit.npy' % (base), fit)
 
         return(INS, frac_diff, n, bins, fit)
+
+    def bl_scatter(self, mask):
+
+        ind = np.where(mask)
+        n, pol_counts = np.unique(np.vstack((ind[1], ind[3])), return_counts=True, axis=1)
+        bl_avg = np.zeros([self.UV.Nbls, self.UV.Nspws, self.UV.Npols])
+        ant_avg = np.zeros([self.UV.Nants_telescope, self.UV.Nspws, self.UV.Npols])
+        for m in range(len(ind[0])):
+            bl_avg[:, ind[1][m], ind[3][m]] += np.absolute(self.UV.data_array[ind[0][m], :, ind[1][m], ind[2][m], ind[3][m]])
+        for m, pair in enumerate(n.transpose()):
+            bl_avg[:, pair[0], pair[1]] = bl_avg[:, pair[0], pair[1]] / pol_counts[m]
+
+        t0 = 18
+        blt_slice = slice(self.UV.Nbls * t0, self.UV.Nbls * (t0 + 1))
+        hist2d, xedges, yedges = np.histogram2d(self.UV.uvw_array[blt_slice, 0],
+                                                self.UV.uvw_array[blt_slice, 1], bins=50)
+
+        bl_hist = []
+        bl_bins = []
+        grid = np.zeros([self.UV.Nspws, self.UV.Npols, 50, 50])
+        for m in range(self.UV.Nspws):
+            hist, bins = np.histogram(bl_avg[:, m, :], bins='auto')
+            bl_hist.append(hist)
+            bl_bins.append(bins)
+            for n in range(self.UV.Npols):
+                for p in range(50):
+                    for q in range(50):
+                        seq = bl_avg[:, m, n][np.logical_and(np.logical_and(xedges[p] < self.UV.uvw_array[blt_slice, 0],
+                                                                            self.UV.uvw_array[blt_slice, 0] < xedges[p + 1]),
+                                                             np.logical_and(yedges[q] < self.UV.uvw_array[blt_slice, 1],
+                                                                            self.UV.uvw_array[blt_slice, 1] < yedges[q + 1]))]
+                        if len(seq) > 0:
+                            grid[m, n, p, q] = np.mean(seq)
+
+        return(bl_avg, bl_hist, bl_bins, hist2d, grid)

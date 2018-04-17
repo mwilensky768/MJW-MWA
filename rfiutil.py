@@ -76,8 +76,15 @@ def SIROperator(FMi, Agg):  # Takes a (1-d) flag mask and aggression param. (sca
     return(FMf)
 
 
-def hist_fit(obs, bins, values, flags, writepath='',
-             flag_slice='All', bin_window=[0, 1e3], fit_type='rayleigh'):
+def bin_max_calc(Nbls, INS):
+    bin_max = sqrt((pi - 4) / (pi * Nbls) * 2 *
+                   log(sqrt(pi) / (4 * len(INS[~INS.mask]) ** (2.0 / 3) * erfinv(0.5))))
+
+    return(bin_max)
+
+
+def hist_fit(obs, bins, values, flags, writepath='', flag_slice='All',
+             bin_window=[0, 1e3], fit_type='rayleigh'):
 
     bin_widths = np.diff(bins)
     bin_centers = bins[:-1] + 0.5 * bin_widths
@@ -127,12 +134,9 @@ def INS_outlier_flag(obs, INS, frac_diff, Nbls, flag_slice='All', amp_avg='Amp',
                      write=False, writepath='', wind_len=16, st_iter=0,
                      sir_agg=0.2):
 
-    # This is how far noisy data will extend
-    bin_max = sqrt((pi - 4) / (pi * Nbls) * 2 *
-                   log(sqrt(pi) / (4 * len(INS[~INS.mask]) ** (2.0 / 3) * erfinv(0.5))))
-
+    bin_max = bin_max_calc(Nbls, INS)
     # Flag the greatest outlier and recalculate the frac_diff in each iteration to determine new outliers
-    while np.max(np.absolute(frac_diff)) > bin_max:
+    while np.max(np.absolute(frac_diff)) > bm:
         INS[np.unravel_index(np.absolute(frac_diff).argmax(), INS.shape)] = np.ma.masked
         frac_diff = INS / INS.mean(axis=0) - 1
 
@@ -149,3 +153,47 @@ def INS_outlier_flag(obs, INS, frac_diff, Nbls, flag_slice='All', amp_avg='Amp',
     np.save('%s_INS_fit_mask.npy' % (base), fit)
 
     return(INS, frac_diff, n, bins, fit)
+
+
+def edge_detect(frac_diff, RFI_type='streak', sig=2):
+    # Essentially Prewitt filter different RFI shapes
+
+    H = np.zeros([5, 5])
+
+    if RFI_type is 'streak':
+        for m in range(5):
+            for n in range(5):
+                H[m, n] = 1 / (2 * pi * sig**2) * np.exp(-((m - 6)**2 + (n - 6)**2) / (2 * sig**2))
+
+        A = np.zeros([3, frac_diff.shape[2] - 4])
+        A[0, :] = 1
+        A[2, :] = -1
+
+    smooth = np.zeros(np.array(frac_diff.shape) - [4, 0, 4, 0])
+    for m in range(smooth.shape[1]):
+        for n in range(smooth.shape[3]):
+            for p in range(smooth.shape[0]):
+                for q in range(smooth.shape[2]):
+                    smooth[p, m, q, n] = np.sum(H * frac_diff[p:p + 5, m, q:q + 5, n])
+
+    edge = np.zeros([smooth.shape[0] - 2, smooth.shape[1], smooth.shape[3]])
+    for m in range(edge.shape[1]):
+        for n in range(edge.shape[2]):
+            for p in range(edge.shape[0]):
+                edge[p, m, n] = np.sum(A * smooth[p:p + 3, m, :, n])
+
+    return(smooth, edge)
+
+
+def match_filter(INS, frac_diff, Nbls):
+
+    for m in range(frac_diff.shape[0]):
+        streaks = frac_diff.mean(axis=2)
+        ind = streaks.argmax(axis=0)
+        for p in range(frac_diff.shape[1]):
+            for q in range(frac_diff.shape[3]):
+                if streaks[ind[p, q], p, q] > bin_max_calc(INS, Nbls) / np.sqrt(len(~frac_diff[ind[p, q], p, :, q].mask)):
+                    INS[ind[p, q], p, :, q] = np.ma.masked
+                    frac_diff = INS / INS.mean(axis=0) - 1
+
+    return(INS, frac_diff)

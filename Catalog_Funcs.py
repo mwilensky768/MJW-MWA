@@ -370,9 +370,9 @@ def INS_catalog(RFI, outpath, flag_slices=['All', ], amp_avg='Amp', aspect_ratio
                                         cbar_label='Fraction', xticks=xticks,
                                         xminors=xminors, xticklabels=xticklabels,
                                         yminors=yminors, aspect_ratio=aspect_ratio,
-                                        invalid_mask=invalid_mask, zero_mask=False)
+                                        invalid_mask=invalid_mask, zero_mask=False,
+                                        mask_color='black')
                 base = '%s%s_spw%i_%s_%s' % (figpath, RFI.obs, k, flag_slice, flag_titles[p])
-                print(INS.shape)
                 fig.savefig('%s_INS.png' % (base))
                 fig_diff.savefig('%s_INS_frac_diff.png' % (base))
                 fig_hist.savefig('%s_INS_hist.png' % (base))
@@ -461,35 +461,35 @@ def flag_catalog(RFI, outpath, flag_slices=['Flagged', ], xticks=None,
         fig.savefig('%s%s_flag_map_%s.png' % (outpath, RFI.obs, flag_slice))
 
 
-def bl_scatter_catalog(RFI, outpath, mask, vmin=None, vmax=None, cmap=cm.plasma):
+def bl_scatter_catalog(RFI, outpath, mask, cmap=cm.plasma):
     """
     You must have at least numpy 1.13 to run this!
     """
-    ind = np.where(mask)
+    bl_avg, bl_hist, bl_bins, hist2d, grid = RFI.bl_scatter(mask)
 
-    ind_arr = np.unique(np.vstack((ind[0:3])), axis=1)
+    fig_hist, ax_hist = plt.subplots(figsize=(14, 8))
+    fig_hist2d, ax_hist2d = plt.subplots(figsize=(14, 8))
 
-    for k in range(ind_arr.shape[1]):
-        fig, ax = ax_constructor(RFI)
-        fig.suptitle('Baseline Scatter Plot t = %i, f = %.1f Mhz' %
-                     (ind_arr[0][k], RFI.UV.freq_array[ind_arr[1][k], ind_arr[2][k]] * 10**(-6)))
-        figpath = '%sAll/spw%i/figs/' % (outpath, ind[1][k])
-        if not os.path.exists(figpath):
-            os.makedirs(figpath)
-        for m, pol in enumerate(RFI.pols):
-            curr_ax = ax_chooser(RFI, ax, m)
-            if vmin is None:
-                vmin = np.absolute(RFI.UV.data_array[ind_arr[0][k], :, ind_arr[1][k], ind_arr[2][k], m])[np.absolute(RFI.UV.data_array[ind_arr[0][k], :, ind_arr[1][k], ind_arr[2][k], m]) > 0].min()
-            if vmax is None:
-                vmax = np.absolute(RFI.UV.data_array[ind_arr[0][k], :, ind_arr[1][k], ind_arr[2][k], m]).max()
-            plot_lib.scatter_plot_2d(fig, curr_ax,
-                                     RFI.UV.uvw_array[ind_arr[0][k] * RFI.UV.Nbls:(ind_arr[0][k] + 1) * RFI.UV.Nbls, 0],
-                                     RFI.UV.uvw_array[ind_arr[0][k] * RFI.UV.Nbls:(ind_arr[0][k] + 1) * RFI.UV.Nbls, 1],
-                                     title=pol, xlabel='$\lambda u$ (m)', ylabel='$\lambda v$ (m)',
-                                     c=np.absolute(RFI.UV.data_array[ind_arr[0][k], :, ind_arr[1][k], ind_arr[2][k], m]),
-                                     cmap=cmap, vmin=vmin, vmax=vmax,
-                                     norm=matplotlib.colors.LogNorm(vmin=vmin, vmax=vmax),
-                                     cbar_label=RFI.UV.vis_units)
+    hist_labels = ['spw%i' % (m) for m in range(RFI.UV.Nspws)]
 
-        fig.savefig('%s%s_bl_scat_t%i_spw%i_f%i.png' % (figpath, RFI.obs, ind_arr[0][k], ind_arr[1][k], ind_arr[2][k]))
-        plt.close(fig)
+    plot_lib.one_d_hist_plot(fig_hist, ax_hist, bl_bins[0], bl_hist, xlog=False,
+                             labels=hist_labels, xlabel='Amplitude (%s)' % (RFI.UV.vis_units),
+                             title='%s RFI Event-Averaged Vis. Diff. Amplitude Histogram' % (RFI.obs))
+    plot_lib.image_plot(fig_hist2d, ax_hist2d, hist2d, title='RFI Baseline Grid Histogram',
+                        aspect_ratio=1, xlabel='$\lambda u$ (m)', ylabel='$\lambda v$ (m)',
+                        cbar_label='# Baselines', zero_mask=False)
+
+    fig_hist.savefig('%s%s_event_hist.png' % (outpath, RFI.obs))
+    fig_hist2d.savefig('%s%s_event_hist2d.png' % (outpath, RFI.obs))
+
+    for m in range(RFI.UV.Nspws):
+        fig_grid, ax_grid = ax_constructor(RFI)
+        fig_grid.suptitle('%s RFI Event-Averaged UV Grid' % (RFI.obs))
+        for n, pol in enumerate(RFI.pols):
+            curr_ax = ax_chooser(RFI, ax_grid, n)
+            plot_lib.image_plot(fig_grid, curr_ax, grid[m, n, :, :], title=pol,
+                                aspect_ratio=1, xlabel='Frequency (Mhz)',
+                                ylabel='Time Pair', cbar_label='Amplitude (UNCALIB)',
+                                zero_mask=False)
+
+        fig_grid.savefig('%s%s_spw%i_event_grid.png' % (outpath, RFI.obs, m))
