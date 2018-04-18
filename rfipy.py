@@ -203,7 +203,7 @@ class RFI:
 
         return(H, uniques)
 
-    def ant_pol_prepare(self, time, freq, amp=True):
+    def ant_pol_prepare(self, time, freq, spw, amp=False):
 
         """
         Generate an array for a time and frequency divided into quadrants.
@@ -226,7 +226,7 @@ class RFI:
 
         for m in range(self.UV.Nbls):
             for n in range(self.UV.Npols):
-                A = self.UV.data_array[time, m, 0, freq, n]
+                A = self.UV.data_array[time, m, spw, freq, n]
                 if amp:
                     T[self.UV.ant_1_array[m] + q[self.pols[n]][0],
                       self.UV.ant_2_array[m] + q[self.pols[n]][1]] = np.absolute(A.imag)
@@ -274,20 +274,21 @@ class RFI:
         return(INS, frac_diff, n, bins, fit)
 
     def bl_scatter(self, mask):
-
+        # There is problematic hard-coding in this!
         ind = np.where(mask)
         n, pol_counts = np.unique(np.vstack((ind[1], ind[3])), return_counts=True, axis=1)
         bl_avg = np.zeros([self.UV.Nbls, self.UV.Nspws, self.UV.Npols])
-        ant_avg = np.zeros([self.UV.Nants_telescope, self.UV.Nspws, self.UV.Npols])
         for m in range(len(ind[0])):
             bl_avg[:, ind[1][m], ind[3][m]] += np.absolute(self.UV.data_array[ind[0][m], :, ind[1][m], ind[2][m], ind[3][m]])
         for m, pair in enumerate(n.transpose()):
             bl_avg[:, pair[0], pair[1]] = bl_avg[:, pair[0], pair[1]] / pol_counts[m]
 
+        # This is a problematic hard-code!
         t0 = 18
         blt_slice = slice(self.UV.Nbls * t0, self.UV.Nbls * (t0 + 1))
         hist2d, xedges, yedges = np.histogram2d(self.UV.uvw_array[blt_slice, 0],
-                                                self.UV.uvw_array[blt_slice, 1], bins=50)
+                                                self.UV.uvw_array[blt_slice, 1],
+                                                bins=50)
 
         bl_hist = []
         bl_bins = []
@@ -307,3 +308,36 @@ class RFI:
                             grid[m, n, 49 - q, p] = np.mean(seq)
 
         return(bl_avg, bl_hist, bl_bins, hist2d, grid, xedges, yedges)
+
+    def ant_grid(self, mask):
+
+        bl_avg, _, _, _, _, _, _, _ = self.bl_scatter(mask)
+        counts = np.zeros(self.UV.Nants_telescope)
+        ant_avg = np.zeros([self.UV.Nants_telescope, self.UV.Nspws, self.UV.Npols])
+        for m in range(self.UV.Nants_telescope):
+            counts[m] = len(np.where(self.UV.ant_1_array == m)[0]) + \
+                len(np.where(self.UV.ant_2_array == m)[0])
+        for m in range(self.UV.Nspws):
+            for n in range(self.UV.Npols):
+                for p in range(self.UV.Nbls):
+                    ant_avg[ant_1_array[p], m, n] += bl_avg[p, m, n]
+                    ant_avg[ant_2_array[p], m, n] += bl_avg[p, m, n]
+                ant_avg[:, m, n] = ant_avg[:, m, n] / counts
+
+        _, xedges, yedges = np.histogram2d(self.UV.antenna_positions[:, 0],
+                                           self.UV.antenna_positions[:, 1],
+                                           bins=10)
+
+        ant_grid = np.zeros([self.UV.Nspws, self.UV.Npols, 10, 10])
+        for m in range(self.UV.Nspws):
+            for n in range(self.UV.Npols):
+                for p in range(10):
+                    for q in range(10):
+                        seq = ant_avg[:, m, n][np.logical_and(np.logical_and(xedges[p] < self.UV.antenna_positions[:, 0],
+                                                                             self.UV.antenna_positions[:, 0] < xedges[p + 1]),
+                                                              np.logical_and(yedges[q] < self.UV.antenna_positions[:, 1],
+                                                                             self.UV.antenna_positions[:, 1] < yedges[q + 1]))]
+                        if len(seq) > 0:
+                            ant_grid[m, n, 9 - q, p] = np.mean(seq)
+
+        return(ant_avg, ant_grid, xedges, yedges)

@@ -136,9 +136,15 @@ def INS_outlier_flag(obs, INS, frac_diff, Nbls, flag_slice='All', amp_avg='Amp',
 
     bin_max = bin_max_calc(Nbls, INS)
     # Flag the greatest outlier and recalculate the frac_diff in each iteration to determine new outliers
-    while np.max(np.absolute(frac_diff)) > bm:
-        INS[np.unravel_index(np.absolute(frac_diff).argmax(), INS.shape)] = np.ma.masked
-        frac_diff = INS / INS.mean(axis=0) - 1
+    while np.amax(np.absolute(frac_diff)) > bin_max:
+        if np.amax(frac_diff) > bin_max:
+            INS[frac_diff > bin_max] = np.ma.masked
+            frac_diff = INS / INS.mean(axis=0) - 1
+            bin_max = bin_max_calc(Nbls, INS)
+        elif np.amin(frac_diff) < -bin_max:
+            INS[frac_diff < -bin_max] = np.ma.masked
+            frac_diff = INS / INS.mean(axis=0) - 1
+            bin_max = bin_max_calc(Nbls, INS)
 
     # Make new histogram afterward, with fit
     n, bins = np.histogram(frac_diff[np.logical_not(frac_diff.mask)], bins='auto')
@@ -185,28 +191,32 @@ def edge_detect(frac_diff, RFI_type='streak', sig=2):
     return(smooth, edge)
 
 
-def match_filter(INS, frac_diff, Nbls, freq_array, filter_type='streak'):
+def match_filter(INS, frac_diff, Nbls, freq_array=None, filter_type='streak'):
 
-    TV7_freqs = [1.812e8, 1.875e8]
-    for m in range(frac_diff.shape[1]):
-        if (min(freq_array[m, :]) < min(TV7_freqs)) or (max(freq_array[m, :]) > max(TV7_freqs)):
-            for n in range(frac_diff.shape[0]):
-                TV7_slice = slice(np.argmin(freq_array[m, :] - min(TV7_freqs)),
-                                  np.argmin(freq_array[m, :] - max(TV7_freqs)))
-                TV7 = frac_diff[:, m, TV7_slice, :].mean(axis=2)
-                ind = TV7.argmax(axis=0)
-                for p in range(frac_diff.shape[3]):
-                    if TV7[ind[p], m, p] > bin_max_calc(INS, Nbls) / np.sqrt(len(~frac_diff[ind[p], m, TV7_slice, p].mask)):
-                        INS[ind[p], m, TV7_slice, p] = np.ma.masked
-                frac_diff = INS / INS.mean(axis=0) - 1
-
-    for m in range(frac_diff.shape[0]):
+    if filter_type is 'TV7':
+        TV7_freqs = [1.812e8, 1.875e8]
+        for m in range(frac_diff.shape[1]):
+            if (min(freq_array[m, :]) < min(TV7_freqs)) or (max(freq_array[m, :]) > max(TV7_freqs)):
+                for n in range(frac_diff.shape[0]):
+                    TV7_slice = slice(np.argmin(freq_array[m, :] - min(TV7_freqs)),
+                                      np.argmin(freq_array[m, :] - max(TV7_freqs)))
+                    TV7 = frac_diff[:, m, TV7_slice, :].mean(axis=2)
+                    ind = TV7.argmax(axis=0)
+                    for p in range(frac_diff.shape[3]):
+                        if TV7[ind[p], m, p] > bin_max_calc(INS, Nbls) / np.sqrt(len(~frac_diff[ind[p], m, TV7_slice, p].mask)):
+                            INS[ind[p], m, TV7_slice, p] = np.ma.masked
+                    frac_diff = INS / INS.mean(axis=0) - 1
+    elif filter_type is 'streak':
         streaks = frac_diff.mean(axis=2)
-        ind = streaks.argmax(axis=0)
-        for p in range(frac_diff.shape[1]):
-            for q in range(frac_diff.shape[3]):
-                if streaks[ind[p, q], p, q] > bin_max_calc(INS, Nbls) / np.sqrt(len(~frac_diff[ind[p, q], p, :, q].mask)):
-                    INS[ind[p, q], p, :, q] = np.ma.masked
-        frac_diff = INS / INS.mean(axis=0) - 1
+        N = np.count_nonzero(frac_diff.mask, axis=2)
+        thresh = bin_max_calc(INS, Nbls) / np.sqrt(N)
+        while np.count_nonzero(streaks > thresh) > 0:
+            ind = np.where(streaks > thresh)
+            # Flag those exceeding the expected threshold
+            INS[ind[0], ind[1], :, ind[2]] = np.ma.masked
+            frac_diff = INS / INS.mean(axis=0) - 1
+            streaks = frac_diff.mean(axis=2)
+            N = np.count_nonzero(frac_diff.mask, axis=2)
+            thresh = bin_max_calc(INS, Nbls) / np.sqrt(N)
 
     return(INS, frac_diff)
