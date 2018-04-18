@@ -185,7 +185,20 @@ def edge_detect(frac_diff, RFI_type='streak', sig=2):
     return(smooth, edge)
 
 
-def match_filter(INS, frac_diff, Nbls):
+def match_filter(INS, frac_diff, Nbls, freq_array, filter_type='streak'):
+
+    TV7_freqs = [1.812e8, 1.875e8]
+    for m in range(frac_diff.shape[1]):
+        if (min(freq_array[m, :]) < min(TV7_freqs)) or (max(freq_array[m, :]) > max(TV7_freqs)):
+            for n in range(frac_diff.shape[0]):
+                TV7_slice = slice(np.argmin(freq_array[m, :] - min(TV7_freqs)),
+                                  np.argmin(freq_array[m, :] - max(TV7_freqs)))
+                TV7 = frac_diff[:, m, TV7_slice, :].mean(axis=2)
+                ind = TV7.argmax(axis=0)
+                for p in range(frac_diff.shape[3]):
+                    if TV7[ind[p], m, p] > bin_max_calc(INS, Nbls) / np.sqrt(len(~frac_diff[ind[p], m, TV7_slice, p].mask)):
+                        INS[ind[p], m, TV7_slice, p] = np.ma.masked
+                frac_diff = INS / INS.mean(axis=0) - 1
 
     for m in range(frac_diff.shape[0]):
         streaks = frac_diff.mean(axis=2)
@@ -194,6 +207,6 @@ def match_filter(INS, frac_diff, Nbls):
             for q in range(frac_diff.shape[3]):
                 if streaks[ind[p, q], p, q] > bin_max_calc(INS, Nbls) / np.sqrt(len(~frac_diff[ind[p, q], p, :, q].mask)):
                     INS[ind[p, q], p, :, q] = np.ma.masked
-                    frac_diff = INS / INS.mean(axis=0) - 1
+        frac_diff = INS / INS.mean(axis=0) - 1
 
     return(INS, frac_diff)

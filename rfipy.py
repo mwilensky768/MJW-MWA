@@ -304,6 +304,6 @@ class RFI:
                                                              np.logical_and(yedges[q] < self.UV.uvw_array[blt_slice, 1],
                                                                             self.UV.uvw_array[blt_slice, 1] < yedges[q + 1]))]
                         if len(seq) > 0:
-                            grid[m, n, p, q] = np.mean(seq)
+                            grid[m, n, 49 - q, p] = np.mean(seq)
 
-        return(bl_avg, bl_hist, bl_bins, hist2d, grid)
+        return(bl_avg, bl_hist, bl_bins, hist2d, grid, xedges, yedges)

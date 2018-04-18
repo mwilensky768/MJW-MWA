@@ -465,7 +465,9 @@ def bl_scatter_catalog(RFI, outpath, mask, cmap=cm.plasma):
     """
     You must have at least numpy 1.13 to run this!
     """
-    bl_avg, bl_hist, bl_bins, hist2d, grid = RFI.bl_scatter(mask)
+    bl_avg, bl_hist, bl_bins, hist2d, grid, xedges, yedges = RFI.bl_scatter(mask)
+    xticklabels = ['%.0f' % (xedges[tick]) for tick in range(0, 50, 10)]
+    yticklabels = ['%.0f' % (yedges[tick]) for tick in range(50, 0, -10)]
 
     fig_hist, ax_hist = plt.subplots(figsize=(14, 8))
     fig_hist2d, ax_hist2d = plt.subplots(figsize=(14, 8))
@@ -488,8 +490,9 @@ def bl_scatter_catalog(RFI, outpath, mask, cmap=cm.plasma):
         for n, pol in enumerate(RFI.pols):
             curr_ax = ax_chooser(RFI, ax_grid, n)
             plot_lib.image_plot(fig_grid, curr_ax, grid[m, n, :, :], title=pol,
-                                aspect_ratio=1, xlabel='Frequency (Mhz)',
-                                ylabel='Time Pair', cbar_label='Amplitude (UNCALIB)',
-                                zero_mask=False)
+                                aspect_ratio=1, xlabel='$\lambda u$ (m)',
+                                xticklabels=xticklabels, yticklabels=yticklabels,
+                                ylabel='$\lambda v$ (m)',
+                                cbar_label='Amplitude (UNCALIB)', zero_mask=False)
 
         fig_grid.savefig('%s%s_spw%i_event_grid.png' % (outpath, RFI.obs, m))
