@@ -273,48 +273,63 @@ class RFI:
 
         return(INS, frac_diff, n, bins, fit)
 
-    def bl_scatter(self, mask):
-        # There is problematic hard-coding in this!
-        ind = np.where(mask)
-        n, pol_counts = np.unique(np.vstack((ind[1], ind[3])), return_counts=True, axis=1)
-        bl_avg = np.zeros([self.UV.Nbls, self.UV.Nspws, self.UV.Npols])
-        for m in range(len(ind[0])):
-            bl_avg[:, ind[1][m], ind[3][m]] += np.absolute(self.UV.data_array[ind[0][m], :, ind[1][m], ind[2][m], ind[3][m]])
-        for m, pair in enumerate(n.transpose()):
-            bl_avg[:, pair[0], pair[1]] = bl_avg[:, pair[0], pair[1]] / pol_counts[m]
-
-        # This is a problematic hard-code!
-        t0 = 18
-        blt_slice = slice(self.UV.Nbls * t0, self.UV.Nbls * (t0 + 1))
-        hist2d, xedges, yedges = np.histogram2d(self.UV.uvw_array[blt_slice, 0],
-                                                self.UV.uvw_array[blt_slice, 1],
-                                                bins=50)
-
+    def bl_grid(self, mask):
+        ind, event_bound = rfiutil.event_identify(mask)
+        Nevent = len(event_bound) + 1
+        bl_avg = np.zeros([self.UV.Nbls, Nevent])
+        # Average vis. diff. amps. for each event
+        bl_hist2d = []
         bl_hist = []
         bl_bins = []
-        grid = np.zeros([self.UV.Nspws, self.UV.Npols, 50, 50])
-        for m in range(self.UV.Nspws):
-            hist, bins = np.histogram(bl_avg[:, m, :], bins='auto')
+        grid = np.zeros([50, 50, Nevents])
+        edges = np.linspace(-3000, 3000, num=51)
+
+        for m in range(Nevent):
+            # Set up the appropriate slices
+            # Event bounds tell us the last index of an event
+            # Start at 0 or the last event bound + 1
+            # End at event bound (slice syntax -> event_bound[m] + 1), or the end
+            if m == 0:
+                p = 0
+            else:
+                p = event_bound[m - 1] + 1
+            if m < Nevent - 1:
+                q = event_bound[m] + 1
+            else:
+                q = len(ind[0])
+            event_slice = slice(p, q)
+            bl_avg[:, m] = np.absolute(self.UV.data_array[ind[2][event_slice],
+                                                          :, ind[0][event_slice],
+                                                          ind[3][event_slice],
+                                                          ind[1][event_slice]]).mean(axis=0)
+
+            blt_slice = slice(self.UV.Nbls * ind[2][p], self.UV.Nbls * (ind[2][p] + 1))
+            hist2d, xedges, yedges = np.histogram2d(self.UV.uvw_array[blt_slice, 0],
+                                                    self.UV.uvw_array[blt_slice, 1],
+                                                    bins=edges)
+            bl_hist2d.append(hist2d)
+            hist, bins = np.histogram(bl_avg[:, m], bins='auto')
             bl_hist.append(hist)
             bl_bins.append(bins)
-            for n in range(self.UV.Npols):
-                for p in range(50):
-                    for q in range(50):
-                        seq = bl_avg[:, m, n][np.logical_and(np.logical_and(xedges[p] < self.UV.uvw_array[blt_slice, 0],
-                                                                            self.UV.uvw_array[blt_slice, 0] < xedges[p + 1]),
-                                                             np.logical_and(yedges[q] < self.UV.uvw_array[blt_slice, 1],
-                                                                            self.UV.uvw_array[blt_slice, 1] < yedges[q + 1]))]
-                        if len(seq) > 0:
-                            grid[m, n, 49 - q, p] = np.mean(seq)
 
-        return(bl_avg, bl_hist, bl_bins, hist2d, grid, xedges, yedges)
+            for i in range(50):
+                for k in range(50):
+                    seq = bl_avg[:, m][np.logical_and(np.logical_and(xedges[i] < self.UV.uvw_array[blt_slice, 0],
+                                                                     self.UV.uvw_array[blt_slice, 0] < xedges[i + 1]),
+                                                      np.logical_and(yedges[k] < self.UV.uvw_array[blt_slice, 1],
+                                                                     self.UV.uvw_array[blt_slice, 1] < yedges[k + 1]))]
+                    if len(seq) > 0:
+                        grid[49 - k, i, m] = np.mean(seq)
+
+        return(bl_avg, ind, event_bound bl_hist, bl_bins, bl_hist2d, grid, edges)
 
     def ant_grid(self, mask):
 
         bl_avg, _, _, _, _, _, _, _ = self.bl_scatter(mask)
         counts = np.zeros(self.UV.Nants_telescope)
-        ant_avg = np.zeros([self.UV.Nants_telescope, self.UV.Nspws, self.UV.Npols])
-        for m in range(self.UV.Nants_telescope):
+        Nevents = len(event_bound) + 1
+        ant_avg = np.zeros([self.UV.Nants_telescope, Nevents])
+        for m in range(Nevents):
             counts[m] = len(np.where(self.UV.ant_1_array == m)[0]) + \
                 len(np.where(self.UV.ant_2_array == m)[0])
         for m in range(self.UV.Nspws):

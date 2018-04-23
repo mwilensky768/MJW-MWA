@@ -135,7 +135,7 @@ def INS_outlier_flag(obs, INS, frac_diff, Nbls, flag_slice='All', amp_avg='Amp',
                      sir_agg=0.2):
 
     bin_max = bin_max_calc(Nbls, INS)
-    # Flag the greatest outlier and recalculate the frac_diff in each iteration to determine new outliers
+    # Flag the greatest positive outlier and recalculate the frac_diff in each iteration to determine new outliers
     while np.amax(np.absolute(frac_diff)) > bin_max:
         if np.amax(frac_diff) > bin_max:
             INS[frac_diff > bin_max] = np.ma.masked
@@ -220,3 +220,20 @@ def match_filter(INS, frac_diff, Nbls, freq_array=None, filter_type='streak'):
             thresh = bin_max_calc(INS, Nbls) / np.sqrt(N)
 
     return(INS, frac_diff)
+
+
+def event_identify(mask, dt=1):
+    """
+    Search for events which are contiguous in time, belonging to the same spw
+    and pol
+
+    dt determines the maximal separation time of flags in order for those flags
+    to belong to the same event
+    """
+    ind = np.where(mask)
+    ind = (ind[1], ind[3], ind[0], ind[2])
+    ind_stack = np.unique(np.vstack(ind), axis=1)
+    diff = ind_stack[:-1].diff(axis=1)
+    col_bounds = np.where(np.logical_or(np.logical_or(diff[0, :], diff[1, :]),
+                                        diff[2, :] > dt))[0]
+    return(ind, event_bound)
