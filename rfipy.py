@@ -11,20 +11,20 @@ import rfiutil
 
 class RFI:
 
-    def __init__(self, obs, filepath, bad_time_indices=[0, -3, -2, -1], coarse_band_remove=False,
-                 auto_remove=True, filetype='uvfits', good_freq_indices=[]):
+    def __init__(self, obs, filepath, bad_time_indices=[0, -3, -2, -1],
+                 auto_remove=True, filetype='uvfits', freq_chans=None):
 
         # These lines establish the most basic attributes of the class, namely
         # its base UVData object and the obsid
         self.obs = obs
         self.UV = pyuv.UVData()
         if filetype is 'uvfits':
-            self.UV.read_uvfits(filepath)
+            self.UV.read_uvfits(filepath, freq_chans=freq_chans)
         elif filetype is 'miriad':
             self.UV.read_miriad(filepath)
 
         # This generalizes polarization references during plotting
-        pol_keys = [-8 + k for k in range(13)]
+        pol_keys = range(-8, 5)
         pol_keys.remove(0)
         pol_values = ['YX', 'XY', 'YY', 'XX', 'LR', 'RL', 'LL', 'RR', 'I', 'Q',
                       'U', 'V']
@@ -43,23 +43,9 @@ class RFI:
                 times.remove(bad_time)
             self.UV.select(times=times)
 
-        if good_freq_indices:
-            self.UV.select(freq_chans=good_freq_indices)
-
         if auto_remove:
-            blt_inds = [k for k in range(self.UV.Nblts) if
-                        self.UV.ant_1_array[k] != self.UV.ant_2_array[k]]
+            blt_inds = np.where(self.UV.ant_1_array != self.UV.ant_2_array)[0]
             self.UV.select(blt_inds=blt_inds)
-
-        if coarse_band_remove:  # MWA specific
-            coarse_width = 1.28 * 10**(6)  # coarse band width of MWA in hz
-            Ncoarse = (self.UV.freq_array[0, -1] - self.UV.freq_array[0, 0]) / coarse_width
-            Mcoarse = coarse_width / self.UV.channel_width  # Number of fine channels per coarse channel
-            LEdges = [Mcoarse * p for p in range(Ncoarse)]
-            REdges = [Mcoarse - 1 + Mcoarse * p for p in range(Ncoarse)]
-
-            self.UV.select(freq_chans=[x for x in range(self.UV.Nfreqs) if x not in
-                                       LEdges and x not in REdges])
 
         # These ensure that every baseline reports at every time so that subtraction
         # can go off without a hitch
@@ -68,41 +54,19 @@ class RFI:
                        self.UV.baseline_array[k * self.UV.Nbls:(k + 1) * self.UV.Nbls]
                        for k in range(1, self.UV.Ntimes - 1)])
         assert cond, 'Baseline array slices do not match!'
-        self.UV.data_array = np.diff(np.reshape(self.UV.data_array,
-                                     [self.UV.Ntimes, self.UV.Nbls, self.UV.Nspws,
-                                      self.UV.Nfreqs, self.UV.Npols]), axis=0)
 
-    def flag_operations(self, flag_slice='Unflagged'):
-        # This function logically combines the flags for subtracted visibilities
+        self.UV.data_array = np.ma.masked_array(np.absolute(np.diff(np.reshape(self.UV.data_array,
+                                                [self.UV.Ntimes, self.UV.Nbls, self.UV.Nspws,
+                                                 self.UV.Nfreqs, self.UV.Npols]), axis=0)))
 
-        A = np.reshape(self.UV.flag_array, [self.UV.Ntimes, self.UV.Nbls, self.UV.Nspws,
-                       self.UV.Nfreqs, self.UV.Npols])
+        self.UV.flag_array = np.reshape((self.UV.flag_array[:-self.UV.Nbls] +
+                                         self.UV.flag_array[self.UV.Nbls:]) > 0,
+                                        [self.UV.Ntimes - 1, self.UV.Nbls,
+                                         self.UV.Nspws, self.UV.Nfreqs,
+                                         self.UV.Npols])
 
-        # Neither visibility was flagged
-        if flag_slice is 'Unflagged':
-            A = np.logical_not(np.logical_or(A[0:(self.UV.Ntimes - 1), :, :, :, :],
-                                             A[1:self.UV.Ntimes, :, :, :, :]))
-        # Either visibility was flagged, or both
-        elif flag_slice is 'Flagged':
-            A = np.logical_or(A[0:(self.UV.Ntimes - 1), :, :, :, :], A[1:self.UV.Ntimes, :, :, :, :])
-        # Both visibilities were flagged
-        elif flag_slice is 'And':
-            A = np.logical_and(A[0:(self.UV.Ntimes - 1), :, :, :, :], A[1:self.UV.Ntimes, :, :, :, :])
-        # One or the other visibilit was flagged, not both
-        elif flag_slice is 'XOR':
-            A = np.logical_xor(A[0:(self.UV.Ntimes - 1), :, :, :, :], A[1:self.UV.Ntimes, :, :, :, :])
-        # Ignore the flags. Work with all of the data.
-        elif flag_slice is 'All':
-            A = np.ones([self.UV.Ntimes - 1, self.UV.Nbls, self.UV.Nspws,
-                         self.UV.Nfreqs, self.UV.Npols], dtype=bool)
-
-        return(A)
-
-    def one_d_hist_prepare(self, flag_slice='All', time_ind=slice(None),
-                           bl_ind=slice(None), spw_ind=0,
-                           freq_ind=slice(None), pol_ind=slice(None),
-                           bins=None, fit='rayleigh', bin_window=[0, 1e+03],
-                           writepath=''):
+    def one_d_hist_prepare(self, flag=False, bins=None, fit=False,
+                           bin_window=None, writepath=''):
         """
         This function makes one_d visibility difference amplitude histograms.
         You may choose to histogram only subsets of the data using the set of ind
@@ -123,33 +87,45 @@ class RFI:
         Set the writepath keyword for writing out function returns.
         """
 
-        flags = self.flag_operations(flag_slice=flag_slice)[time_ind, bl_ind, spw_ind, freq_ind, pol_ind]
-        values = np.absolute(self.UV.data_array)[time_ind, bl_ind, spw_ind, freq_ind, pol_ind]
-
-        # Generate the bins or keep the selectred ones
+        # Generate the bins or keep the selected ones
         if bins is None:
-            MIN = np.amin(values[values > 0])
-            MAX = np.amax(values)
+            MIN = np.amin(self.UV.data_array)
+            MAX = np.amax(self.UV.data_array)
             bins = np.logspace(floor(log10(MIN)), ceil(log10(MAX)), num=1001)
-        else:
-            bins = bins
 
-        # Generate a fit if desired
+        if flag:
+            self.UV.data_array.mask = self.UV.flag_array
         if fit:
-            m, fit = rfiutil.hist_fit(self.obs, bins, values, flags, writepath=writepath,
-                                      flag_slice=flag_slice, bin_window=bin_window,
-                                      fit_type=fit)
-        else:
-            m, bins = np.histogram(values[flags], bins=bins)
-            fit = None
+            bin_widths = np.diff(bins)
+            bin_centers = bins[:-1] + 0.5 * bin_widths
+            fit = np.zeros(len(bins) - 1)
+            if bin_window:
+                self.UV.data_array = np.ma.masked_outside(self.UV.data_array,
+                                                          min(bin_window),
+                                                          max(bin_window))
+            sig_arr, N_arr = self.rms_calc(axis=(0, 1), writepath=writepath) / np.sqrt(2)
+            if bin_window:
+                if flag:
+                    self.UV.data_array.mask = self.UV.flag_array
+                else:
+                    self.UV.data_array.mask = False
+            for p in range(sig_arr.shape[0]):
+                for q in range(sig_arr.shape[1]):
+                    for r in range(sig_arr.shape[2]):
+                        if not sig_arr.mask[p, q, r]:
+                            fit += N_arr[p, q, r] * bin_widths * (bin_centers / sig_arr[p, q, r]**2) * \
+                                np.exp(- bin_centers**2 / (2 * sig_arr[p, q, r]**2))
+
+        n, _ = np.histogram(self.UV.data_array[np.logical_not(self.UV.data_array.mask)], bins=bins)
+        fit = None
 
         # Write out the function returns
-        base = '%s%s_%s_spw%i' % (writepath, self.obs, flag_slice, spw_ind)
-        np.save('%s_hist.npy' % (base), m)
+        base = '%s%s' % (writepath, self.obs)
+        np.save('%s_hist.npy' % (base), n)
         np.save('%s_bins.npy' % (base), bins)
         np.save('%s_fit.npy' % (base), fit)
 
-        return(m, bins, fit)
+        return(n, bins, fit)
 
     def reverse_index(self, band, flag_slice='Unflagged'):
         # Find vis. differences within a certain amplitude band of the chosen flag slice
@@ -252,6 +228,7 @@ class RFI:
             values = self.UV.data_array
 
         flags = self.flag_operations(flag_slice)
+        Nbls_arr = flags.sum(axis=1)
         values = np.ma.masked_array(values)
         values[np.logical_not(flags)] = np.ma.masked
         INS = np.absolute(np.mean(values, axis=1))
@@ -267,6 +244,7 @@ class RFI:
         base = '%s%s_%s_%s' % (writepath, self.obs, flag_slice, amp_avg)
         np.ma.dump(INS, '%s_INS.npym' % (base))
         np.ma.dump(frac_diff, '%s_INS_frac_diff.npym' % (base))
+        np.save('%s_INS_Nbls.npy' % (base), Nbls_arr)
         np.save('%s_INS_counts.npy' % (base), n)
         np.save('%s_INS_bins.npy' % (base), bins)
         np.save('%s_INS_fit.npy' % (base), fit)
@@ -356,3 +334,15 @@ class RFI:
                             ant_grid[m, n, 9 - q, p] = np.mean(seq)
 
         return(ant_avg, ant_grid, xedges, yedges)
+
+    def rms_calc(self, writepath='' axis=None):
+        # Calculate the rms of the unflagged data, splitting according to axis tuple
+        rms = np.sqrt(np.mean(self.UV.data_array**2, axis=axis))
+        N = np.count_nonzero(np.logical_not(self.UV.data_array.mask), axis=axis)
+
+        fn = filter(str.isalnum, str(axis))
+
+        np.save('%s%s_rms_%s.npy', % (writepath, self.obs, fn))
+        np.save('%s%s_N_%s.npy', % (writepath, self.obs, fn))
+
+        return(rms, N)

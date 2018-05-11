@@ -1,20 +1,10 @@
 import imageio
 import glob
 
-inpath = '/Users/mike_e_dubs/MWA/Catalogs/Golden_Set_8s_Autos/Vis_Avg/Narrowband/'
-outpath = '/Users/mike_e_dubs/MWA/Animations/Golden_Set_8s_Autos/Vis_Avg/Narrowband/'
-obslist_path = '/Users/mike_e_dubs/MWA/Obs_Lists/Golden_Set_Narrowband_OBSIDS.txt'
+inpath = '/Users/mike_e_dubs/MWA/FHD/Meteor_Trail/output_images/'
+outpath = '/Users/mike_e_dubs/MWA/FHD/Meteor_Trail/'
 duration = 0.2
-
-with open(obslist_path) as f:
-    obslist = f.read().split("\n")
-obslist.remove('')
-
-im_list = {}
-for obs in obslist:
-    im_list = sorted(glob.glob('%s%s*' % (inpath, obs)),
-                     key=lambda name: int(name[name.find('_t') + 2:-4]))
-    images = [imageio.imread(im) for im in im_list]
-    if len(images) > 0:
-        imageio.mimsave('%s%s.gif' % (outpath, obs), images,
-                        duration=duration)
+im_list = glob.glob('%s*Residual_XX.png' % (inpath))
+im_list.sort()
+images = [imageio.imread(im) for im in im_list]
+imageio.mimsave('%s1061313128_t11_t27.gif' % (outpath), images, duration=duration)

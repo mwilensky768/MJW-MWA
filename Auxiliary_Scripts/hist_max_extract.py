@@ -5,8 +5,8 @@ use('Agg')
 import matplotlib.pyplot as plt
 import plot_lib
 
-arrpath = '/Users/mike_e_dubs/MWA/Catalogs/Grand_Catalog/Long_Run_8s_Autos/Freq_Time/Variances/'
-outpath = '/Users/mike_e_dubs/MWA/Catalogs/Grand_Catalog/Long_Run_8s_Autos/Freq_Time/max_loc/'
+arrpath = '/Users/mike_e_dubs/MWA/Catalogs/Grand_Catalog/Golden_Set_8s_Autos/Freq_Time/Variances/'
+outpath = '/Users/mike_e_dubs/MWA/Catalogs/Grand_Catalog/Golden_Set_8s_Autos/Freq_Time/max_loc/'
 hist_arrs_all = glob.glob('%s*All_hist.npy' % (arrpath))
 hist_arrs_all.sort()
 hist_arrs_unflagged = glob.glob('%s*Unflagged_hist.npy' % (arrpath))
@@ -48,12 +48,12 @@ for (hist_all_arr, hist_unflagged_arr, bins_all_arr, bins_unflagged_arr) in \
 max_locs.sort()
 max_locs = np.array(max_locs)
 fig, ax = plt.subplots(figsize=(14, 8), nrows=2)
-fig.suptitle('Long Run Histogram Count Max Locations')
+fig.suptitle('Golden Set Histogram Count Max Locations')
 fig_titles = ['Unflagged', 'All']
-xticks = [1061313496, 1061315320, 1061317152, 1061318864]
+xticks = [1061313496, 1061315320, 1061317152, 1061318984]
 
 for m in range(2):
-    plot_lib.scatter_plot_2d(fig, ax[m], max_locs[:64, 0], max_locs[:64, m + 1],
+    plot_lib.scatter_plot_2d(fig, ax[m], max_locs[:, 0], max_locs[:, m + 1],
                              title=fig_titles[m], xlabel='GPS Time',
                              ylabel='Max Location (UNCALIB)', xticks=xticks)
 

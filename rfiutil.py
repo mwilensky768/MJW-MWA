@@ -76,11 +76,10 @@ def SIROperator(FMi, Agg):  # Takes a (1-d) flag mask and aggression param. (sca
     return(FMf)
 
 
-def bin_max_calc(Nbls, INS):
-    bin_max = sqrt((pi - 4) / (pi * Nbls) * 2 *
-                   log(sqrt(pi) / (4 * len(INS[~INS.mask]) ** (2.0 / 3) * erfinv(0.5))))
+def sigma_calc(Nbls):
+    sigma = np.sqrt((4 - pi) / (Nbls * pi))
 
-    return(bin_max)
+    return(sigma)
 
 
 def hist_fit(obs, bins, values, flags, writepath='', flag_slice='All',
@@ -191,35 +190,82 @@ def edge_detect(frac_diff, RFI_type='streak', sig=2):
     return(smooth, edge)
 
 
-def match_filter(INS, frac_diff, Nbls, freq_array=None, filter_type='streak'):
+def match_filter(INS, frac_diff, Nbls, freq_array, sig_thresh):
+    # Can pass filter_type a list to check multiple shapes
 
-    if filter_type is 'TV7':
-        TV7_freqs = [1.812e8, 1.875e8]
+    def TV_slicer(TV_freqs, freq_array, spw, slices):
+        for ch, freq_range in enumerate(TV_freqs):
+            if (min(freq_array[spw, :]) < min(freq_range)) or (max(freq_array[spw, :]) > max(freq_range)):
+                slices['TV%i' % (ch + 6)] = slice(np.argmin(np.abs(freq_array[spw, :] - min(freq_range))),
+                                                  np.argmin(np.abs(freq_array[spw, :] - max(freq_range))))
+        return(slices)
+
+    def match_test(frac_diff, Nbls, spw, slc, pol, sig_thresh):
+        sliced_arr = frac_diff[:, spw, slc, pol].mean(axis=1)
+        N = np.count_nonzero(~frac_diff[:, spw, slc, pol].mask, axis=1)
+        thresh = sig_thresh * np.sqrt(np.sum(sigma_calc(Nbls)[:, spw, slc, pol]**2, axis=1)) / N
+        if np.any(sliced_arr > thresh):
+            t = (sliced_arr / thresh).argmax()
+            R = (sliced_arr / thresh).max()
+        else:
+            t = np.nan
+            R = np.nan
+        return(t, R)
+
+    TV6_freqs = [1.775e8 - 3.5e6, 1.775e8 + 3.5e6]
+    TV7_freqs = [1.845e8 - 3.5e6, 1.845e8 + 3.5e6]
+    TV8_freqs = [1.915e8 - 3.5e6, 1.915e8 + 3.5e6]
+    TV_freqs = [TV6_freqs, TV7_freqs, TV8_freqs]
+    keys = ['streak', 'TV6', 'TV7', 'TV8', 'point']
+    event_R = {key: np.zeros([frac_diff.shape[1], frac_diff.shape[3]]) for key in keys}
+    R_arr = np.stack([event_R[key] for key in keys])
+    while not np.all(np.isnan(R_arr)):
+        max_R = -np.inf
+        t_max = -1
+        key_max = ''
         for m in range(frac_diff.shape[1]):
-            if (min(freq_array[m, :]) < min(TV7_freqs)) or (max(freq_array[m, :]) > max(TV7_freqs)):
-                for n in range(frac_diff.shape[0]):
-                    TV7_slice = slice(np.argmin(freq_array[m, :] - min(TV7_freqs)),
-                                      np.argmin(freq_array[m, :] - max(TV7_freqs)))
-                    TV7 = frac_diff[:, m, TV7_slice, :].mean(axis=2)
-                    ind = TV7.argmax(axis=0)
-                    for p in range(frac_diff.shape[3]):
-                        if TV7[ind[p], m, p] > bin_max_calc(INS, Nbls) / np.sqrt(len(~frac_diff[ind[p], m, TV7_slice, p].mask)):
-                            INS[ind[p], m, TV7_slice, p] = np.ma.masked
-                    frac_diff = INS / INS.mean(axis=0) - 1
-    elif filter_type is 'streak':
-        streaks = frac_diff.mean(axis=2)
-        N = np.count_nonzero(frac_diff.mask, axis=2)
-        thresh = bin_max_calc(INS, Nbls) / np.sqrt(N)
-        while np.count_nonzero(streaks > thresh) > 0:
-            ind = np.where(streaks > thresh)
-            # Flag those exceeding the expected threshold
-            INS[ind[0], ind[1], :, ind[2]] = np.ma.masked
-            frac_diff = INS / INS.mean(axis=0) - 1
-            streaks = frac_diff.mean(axis=2)
-            N = np.count_nonzero(frac_diff.mask, axis=2)
-            thresh = bin_max_calc(INS, Nbls) / np.sqrt(N)
+            slices = {'streak': slice(None), 'TV6': None, 'TV7': None, 'TV8': None}
+            slices = TV_slicer(TV_freqs, freq_array, m, slices)
+            for n in range(frac_diff.shape[3]):
+                for key in keys[:4]:
+                    if slices[key]:
+                        t, event_R[key][m, n] = match_test(frac_diff, Nbls, m, slices[key], n, sig_thresh)
+                        if event_R[key][m, n] > max_R:
+                            max_R = event_R[key][m, n]
+                            t_max = t
+                            key_max = key
+                t, f = np.unravel_index(frac_diff[:, m, :, n].argmax(),
+                                        frac_diff[:, m, :, n].shape)
+                thresh = sig_thresh * sigma_calc(Nbls[t, m, f, n])
+                if frac_diff[t, m, f, n] > thresh:
+                    event_R['point'][m, n] = frac_diff[t, m, f, n] / thresh
+                    if event_R['point'][m, n] > max_R:
+                        key_max = None
+                else:
+                    event_R['point'][m, n] = np.nan
+                if key_max:
+                    INS[t_max, m, slices[key_max], n] = np.ma.masked
+                elif key_max is None:
+                    INS[t, m, f, n] = np.ma.masked
+        R_arr = np.stack([event_R[key] for key in keys])
+        frac_diff = INS / INS.mean(axis=0) - 1
 
     return(INS, frac_diff)
+
+
+def narrowband_filter(INS, ch_ignore=None):
+
+    FD_CB = np.zeros(INS.shape)
+    for m in range(24):
+        INS_CBM = np.array([np.median(INS[:, :, 16 * m:16 * (m + 1), :], axis=2) for k in range(16)]).transpose((1, 2, 0, 3))
+        FD_CB[:, :, 16 * m:16 * (m + 1), :] = INS[:, :, 16 * m:16 * (m + 1), :] / INS_CBM - 1
+    if ch_ignore is not None:
+        INS[:, :, ch_ignore, :] = np.ma.masked
+    INS = np.ma.masked_where(np.logical_and(FD_CB > 0.1, ~INS.mask), INS)
+    if ch_ignore is not None:
+        INS.mask[:, :, ch_ignore, :] = False
+
+    return(INS)
 
 
 def event_identify(mask, dt=1):

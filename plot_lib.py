@@ -1,6 +1,6 @@
-import matplotlib.pyplot as plt
 from matplotlib import cm, use
 use('Agg')
+import matplotlib.pyplot as plt
 from matplotlib.ticker import FixedLocator, AutoMinorLocator
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
@@ -78,7 +78,7 @@ def line_plot(fig, ax, data, title='Visibility Difference Average',
     if not zorder:
         zorder = range(len(data))
     if not labels:
-        labels = 4 * ['']
+        labels = len(data) * ['']
 
     for k in range(len(data)):
         ax.plot(data[k], label=labels[k], zorder=zorder[k])
