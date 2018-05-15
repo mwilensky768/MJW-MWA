@@ -82,82 +82,22 @@ def sigma_calc(Nbls):
     return(sigma)
 
 
-def hist_fit(obs, bins, values, flags, writepath='', flag_slice='All',
-             bin_window=[0, 1e3], fit_type='rayleigh'):
+def INS_hist_fit(bins, MS, Nbls, sig_thresh):
 
     bin_widths = np.diff(bins)
     bin_centers = bins[:-1] + 0.5 * bin_widths
-    fit = np.zeros(len(bins) - 1)
 
-    if fit_type is 'rayleigh':
-        m = np.copy(fit)
-        sig_sq_array = np.zeros(values.shape[2:])
-        # Calculate maximum likelihood estimator for each frequency and polarization
-        for l in range(values.shape[3]):
-            for k in range(values.shape[2]):
-                n, bins = np.histogram(values[:, :, k, l][flags[:, :, k, l]], bins=bins)
-                N = np.sum(n)
-                m += n
-                # Only use data within the fit window
-                data_cond = np.logical_and(np.logical_and(min(bin_window) < values[:, :, k, l],
-                                           values[:, :, k, l] < max(bin_window)), flags[:, :, k, l])
-                N_fit = np.count_nonzero(data_cond)
-                # Do not calculate a sigma if nothing belonging to the flag slice is in the window
-                if N_fit > 0:
-                    # Calculate the MLE and histogram according to the MLE
-                    sig_sq = 0.5 * np.sum(values[:, :, k, l][data_cond]**2) / N_fit
-                    fit += N_fit * bin_widths * bin_centers * \
-                        np.exp(-bin_centers**2 / (2 * sig_sq)) / sig_sq
-                else:
-                    sig_sq = np.nan
-                sig_sq_array[k, l] = sig_sq
+    sigma = sigma_calc(np.amax(Nbls))
+    thresh = sig_thresh * sigma
+    data_cond = np.logical_and(-thresh < MS, MS < thresh)
 
-        np.save('%s%s_%s_sigsq.npy' % (writepath, obs, flag_slice),
-                sig_sq_array)
+    N = len(MS[data_cond])
+    mu = np.mean(MS[data_cond])
+    sigma_sq = np.var(MS[data_cond])
+    fit = N * bin_widths / np.sqrt(2 * pi * sigma_sq) * \
+        np.exp(-((bin_centers - mu) ** 2) / (2 * sigma_sq))
 
-    if fit_type is 'normal':
-        data_cond = np.logical_and(np.logical_and(min(bin_window) < values,
-                                                  values < max(bin_window)),
-                                   flags)
-        N = len(values[data_cond])
-        mu = np.mean(values[data_cond])
-        sigma_sq = np.var(values[data_cond])
-        fit = N * bin_widths / np.sqrt(2 * pi * sigma_sq) * \
-            np.exp(-((bin_centers - mu) ** 2) / (2 * sigma_sq))
-        m = np.histogram(values.flatten())
-
-    return(m, fit)
-
-
-def INS_outlier_flag(obs, INS, frac_diff, Nbls, flag_slice='All', amp_avg='Amp',
-                     write=False, writepath='', wind_len=16, st_iter=0,
-                     sir_agg=0.2):
-
-    bin_max = bin_max_calc(Nbls, INS)
-    # Flag the greatest positive outlier and recalculate the frac_diff in each iteration to determine new outliers
-    while np.amax(np.absolute(frac_diff)) > bin_max:
-        if np.amax(frac_diff) > bin_max:
-            INS[frac_diff > bin_max] = np.ma.masked
-            frac_diff = INS / INS.mean(axis=0) - 1
-            bin_max = bin_max_calc(Nbls, INS)
-        elif np.amin(frac_diff) < -bin_max:
-            INS[frac_diff < -bin_max] = np.ma.masked
-            frac_diff = INS / INS.mean(axis=0) - 1
-            bin_max = bin_max_calc(Nbls, INS)
-
-    # Make new histogram afterward, with fit
-    n, bins = np.histogram(frac_diff[np.logical_not(frac_diff.mask)], bins='auto')
-    _, fit = hist_fit(obs, bins, frac_diff, np.logical_not(frac_diff.mask),
-                      bin_window=[-bin_max, bin_max], fit_type='normal')
-
-    base = '%s%s_%s_%s' % (writepath, obs, flag_slice, amp_avg)
-    np.ma.dump(INS, '%s_INS_mask.npym' % (base))
-    np.ma.dump(frac_diff, '%s_INS_frac_diff_mask.npym' % (base))
-    np.save('%s_INS_counts_mask.npy' % (base), n)
-    np.save('%s_INS_bins_mask.npy' % (base), bins)
-    np.save('%s_INS_fit_mask.npy' % (base), fit)
-
-    return(INS, frac_diff, n, bins, fit)
+    return(fit)
 
 
 def edge_detect(frac_diff, RFI_type='streak', sig=2):
@@ -190,7 +130,7 @@ def edge_detect(frac_diff, RFI_type='streak', sig=2):
     return(smooth, edge)
 
 
-def match_filter(INS, frac_diff, Nbls, freq_array, sig_thresh):
+def match_filter(INS, MS, Nbls, freq_array, sig_thresh, obs):
     # Can pass filter_type a list to check multiple shapes
 
     def TV_slicer(TV_freqs, freq_array, spw, slices):
@@ -200,9 +140,9 @@ def match_filter(INS, frac_diff, Nbls, freq_array, sig_thresh):
                                                   np.argmin(np.abs(freq_array[spw, :] - max(freq_range))))
         return(slices)
 
-    def match_test(frac_diff, Nbls, spw, slc, pol, sig_thresh):
-        sliced_arr = frac_diff[:, spw, slc, pol].mean(axis=1)
-        N = np.count_nonzero(~frac_diff[:, spw, slc, pol].mask, axis=1)
+    def match_test(MS, Nbls, spw, slc, pol, sig_thresh):
+        sliced_arr = MS[:, spw, slc, pol].mean(axis=1)
+        N = np.count_nonzero(~MS[:, spw, slc, pol].mask, axis=1)
         thresh = sig_thresh * np.sqrt(np.sum(sigma_calc(Nbls)[:, spw, slc, pol]**2, axis=1)) / N
         if np.any(sliced_arr > thresh):
             t = (sliced_arr / thresh).argmax()
@@ -217,28 +157,28 @@ def match_filter(INS, frac_diff, Nbls, freq_array, sig_thresh):
     TV8_freqs = [1.915e8 - 3.5e6, 1.915e8 + 3.5e6]
     TV_freqs = [TV6_freqs, TV7_freqs, TV8_freqs]
     keys = ['streak', 'TV6', 'TV7', 'TV8', 'point']
-    event_R = {key: np.zeros([frac_diff.shape[1], frac_diff.shape[3]]) for key in keys}
+    event_R = {key: np.zeros([MS.shape[1], MS.shape[3]]) for key in keys}
     R_arr = np.stack([event_R[key] for key in keys])
     while not np.all(np.isnan(R_arr)):
         max_R = -np.inf
         t_max = -1
         key_max = ''
-        for m in range(frac_diff.shape[1]):
+        for m in range(MS.shape[1]):
             slices = {'streak': slice(None), 'TV6': None, 'TV7': None, 'TV8': None}
             slices = TV_slicer(TV_freqs, freq_array, m, slices)
-            for n in range(frac_diff.shape[3]):
+            for n in range(MS.shape[3]):
                 for key in keys[:4]:
                     if slices[key]:
-                        t, event_R[key][m, n] = match_test(frac_diff, Nbls, m, slices[key], n, sig_thresh)
+                        t, event_R[key][m, n] = match_test(MS, Nbls, m, slices[key], n, sig_thresh)
                         if event_R[key][m, n] > max_R:
                             max_R = event_R[key][m, n]
                             t_max = t
                             key_max = key
-                t, f = np.unravel_index(frac_diff[:, m, :, n].argmax(),
-                                        frac_diff[:, m, :, n].shape)
+                t, f = np.unravel_index(MS[:, m, :, n].argmax(),
+                                        MS[:, m, :, n].shape)
                 thresh = sig_thresh * sigma_calc(Nbls[t, m, f, n])
-                if frac_diff[t, m, f, n] > thresh:
-                    event_R['point'][m, n] = frac_diff[t, m, f, n] / thresh
+                if MS[t, m, f, n] > thresh:
+                    event_R['point'][m, n] = MS[t, m, f, n] / thresh
                     if event_R['point'][m, n] > max_R:
                         key_max = None
                 else:
@@ -248,9 +188,12 @@ def match_filter(INS, frac_diff, Nbls, freq_array, sig_thresh):
                 elif key_max is None:
                     INS[t, m, f, n] = np.ma.masked
         R_arr = np.stack([event_R[key] for key in keys])
-        frac_diff = INS / INS.mean(axis=0) - 1
+        MS = INS / INS.mean(axis=0) - 1
 
-    return(INS, frac_diff)
+    n, bins = np.histogram(MS[~MS.mask], bins='auto')
+    fit = INS_hist_fit(bins, MS, Nbls, sig_thresh)
+
+    return(INS, MS, n, bins, fit)
 
 
 def narrowband_filter(INS, ch_ignore=None):

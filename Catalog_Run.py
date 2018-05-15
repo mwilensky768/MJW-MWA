@@ -40,12 +40,11 @@ fraction = True
 
 # mask is an experimental feature which attempts to flag the noise spectra based on some statistical reasoning.
 # Results may vary. It is nowhere near completion.
-amp_avg = 'Amp'
 invalid_mask = False
 mask = True
 
 
-RFI = rfi.RFI(str(obs), args.inpath[0], auto_remove=auto_remove,
+RFI = rfi.RFI(str(obs), args.inpath[0], args.outpath[0], auto_remove=auto_remove,
               bad_time_indices=bad_time_indices)
 
 if 'waterfall' in catalog_types:
@@ -53,5 +52,4 @@ if 'waterfall' in catalog_types:
                          flag_slices=flag_slices, fit_type=fit_type,
                          bin_window=bin_window, fraction=fraction)
 if 'INS' in catalog_types:
-    cf.INS_catalog(RFI, args.outpath[0], flag_slices=flag_slices, amp_avg=amp_avg,
-                   invalid_mask=invalid_mask, mask=mask)
+    cf.INS_catalog(RFI, invalid_mask=invalid_mask, mask=mask)
