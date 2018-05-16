@@ -12,7 +12,7 @@ import rfiutil
 class RFI:
 
     def __init__(self, obs, filepath, outpath, bad_time_indices=[0, -3, -2, -1],
-                 auto_remove=True, filetype='uvfits', freq_chans=None):
+                 filetype='uvfits', freq_chans=None, times=None, ant_str='cross'):
 
         # These lines establish the most basic attributes of the class, namely
         # its base UVData object and the obsid
@@ -20,7 +20,16 @@ class RFI:
         self.UV = pyuv.UVData()
         self.outpath = outpath
         if filetype is 'uvfits':
-            self.UV.read_uvfits(filepath, freq_chans=freq_chans)
+            if bad_time_indices:
+                self.UV.read_uvfits(filepath, read_data=False)
+                times = np.unique(self.UV.time_array).tolist()
+                bad_times = []
+                for k in bad_time_indices:
+                    bad_times.append(times[k])
+                for bad_time in bad_times:
+                    times.remove(bad_time)
+            self.UV.read_uvfits_data(filepath, freq_chans=freq_chans, times=times,
+                                     ant_str=ant_str)
         elif filetype is 'miriad':
             self.UV.read_miriad(filepath)
 
@@ -32,21 +41,6 @@ class RFI:
         pol_dict = dict(zip(pol_keys, pol_values))
         self.pols = [pol_dict[self.UV.polarization_array[k]] for k in
                      range(self.UV.Npols)]
-
-        # These if conditionals check for keywords which down-select the UVData
-        # object
-        if bad_time_indices:
-            times = np.unique(self.UV.time_array).tolist()
-            bad_times = []
-            for k in bad_time_indices:
-                bad_times.append(times[k])
-            for bad_time in bad_times:
-                times.remove(bad_time)
-            self.UV.select(times=times)
-
-        if auto_remove:
-            blt_inds = np.where(self.UV.ant_1_array != self.UV.ant_2_array)[0]
-            self.UV.select(blt_inds=blt_inds)
 
         # These ensure that every baseline reports at every time so that subtraction
         # can go off without a hitch
@@ -75,8 +69,9 @@ class RFI:
 
     def apply_flags(self, app=False):
         if app:
-            self.UV.data_array.mask = self.UV.flag_array
-        else:
+            if ~np.all(self.UV.data_array.mask == self.UV.flag_array):
+                self.UV.data_array.mask = self.UV.flag_array
+        elif np.any(self.UV.data_array.mask):
             self.UV.data_array.mask = False
 
     def one_d_hist_prepare(self, flag=False, bins=None, fit=False,
@@ -114,18 +109,19 @@ class RFI:
                 self.UV.data_array = np.ma.masked_outside(self.UV.data_array,
                                                           min(bin_window),
                                                           max(bin_window))
-            sig_arr, N_arr = self.rms_calc(axis=(0, 1), writepath=self.outpath) / np.sqrt(2)
+            sig_arr, N_arr = self.rms_calc(axis=(0, 1)) / np.sqrt(2)
             if bin_window:
                 self.apply_flags(flag)
             for p in range(sig_arr.shape[0]):
                 for q in range(sig_arr.shape[1]):
                     for r in range(sig_arr.shape[2]):
-                        if not sig_arr.mask[p, q, r]:
+                        if N_arr[p, q, r] > 0:
                             fit += N_arr[p, q, r] * bin_widths * (bin_centers / sig_arr[p, q, r]**2) * \
                                 np.exp(- bin_centers**2 / (2 * sig_arr[p, q, r]**2))
+        else:
+            fit = None
 
         n, _ = np.histogram(self.UV.data_array[np.logical_not(self.UV.data_array.mask)], bins=bins)
-        fit = None
 
         # Write out the function returns
         base = '%sarrs/%s/%s' % (self.outpath, self.flag_titles[flag], self.obs)
@@ -135,17 +131,26 @@ class RFI:
 
         return(n, bins, fit)
 
-    def waterfall_hist_prepare(self, band, flag=False, fraction=True, axis=1):
-        # Find vis. differences within a certain amplitude band of the chosen flag slice
+    def waterfall_hist_prepare(self, amp_range, flag=False, fraction=True, axis=1):
 
         self.apply_flags(flag)
 
-        H = ((min(band) < self.UV.data_array) & (self.UV.data_array < max(band)) &
-             (self.UV.data_array.mask > 0)).sum(axis=axis)
+        # Find vis. diff. amps. in a given range. Could be unflagged data or all data.
+        # and sum across a given axis to report the number of measurements affected
+        # in the remaining space. Can also give as a fraction.
+        H = ((min(amp_range) < self.UV.data_array) &
+             (self.UV.data_array < max(amp_range)) &
+             (self.UV.data_array.mask == 0)).sum(axis=axis)
         if fraction:
-            H = H.astype(float) / self.UV.Nbls
-        np.save('%sarrs/%s/%s_whist.npy' % (self.outpath, self.flag_titles[flag],
-                                            self.obs), H)
+            # ugly if statement for syntactical reasons...
+            if type(axis) is int:
+                H = H.astype(float) / self.UV.data_array.shape[axis]
+            else:
+                H = H.astype(float) / np.prod([self.UV.data_array.shape[k] for k in axis])
+
+        np.ma.dump(H, '%sarrs/%s/%s_whist.npym' % (self.outpath,
+                                                   self.flag_titles[flag],
+                                                   self.obs))
 
         return(H)
 
@@ -289,7 +294,7 @@ class RFI:
 
         return(ant_avg, ant_grid, xedges, yedges)
 
-    def rms_calc(self, axis=None, flag=False):
+    def rms_calc(self, axis=None, flag=True):
         # Calculate the rms of the unflagged data, splitting according to axis tuple
         self.apply_flags(flag)
         rms = np.sqrt(np.mean(self.UV.data_array**2, axis=axis))
@@ -298,7 +303,7 @@ class RFI:
         fn = filter(str.isalnum, str(axis))
 
         base = '%sarrs/%s/%s_' % (self.outpath, self.flag_titles[flag], self.obs)
-        np.save('%s_rms_%s.npy' % (base, fn), rms)
+        np.ma.dump(rms, '%s_rms_%s.npym' % (base, fn))
         np.save('%s_N_%s.npy' % (base, fn), N)
 
         return(rms, N)

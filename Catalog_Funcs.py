@@ -14,14 +14,19 @@ import itertools
 
 def band_constructor(counts, bins, labels, flag_slice):
 
+    # Find which label belongs to the flag slice for which the band is constructed
     for k, label in enumerate(labels):
         if label == flag_slice:
             m = k
 
+    # Identify the corresponding counts and corresponding fit
     count = counts[m]
     fit = counts[m + 1]
 
-    max_loc = min(bins[:-1][count.argmax()])
+    # Find the first left bin edge where the counts have their maximum
+    max_loc = bins[:-1][count.argmax()]
+    # The band starts at the minimum left bin edge for which the fit < 1 and bins > max_loc,
+    # and ends at the right-most bin-edge.
     band = [min(bins[:-1][np.logical_and(fit < 1, bins[:-1] > max_loc)]), max(bins)]
 
     return(band)
@@ -123,41 +128,45 @@ def make_outdirs(RFI):
     return(figpath)
 
 
-def waterfall_catalog(RFI, outpath, band={False: [1e3, 1e5], True: 'fit'},
-                      fit={False: False, True: True},
-                      bins=np.logspace(-3, 5, num=1001), fraction=True,
-                      flags=[True, False], bin_window=[0, 1e+03],
-                      aspect_ratio=3):
+def waterfall_catalog(RFI, amp_range={False: [1e3, 1e5], True: 'fit'},
+                      fit={False: False, True: True}, bins=None,
+                      fraction=True, bin_window=[0, 1e+03], aspect_ratio=3):
 
     """
+    For each spectral window present in the data, construct a 1-d histogram,
+    accompanied by a waterfall plot which reverse indexes elements of the
+    data set within a chosen amplitude range. In each histogram plot is a
+    histogram of all the data and a histogram of only data which passed through
+    the flagger unmarked. The waterfall plots are separated by polarization, and
+    show the total number of "affected" baselines at a given time/frequency in
+    that polarization.
     """
-    flag_labels = {False: 'Post-Flag', True: 'All Baselines'}
-    zorder = {'Unflagged': 3, 'Unflagged Fit': 4, 'All Fit': 2, 'All': 1}
+    flag_labels = {True: 'Post-Flagging', False: 'All Baselines'}
+    zorder = {'Post-Flagging': 3, 'Post-Flagging Fit': 4, 'All Baselines Fit': 2, 'All Baselines': 1}
     figpath = make_outdirs(RFI)
     for m in range(RFI.UV.Nspws):
         counts = []
         labels = []
         for flag in [True, False]:
-            writepath, figpath = make_outdirs(outpath, flag_slice, m=m)
             count, bins, hist_fit = RFI.one_d_hist_prepare(flag=flag,
                                                            fit=fit[flag],
                                                            bins=bins,
-                                                           writepath=writepath,
                                                            bin_window=bin_window)
 
             counts.append(count)
             labels.append(flag_labels[flag])
             if fit[flag]:
                 counts.append(hist_fit)
-                labels.append('%s Fit' % (flag_label[flag]))
+                labels.append('%s Fit' % (flag_labels[flag]))
 
+        # Set up a grid with gridspec
         gs, gs_loc = grid_setup(RFI)
 
         for flag in [True, False]:
-            if band[flag] is 'fit':
-                band[flag] = band_constructor(counts, bins, labels, flag_slice)
+            if amp_range[flag] is 'fit':
+                amp_range[flag] = band_constructor(counts, bins, labels, flag_labels[flag])
 
-            W = RFI.waterfall_hist_prepare(band[flag], fraction=fraction,
+            W = RFI.waterfall_hist_prepare(amp_range[flag], fraction=fraction,
                                            flag=flag)
 
             fig = plt.figure(figsize=(14, 8))
@@ -169,11 +178,13 @@ def waterfall_catalog(RFI, outpath, band={False: [1e3, 1e5], True: 'fit'},
                                      title='%s Visibility Difference Histogram' %
                                      (RFI.obs))
 
-            ax.axvline(x=min(band[flag_slice]), color='black')
-            ax.axvline(x=max(band[flag_slice]), color='black')
+            ax.axvline(x=min(amp_range[flag]), color='black')
+            ax.axvline(x=max(amp_range[flag]), color='black')
 
             MAXW_list, MINW_list = ext_list_selector(RFI, W[:, m, :, :])
-            _, _, _, xticks, xminors, _, xticklabels = plot_lib.four_panel_tf_setup(RFI.UV.freq_array[m, :])
+
+            _, _, _, xticks, xminors, _, xticklabels = \
+                plot_lib.four_panel_tf_setup(RFI.UV.freq_array[m, :])
 
             for n, pol in enumerate(RFI.pols):
                 if fraction:
@@ -183,15 +194,16 @@ def waterfall_catalog(RFI, outpath, band={False: [1e3, 1e5], True: 'fit'},
                 ax = fig.add_subplot(gs[gs_loc[n][0], gs_loc[n][1]])
                 plot_lib.image_plot(fig, ax, W[:, m, :, n], cmap=cm.cool,
                                     vmin=MINW_list[n], vmax=MAXW_list[n],
-                                    title='%s %s' % (pol, flag_slice),
+                                    title='%s %s' % (pol, flag_labels[flag]),
                                     aspect_ratio=aspect_ratio, cbar_label=cbar_label,
                                     xticks=xticks, xminors=xminors, yminors='auto',
                                     xticklabels=xticklabels, mask_color='white')
 
             plt.tight_layout()
-            fig.savefig('%s%s/spw%i/%s_waterfall.png' % (figpath,
-                                                         RFI.flag_titles[flag],
-                                                         m, RFI.obs))
+            fig.savefig('%s%s/spw%i/%s_%s_waterfall.png' % (figpath,
+                                                            RFI.flag_titles[flag],
+                                                            m, RFI.obs,
+                                                            RFI.flag_titles[flag]))
 
             plt.close(fig)
 
