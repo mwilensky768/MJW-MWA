@@ -89,6 +89,9 @@ while [ $? -ne 0 ] && [ $i -lt 10 ]; do
     --recursive --exclude "*" --include "*${obs_id}*" --quiet
 done
 
+# Remove uvfits and metafits from the instance
+sudo rm /uvfits/${obs_id}.uvfits
+
 # Copy gridengine stdout to S3
 aws s3 cp ~/grid_out/rfi_job_aws.sh.o${JOB_ID} \
 ${s3_path}/grid_out/rfi_job_aws.sh.o${JOB_ID}_${myip}.txt \
