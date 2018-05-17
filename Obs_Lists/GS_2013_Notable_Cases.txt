@@ -1,0 +1,7 @@
+1061313008 (Spike w/alias?)
+1061313128 (TV7)
+1061318864 (NB 180.0 Mhz partial alias)
+1061318984 (NB 180.0 Mhz no alias)
+1061319104 (NB 180.0 Mhz partial alias)
+1061319224 (NB 180.0 Mhz full alias)
+
