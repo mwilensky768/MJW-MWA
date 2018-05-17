@@ -76,7 +76,7 @@ if [ ! -f "/uvfits/${obs_id}.uvfits" ]; then
 fi
 
 # Run python catalog script
-python Catalog_Run.py /uvfits/${obs_id}.uvfits $outdir
+python Catalog_Run.py /uvfits/${obs_id}.uvfits $outdir/
 
 # Move rfi outputs to S3
 i=1  #initialize counter
@@ -90,11 +90,11 @@ while [ $? -ne 0 ] && [ $i -lt 10 ]; do
 done
 
 # Copy gridengine stdout to S3
-aws s3 cp ~/grid_out/fhd_job_aws.sh.o${JOB_ID} \
-${s3_path}/fhd_${version}/grid_out/fhd_job_aws.sh.o${JOB_ID}_${myip}.txt \
+aws s3 cp ~/grid_out/rfi_job_aws.sh.o${JOB_ID} \
+${s3_path}/grid_out/rfi_job_aws.sh.o${JOB_ID}_${myip}.txt \
 --quiet
 
 # Copy gridengine stderr to S3
-aws s3 cp ~/grid_out/fhd_job_aws.sh.e${JOB_ID} \
-${s3_path}/fhd_${version}/grid_out/fhd_job_aws.sh.e${JOB_ID}_${myip}.txt \
+aws s3 cp ~/grid_out/rfi_job_aws.sh.e${JOB_ID} \
+${s3_path}/grid_out/rfi_job_aws.sh.e${JOB_ID}_${myip}.txt \
 --quiet
