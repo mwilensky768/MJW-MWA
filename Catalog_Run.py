@@ -42,8 +42,7 @@ invalid_mask = False
 mask = True
 
 
-RFI = rfi.RFI(str(obs), args.inpath[0], args.outpath[0], auto_remove=auto_remove,
-              bad_time_indices=bad_time_indices)
+RFI = rfi.RFI(str(obs), args.inpath[0], args.outpath[0], bad_time_indices=bad_time_indices)
 
 if 'waterfall' in catalog_types:
     cf.waterfall_catalog(RFI, bins=bins, amp_range=amp_range,
