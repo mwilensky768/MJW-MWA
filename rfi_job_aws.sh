@@ -77,6 +77,7 @@ fi
 
 # Run python catalog script
 python Catalog_Run.py /uvfits/${obs_id}.uvfits $outdir/
+ls /rfi_output/arrs/All/
 
 # Move rfi outputs to S3
 i=1  #initialize counter
