@@ -50,4 +50,5 @@ if 'waterfall' in catalog_types:
 if 'INS' in catalog_types:
     cf.INS_catalog(RFI, invalid_mask=invalid_mask, mask=mask)
 if 'rms' in catalog_types:
+    RFI.rms_calc(flag=False)
     RFI.rms_calc()
