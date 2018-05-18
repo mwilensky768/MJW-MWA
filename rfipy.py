@@ -64,6 +64,7 @@ class RFI:
 
         self.flag_titles = {False: 'All', True: 'Post_Flag'}
         for item in self.flag_titles:
+            print(os.path.exists('%sarrs/%s/' % (self.outpath, self.flag_titles[item])))
             if not os.path.exists('%sarrs/%s/' % (self.outpath, self.flag_titles[item])):
                 os.makedirs('%sarrs/%s/' % (self.outpath, self.flag_titles[item]))
 
