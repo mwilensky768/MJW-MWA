@@ -21,7 +21,7 @@ if [ -z ${outdir} ]; then
     outdir=/rfi_output/${obs_id}_rfi
 fi
 if [ -z ${s3_path} ]; then
-    s3_path=s3://mwa-data/golden_set
+    s3_path=s3://mwa-data/golden_set_rfi
 fi
 if [ -z ${uvfits_s3_loc} ]; then
     uvfits_s3_loc=s3://mwapublic/uvfits/4.1

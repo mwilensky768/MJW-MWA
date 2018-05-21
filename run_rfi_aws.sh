@@ -96,7 +96,7 @@ fi
 
 if [ -z ${s3_path} ]
 then
-    s3_path=s3://mwa-data/golden_set
+    s3_path=s3://mwa-data/golden_set_rfi
     echo Using default S3 location: $s3_path
 else
     #strip the last / if present in output directory filepath
