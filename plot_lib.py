@@ -72,8 +72,8 @@ def one_d_hist_plot(fig, ax, bin_edges, counts, zorder=None, labels=None, xlog=T
 
 def line_plot(fig, ax, data, title='Visibility Difference Average',
               xlabel='Frequency (Mhz)', ylabel='Visibility Amplitude',
-              zorder=None, labels=None, xticks=None, xticklabels=None, xminors=None,
-              legend=True):  # Please pass data as a list
+              zorder=None, labels=None, xticks=None, xticklabels=None,
+              xminors=None, legend=True):  # Please pass data as a list
 
     if not zorder:
         zorder = range(len(data))

@@ -9,7 +9,7 @@ import os
 from time import strftime
 
 arr_path = '/Users/mike_e_dubs/MWA/Catalogs/Grand_Catalog/Golden_Set_8s_Autos/Vis_Avg/Averages/'
-outpath = '/Users/mike_e_dubs/MWA/Catalogs/Grand_Catalog/Templates/Golden_Set_8s_Autos/Match_Filter/'
+outpath = '/Users/mike_e_dubs/MWA/Catalogs/Grand_Catalog/Templates/Golden_Set_8s_Autos/All_Streak/'
 arr_list = glob.glob('%s*.npy' % (arr_path))
 arr_list.sort()
 occ_num = np.zeros(22)
@@ -29,14 +29,14 @@ for arr in arr_list:
             print('%i started at %s' % (sig_thresh, strftime("%H:%M:%S")))
         INS = np.ma.masked_array(np.load(arr))
         INS = rfiutil.narrowband_filter(INS, ch_ignore)
-        frac_diff = INS / INS.mean(axis=0) - 1
+        MS = INS / INS.mean(axis=0) - 1
         if sig_thresh == 4:
             Nbls = 8001 * np.ones(INS.shape)
 
-        INS, frac_diff = rfiutil.match_filter(INS, frac_diff, Nbls, freq_array, sig_thresh)
+        INS, MS = rfiutil.all_streak_filter(INS, MS, Nbls, sig_thresh)
         occ_num[sig_thresh - 4] += np.count_nonzero(INS.mask)
         occ_den[sig_thresh - 4] += np.prod(INS.shape)
-        if not np.count_nonzero(INS.mask) == 0:
+        if np.count_nonzero(INS.mask) > 0:
             occ_freq_num[sig_thresh - 4, :] += np.count_nonzero(INS.mask, axis=(0, 1, 3))
         occ_freq_den[sig_thresh - 4] += INS.shape[0] * INS.shape[3]
 

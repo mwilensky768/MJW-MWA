@@ -1,6 +1,7 @@
 import numpy as np
 from math import floor, ceil, log10, pi, log, sqrt
 from scipy.special import erfinv
+from scipy.integrate import simps
 
 
 def SumThreshold(x, y, M, chi):
@@ -130,7 +131,7 @@ def edge_detect(frac_diff, RFI_type='streak', sig=2):
     return(smooth, edge)
 
 
-def match_filter(INS, MS, Nbls, freq_array, sig_thresh, obs):
+def match_filter(INS, MS, Nbls, freq_array, sig_thresh):
     # Can pass filter_type a list to check multiple shapes
 
     def TV_slicer(TV_freqs, freq_array, spw, slices):
@@ -209,6 +210,24 @@ def narrowband_filter(INS, ch_ignore=None):
         INS.mask[:, :, ch_ignore, :] = False
 
     return(INS)
+
+
+def rayleigh_convolve(N, MAX):
+    # Convolve a the median-subtracted rayleigh distribution N times by using
+    # the convolution theorem
+    M = 1001
+    x = np.linspace(-1, MAX, num=M)
+    Fs = 1. / x[1] - x[0]
+    f = np.linspace(0, (1 - 1. / M) * Fs, num=M)
+    pdf = 2 * np.log(2) * (x + 1) * np.exp(-np.log(2) * (x + 1)**2)
+    cf = np.zeros(M)
+    # Calculate the fourier transform using Simpson's rule
+    for m, f_0 in enumerate(f):
+        cf[m] = (simps(np.exp(1j * x * f_0) * pdf, x=x))**N
+    for m, x_0 in enumerate(x):
+        pdf[m] = simps(np.exp(-1j * x_0 * f) * cf, x=f) / (2 * pi)
+
+    return(x, pdf)
 
 
 def event_identify(mask, dt=1):
