@@ -47,8 +47,8 @@ pro mjw_fhd_versions
       ring_radius = 0
       debug_region_grow = 0
       recalculate_all = 1
-      vis_file_list = '/Users/mikewilensky/1061313128.uvfits'
       cal_bp_transfer = 0
+      platform = 'aws'
 
      end
 
