@@ -30,7 +30,7 @@ if [ -z ${uvfits_s3_loc} ]; then
     uvfits_s3_loc=s3://mwapublic/uvfits/4.1
 fi
 if [ -z ${metafits_s3_loc} ]; then
-    metafits_s3_loc=s3://mwatest/metafits/4.1
+    metafits_s3_loc=s3://mwapublic/metafits/4.1
 fi
 if [ -z ${version} ]; then
     >&2 echo "ERROR: no version provided"
