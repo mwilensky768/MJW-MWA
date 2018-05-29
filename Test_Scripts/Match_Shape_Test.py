@@ -9,7 +9,7 @@ import os
 from time import strftime
 
 arr_path = '/Users/mike_e_dubs/MWA/Catalogs/Grand_Catalog/Golden_Set_8s_Autos/Vis_Avg/Averages/'
-outpath = '/Users/mike_e_dubs/MWA/Catalogs/Grand_Catalog/Templates/Golden_Set_8s_Autos/All_Streak/'
+outpath = '/Users/mike_e_dubs/MWA/Catalogs/Grand_Catalog/Templates/Golden_Set_8s_Autos/Match_Filter/'
 arr_list = glob.glob('%s*.npy' % (arr_path))
 arr_list.sort()
 occ_num = np.zeros(22)
@@ -20,6 +20,8 @@ freq_array = np.zeros([1, 384])
 freq_array[0, :] = np.load('/Users/mike_e_dubs/python_stuff/MJW-MWA/Useful_Information/MWA_Highband_Freq_Array.npy')
 centers = [8 + 16 * k for k in range(24)]
 ch_ignore = centers
+shape_dict = {'TV%i' % (k): np.load('/Users/mike_e_dubs/python_stuff/MJW-MWA/Useful_Information/TV%i_freqs.npy' % (k))
+              for k in [6, 7, 8]}
 
 for arr in arr_list:
     obs = arr[len(arr_path):len(arr_path) + 10]
@@ -33,7 +35,7 @@ for arr in arr_list:
         if sig_thresh == 4:
             Nbls = 8001 * np.ones(INS.shape)
 
-        INS, MS = rfiutil.all_streak_filter(INS, MS, Nbls, sig_thresh)
+        INS, MS, _, _, _, _ = rfiutil.match_filter(INS, MS, Nbls, freq_array, sig_thresh, shape_dict)
         occ_num[sig_thresh - 4] += np.count_nonzero(INS.mask)
         occ_den[sig_thresh - 4] += np.prod(INS.shape)
         if np.count_nonzero(INS.mask) > 0:
@@ -42,7 +44,7 @@ for arr in arr_list:
 
         fig, ax, pols, xticks, xminors, yminors, xticklabels = pl.four_panel_tf_setup(freq_array[0, :])
         for m in range(4):
-            pl.image_plot(fig, ax[m / 2][m % 2], frac_diff[:, 0, :, m], cmap=cm.coolwarm,
+            pl.image_plot(fig, ax[m / 2][m % 2], MS[:, 0, :, m], cmap=cm.coolwarm,
                           title=pols[m], xlabel='Frequency (Mhz)', ylabel='Time Pair',
                           cbar_label='Fraction of Mean', xticks=xticks, xminors=xminors,
                           yminors=yminors, xticklabels=xticklabels, zero_mask=False,
@@ -50,7 +52,7 @@ for arr in arr_list:
 
         if not os.path.exists('%s%i/' % (outpath, sig_thresh)):
             os.makedirs('%s%i/' % (outpath, sig_thresh))
-        fig.savefig('%s%i/%s_match_filter_frac_diff.png' % (outpath, sig_thresh, obs))
+        fig.savefig('%s%i/%s_match_filter_MS.png' % (outpath, sig_thresh, obs))
         plt.close(fig)
 
 occ = occ_num / occ_den * 100

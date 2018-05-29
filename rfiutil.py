@@ -138,37 +138,39 @@ def match_filter(INS, MS, Nbls, freq_array, sig_thresh, shape_dict):
     """
 
     def shape_slicer(shape_dict, freq_array, spw):
+        slice_dict = {}
         for shape in shape_dict:
             # Ask if any of the shape is in the freq_array
             if (min(freq_array[spw, :]) < min(shape_dict[shape])) or (max(freq_array[spw, :]) > max(shape_dict[shape])):
                 # Rewrite the shape_dict entry in terms of channel numbers which match the shape best
-                shape_dict[shape] = slice(np.argmin(np.abs(freq_array[spw, :] - min(shape_dict[shape]))),
+                slice_dict[shape] = slice(np.argmin(np.abs(freq_array[spw, :] - min(shape_dict[shape]))),
                                           np.argmin(np.abs(freq_array[spw, :] - max(shape_dict[shape]))))
             # Set the slice to None if the shape is not at all in the freq_array
             else:
-                shape_dict[shape] = None
-        shape_dict['streak'] = slice(None)
-        shape_dict['point'] = slice(None)
-        return(shape_dict)
+                slice_dict[shape] = None
+        slice_dict['streak'] = slice(None)
+        slice_dict['point'] = slice(None)
+        return(slice_dict)
 
-    def match_test(MS, Nbls, spw, pol, sig_thresh, shape_dict):
+    def match_test(MS, Nbls, spw, pol, sig_thresh, slice_dict):
         # Treat point and slices separately
         R_max = -np.inf
         t_max = None
         f_max = None
-        for shape in shape_dict:
-            if shape_dict[shape] is not None:
+        for shape in slice_dict:
+            if slice_dict[shape] is not None:
                 if shape is 'point':
                     thresh = sig_thresh * sigma_calc(Nbls[:, spw, :, pol])
                     t, f = np.unravel_index((MS[:, spw, :, pol] / thresh).argmax(), MS[:, spw, :, pol].shape)
-                    R = MS[t, spw, f, pol] / thresh[t, spw, f, pol]
+                    R = MS[t, spw, f, pol] / thresh[t, f]
                 else:
                     # Average across the shaoe in question specified by slc - output is 1D
-                    sliced_arr = MS[:, spw, shape_dict[shape], pol].mean(axis=1)
-                    N = np.count_nonzero(~MS[:, spw, slc, pol].mask, axis=1)
+                    sliced_arr = MS[:, spw, slice_dict[shape], pol].mean(axis=1)
+                    N = np.count_nonzero(~MS[:, spw, slice_dict[shape], pol].mask, axis=1)
                     # Gauss dist, so expected width is as below
-                    thresh = sig_thresh * np.sqrt(np.sum(sigma_calc(Nbls[:, spw, slc, pol])**2, axis=1)) / N
-                    t, f = ((sliced_arr / thresh).argmax(), shape_dict[shape])
+                    thresh = sig_thresh * \
+                        np.sqrt(np.sum(sigma_calc(Nbls[:, spw, slice_dict[shape], pol])**2, axis=1)) / N
+                    t, f = ((sliced_arr / thresh).argmax(), slice_dict[shape])
                     R = sliced_arr[t] / thresh[t]
                 if R > 1:
                     if R > R_max:
@@ -180,11 +182,9 @@ def match_filter(INS, MS, Nbls, freq_array, sig_thresh, shape_dict):
     event_count = []
     while R_max > -np.inf:
         for m in range(MS.shape[1]):
-            shape_dict = shape_slicer(shape_dict, freq_array, m)
+            slice_dict = shape_slicer(shape_dict, freq_array, m)
             for n in range(MS.shape[3]):
-                for shape in shape_dict:
-                    if shape_dict[shape] is not None:
-                        t_max, f_max, R_max = match_test(MS, Nbls, m, shape_dict[shape], n, sig_thresh)
+                t_max, f_max, R_max = match_test(MS, Nbls, m, n, sig_thresh, slice_dict)
                 if R_max > -np.inf:
                     INS[t_max, m, f_max, n] = np.ma.masked
                     event_count.append((t_max, m, f_max, n))
