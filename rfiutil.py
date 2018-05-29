@@ -131,7 +131,7 @@ def edge_detect(frac_diff, RFI_type='streak', sig=2):
     return(smooth, edge)
 
 
-def match_filter(INS, MS, Nbls, freq_array, sig_thresh, shape_dict):
+def match_filter(INS, MS, Nbls, freq_array, sig_thresh, shape_dict, dt=1):
     """
     shape_dict is a dictionary whose key is the name of the shape as a string
     and each entry is a tuple of frequencies given in the units of the freq_array.
@@ -178,8 +178,29 @@ def match_filter(INS, MS, Nbls, freq_array, sig_thresh, shape_dict):
 
         return(t_max, f_max, R_max)
 
+    def event_compile(events, dt=1):
+
+        # Sort the flagged events basically in chronological order and stack them
+        events.sort()
+        event_stack = np.vstack(events)
+        # Find where the spw/pol/freqs do not agree OR where time separation is greater than dt
+        # Add one so that the bounds mark the start of a new event
+        row_bounds = np.where(np.any(event_stack[:-1, :-1] != event_stack[1:, :-1], axis=1) |
+                              np.diff(event_stack[:, -1]) > dt)[0] + 1
+        # insert zero and N_event so that making slices is more straightforward than otherwise
+        np.insert(row_bounds, 0, 0)
+        np.append(row_bounds, len(event_stack))
+
+        # Generate a list of time_slices to be hstacked with the events
+        time_slices = []
+        for m, row in enumerate(row_bounds[:-1]):
+            time_slices.append(slice(event_stack[row, -1], event_stack[row_bounds[m + 1], -1]))
+        events = np.hstack((events[row_bounds[:-1], :-1], np.array(time_slices).transpose()))
+
+        return(events)
+
     R_max = 0
-    event_count = []
+    events = []
     while R_max > -np.inf:
         for m in range(MS.shape[1]):
             slice_dict = shape_slicer(shape_dict, freq_array, m)
@@ -187,14 +208,16 @@ def match_filter(INS, MS, Nbls, freq_array, sig_thresh, shape_dict):
                 t_max, f_max, R_max = match_test(MS, Nbls, m, n, sig_thresh, slice_dict)
                 if R_max > -np.inf:
                     INS[t_max, m, f_max, n] = np.ma.masked
-                    event_count.append((t_max, m, f_max, n))
+                    events.append((m, n, f_max, t_max))
         if R_max > -np.inf:
             MS = INS / INS.mean(axis=0) - 1
+
+    events = event_compile(events, dt=dt)
 
     n, bins = np.histogram(MS[~MS.mask], bins='auto')
     fit = INS_hist_fit(bins, MS, Nbls, sig_thresh)
 
-    return(INS, MS, n, bins, fit, event_count)
+    return(INS, MS, n, bins, fit, events)
 
 
 def narrowband_filter(INS, ch_ignore=None):
@@ -212,25 +235,7 @@ def narrowband_filter(INS, ch_ignore=None):
     return(INS)
 
 
-def rayleigh_convolve(N, MAX):
-    # Convolve a the median-subtracted rayleigh distribution N times by using
-    # the convolution theorem
-    M = 1001
-    x = np.linspace(-1, MAX, num=M)
-    Fs = 1. / x[1] - x[0]
-    f = np.linspace(0, (1 - 1. / M) * Fs, num=M)
-    pdf = 2 * np.log(2) * (x + 1) * np.exp(-np.log(2) * (x + 1)**2)
-    cf = np.zeros(M)
-    # Calculate the fourier transform using Simpson's rule
-    for m, f_0 in enumerate(f):
-        cf[m] = (simps(np.exp(1j * x * f_0) * pdf, x=x))**N
-    for m, x_0 in enumerate(x):
-        pdf[m] = simps(np.exp(-1j * x_0 * f) * cf, x=f) / (2 * pi)
-
-    return(x, pdf)
-
-
-def event_identify(mask, shape_dict, dt=1):
+def event_identify(event_count, dt=1):
     """
     Search for events which are contiguous in time, belonging to the same spw
     and pol

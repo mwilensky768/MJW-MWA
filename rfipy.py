@@ -213,7 +213,18 @@ class RFI:
 
         return(INS, MS, Nbls_arr, n, bins, fit)
 
-    def bl_grid(self, mask):
+    def bl_grid(self, events, dt=1, flag=False):
+        self.apply_flags(flag)
+
+        event_stack = np.vstack(events)
+        events = event_stack[np.where(np.any(event_stack[:-1, :-1] != event_stack[1:, :-1], axis=1) |
+                                      np.diff(event_stack[:, -1]) > dt)]
+        for m, event in enumerate(events):
+            if ((event[:3] == events[m + 1][:3]) and (events[m + 1][3] - event[3]) > dt):
+                time_end = m + 1
+                event_slices.append((event[0], event[1], event[2], slice(time_start, time_end)))
+                time_start = m + 1
+
         ind, event_bound = rfiutil.event_identify(mask)
         Nevent = len(event_bound) + 1
         bl_avg = np.zeros([self.UV.Nbls, Nevent])
