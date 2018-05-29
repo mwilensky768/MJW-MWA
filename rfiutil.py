@@ -131,70 +131,70 @@ def edge_detect(frac_diff, RFI_type='streak', sig=2):
     return(smooth, edge)
 
 
-def match_filter(INS, MS, Nbls, freq_array, sig_thresh):
-    # Can pass filter_type a list to check multiple shapes
+def match_filter(INS, MS, Nbls, freq_array, sig_thresh, shape_dict):
+    """
+    shape_dict is a dictionary whose key is the name of the shape as a string
+    and each entry is a tuple of frequencies given in the units of the freq_array.
+    """
 
-    def TV_slicer(TV_freqs, freq_array, spw, slices):
-        for ch, freq_range in enumerate(TV_freqs):
-            if (min(freq_array[spw, :]) < min(freq_range)) or (max(freq_array[spw, :]) > max(freq_range)):
-                slices['TV%i' % (ch + 6)] = slice(np.argmin(np.abs(freq_array[spw, :] - min(freq_range))),
-                                                  np.argmin(np.abs(freq_array[spw, :] - max(freq_range))))
-        return(slices)
+    def shape_slicer(shape_dict, freq_array, spw):
+        for shape in shape_dict:
+            # Ask if any of the shape is in the freq_array
+            if (min(freq_array[spw, :]) < min(shape_dict[shape])) or (max(freq_array[spw, :]) > max(shape_dict[shape])):
+                # Rewrite the shape_dict entry in terms of channel numbers which match the shape best
+                shape_dict[shape] = slice(np.argmin(np.abs(freq_array[spw, :] - min(shape_dict[shape]))),
+                                          np.argmin(np.abs(freq_array[spw, :] - max(shape_dict[shape]))))
+            # Set the slice to None if the shape is not at all in the freq_array
+            else:
+                shape_dict[shape] = None
+        shape_dict['streak'] = slice(None)
+        shape_dict['point'] = slice(None)
+        return(shape_dict)
 
-    def match_test(MS, Nbls, spw, slc, pol, sig_thresh):
-        sliced_arr = MS[:, spw, slc, pol].mean(axis=1)
-        N = np.count_nonzero(~MS[:, spw, slc, pol].mask, axis=1)
-        thresh = sig_thresh * np.sqrt(np.sum(sigma_calc(Nbls)[:, spw, slc, pol]**2, axis=1)) / N
-        if np.any(sliced_arr > thresh):
-            t = (sliced_arr / thresh).argmax()
-            R = (sliced_arr / thresh).max()
-        else:
-            t = np.nan
-            R = np.nan
-        return(t, R)
-
-    TV6_freqs = [1.775e8 - 3.5e6, 1.775e8 + 3.5e6]
-    TV7_freqs = [1.845e8 - 3.5e6, 1.845e8 + 3.5e6]
-    TV8_freqs = [1.915e8 - 3.5e6, 1.915e8 + 3.5e6]
-    TV_freqs = [TV6_freqs, TV7_freqs, TV8_freqs]
-    keys = ['streak', 'TV6', 'TV7', 'TV8', 'point']
-    event_R = {key: np.zeros([MS.shape[1], MS.shape[3]]) for key in keys}
-    R_arr = np.stack([event_R[key] for key in keys])
-    while not np.all(np.isnan(R_arr)):
-        max_R = -np.inf
-        t_max = -1
-        key_max = ''
-        for m in range(MS.shape[1]):
-            slices = {'streak': slice(None), 'TV6': None, 'TV7': None, 'TV8': None}
-            slices = TV_slicer(TV_freqs, freq_array, m, slices)
-            for n in range(MS.shape[3]):
-                for key in keys[:4]:
-                    if slices[key]:
-                        t, event_R[key][m, n] = match_test(MS, Nbls, m, slices[key], n, sig_thresh)
-                        if event_R[key][m, n] > max_R:
-                            max_R = event_R[key][m, n]
-                            t_max = t
-                            key_max = key
-                t, f = np.unravel_index(MS[:, m, :, n].argmax(),
-                                        MS[:, m, :, n].shape)
-                thresh = sig_thresh * sigma_calc(Nbls[t, m, f, n])
-                if MS[t, m, f, n] > thresh:
-                    event_R['point'][m, n] = MS[t, m, f, n] / thresh
-                    if event_R['point'][m, n] > max_R:
-                        key_max = None
+    def match_test(MS, Nbls, spw, pol, sig_thresh, shape_dict):
+        # Treat point and slices separately
+        R_max = -np.inf
+        t_max = None
+        f_max = None
+        for shape in shape_dict:
+            if shape_dict[shape] is not None:
+                if shape is 'point':
+                    thresh = sig_thresh * sigma_calc(Nbls[:, spw, :, pol])
+                    t, f = np.unravel_index((MS[:, spw, :, pol] / thresh).argmax(), MS[:, spw, :, pol].shape)
+                    R = MS[t, spw, f, pol] / thresh[t, spw, f, pol]
                 else:
-                    event_R['point'][m, n] = np.nan
-                if key_max:
-                    INS[t_max, m, slices[key_max], n] = np.ma.masked
-                elif key_max is None:
-                    INS[t, m, f, n] = np.ma.masked
-        R_arr = np.stack([event_R[key] for key in keys])
-        MS = INS / INS.mean(axis=0) - 1
+                    # Average across the shaoe in question specified by slc - output is 1D
+                    sliced_arr = MS[:, spw, shape_dict[shape], pol].mean(axis=1)
+                    N = np.count_nonzero(~MS[:, spw, slc, pol].mask, axis=1)
+                    # Gauss dist, so expected width is as below
+                    thresh = sig_thresh * np.sqrt(np.sum(sigma_calc(Nbls[:, spw, slc, pol])**2, axis=1)) / N
+                    t, f = ((sliced_arr / thresh).argmax(), shape_dict[shape])
+                    R = sliced_arr[t] / thresh[t]
+                if R > 1:
+                    if R > R_max:
+                        t_max, f_max, R_max = (t, f, R)
+
+        return(t_max, f_max, R_max)
+
+    R_max = 0
+    event_count = []
+    while R_max > -np.inf:
+        for m in range(MS.shape[1]):
+            shape_dict = shape_slicer(shape_dict, freq_array, m)
+            for n in range(MS.shape[3]):
+                for shape in shape_dict:
+                    if shape_dict[shape] is not None:
+                        t_max, f_max, R_max = match_test(MS, Nbls, m, shape_dict[shape], n, sig_thresh)
+                if R_max > -np.inf:
+                    INS[t_max, m, f_max, n] = np.ma.masked
+                    event_count.append((t_max, m, f_max, n))
+        if R_max > -np.inf:
+            MS = INS / INS.mean(axis=0) - 1
 
     n, bins = np.histogram(MS[~MS.mask], bins='auto')
     fit = INS_hist_fit(bins, MS, Nbls, sig_thresh)
 
-    return(INS, MS, n, bins, fit)
+    return(INS, MS, n, bins, fit, event_count)
 
 
 def narrowband_filter(INS, ch_ignore=None):
@@ -230,7 +230,7 @@ def rayleigh_convolve(N, MAX):
     return(x, pdf)
 
 
-def event_identify(mask, dt=1):
+def event_identify(mask, shape_dict, dt=1):
     """
     Search for events which are contiguous in time, belonging to the same spw
     and pol
@@ -238,10 +238,26 @@ def event_identify(mask, dt=1):
     dt determines the maximal separation time of flags in order for those flags
     to belong to the same event
     """
+    # Find the indices of the masked data in a tuple
     ind = np.where(mask)
+    # Reorder the tuple to spw, pol, time, freq
     ind = (ind[1], ind[3], ind[0], ind[2])
+    # stack them vertically and use unique to sort
     ind_stack = np.unique(np.vstack(ind), axis=1)
+    # take the difference in the stack
     diff = ind_stack[:-1].diff(axis=1)
+    # Find the column index for the last member of an event
     col_bounds = np.where(np.logical_or(np.logical_or(diff[0, :], diff[1, :]),
                                         diff[2, :] > dt))[0]
-    return(ind, event_bound)
+
+    return(ind, col_bounds)
+
+
+def emp_pdf_flag(size, data, bins, thresh=10, scale=1. / np.sqrt(np.log(2))):
+    A = np.random.rayleigh(scale=scale, size=size).mean(axis=0)
+    model, _ = np.histogram(A, bins=bins, density=True) * len(data.flatten())
+    max_loc = bins[:-1][model.argmax()]
+    cutoff = min(bins[(model < 1) & (bins[:-1] > max_loc)])
+    data[data > cutoff] = np.ma.masked
+
+    return(cutoff, data)
