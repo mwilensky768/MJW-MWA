@@ -26,11 +26,11 @@ shape_dict = {'TV%i' % (k): np.load('/Users/mike_e_dubs/python_stuff/MJW-MWA/Use
 for arr in arr_list:
     obs = arr[len(arr_path):len(arr_path) + 10]
     print('%s started at %s' % (obs, strftime("%H:%M:%S")))
-    for sig_thresh in range(4, 26):
+    for sig_thresh in range(4, 5):
         if sig_thresh % 2 == 0:
             print('%i started at %s' % (sig_thresh, strftime("%H:%M:%S")))
         INS = np.ma.masked_array(np.load(arr))
-        INS = rfiutil.narrowband_filter(INS, ch_ignore)
+        # INS = rfiutil.narrowband_filter(INS, ch_ignore)
         MS = INS / INS.mean(axis=0) - 1
         if sig_thresh == 4:
             Nbls = 8001 * np.ones(INS.shape)

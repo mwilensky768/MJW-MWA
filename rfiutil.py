@@ -2,6 +2,7 @@ import numpy as np
 from math import floor, ceil, log10, pi, log, sqrt
 from scipy.special import erfinv
 from scipy.integrate import simps
+import time
 
 
 def SumThreshold(x, y, M, chi):
@@ -163,6 +164,7 @@ def match_filter(INS, MS, Nbls, freq_array, sig_thresh, shape_dict, dt=1):
                     thresh = sig_thresh * sigma_calc(Nbls[:, spw, :, pol])
                     t, f = np.unravel_index((MS[:, spw, :, pol] / thresh).argmax(), MS[:, spw, :, pol].shape)
                     R = MS[t, spw, f, pol] / thresh[t, f]
+                    f = slice(f, f + 1)
                 else:
                     # Average across the shaoe in question specified by slc - output is 1D
                     sliced_arr = MS[:, spw, slice_dict[shape], pol].mean(axis=1)
@@ -181,23 +183,29 @@ def match_filter(INS, MS, Nbls, freq_array, sig_thresh, shape_dict, dt=1):
     def event_compile(events, dt=1):
 
         # Sort the flagged events basically in chronological order and stack them
-        events.sort()
-        event_stack = np.vstack(events)
-        # Find where the spw/pol/freqs do not agree OR where time separation is greater than dt
-        # Add one so that the bounds mark the start of a new event
-        row_bounds = np.where(np.any(event_stack[:-1, :-1] != event_stack[1:, :-1], axis=1) |
-                              np.diff(event_stack[:, -1]) > dt)[0] + 1
-        # insert zero and N_event so that making slices is more straightforward than otherwise
-        np.insert(row_bounds, 0, 0)
-        np.append(row_bounds, len(event_stack))
+        if events:
+            events.sort()
+            event_stack = np.vstack(events)
+            # print(event_stack)
+            # Find where the spw/pol/freqs do not agree OR where time separation is greater than dt
+            # Add one so that the bounds mark the start of a new event
+            row_bounds = np.where(np.logical_or(np.any(event_stack[:-1, :-1] != event_stack[1:, :-1], axis=1),
+                                                np.diff(event_stack[:, -1], axis=0) > dt))[0]
+            # insert zero and N_event so that making slices is more straightforward than otherwise
+            # first slice goes from zero, last slice goes to the end
+            row_bounds = np.insert(row_bounds, 0, -1)
+            row_bounds = np.append(row_bounds, len(event_stack) - 1)
+            # print(row_bounds)
 
-        # Generate a list of time_slices to be hstacked with the events
-        time_slices = []
-        for m, row in enumerate(row_bounds[:-1]):
-            time_slices.append(slice(event_stack[row, -1], event_stack[row_bounds[m + 1], -1]))
-        events = np.hstack((events[row_bounds[:-1], :-1], np.array(time_slices).transpose()))
+            # Generate a list of time_slices to be hstacked with the events
+            time_slices = []
+            for m, row in enumerate(row_bounds[:-1]):
+                # Has to shift up from the row entry to start, then go to the row_bound, and add 1 to the time obtained
+                time_slices.append(slice(event_stack[row + 1, -1], event_stack[row_bounds[m + 1], -1] + 1))
+            events = np.hstack((event_stack[row_bounds[:-1], :-1], np.array(time_slices, ndmin=2).transpose()))
+            # print(events)
 
-        return(events)
+            return(events)
 
     R_max = 0
     events = []
@@ -258,11 +266,14 @@ def event_identify(event_count, dt=1):
     return(ind, col_bounds)
 
 
-def emp_pdf_flag(size, data, bins, thresh=10, scale=1. / np.sqrt(np.log(2))):
-    A = np.random.rayleigh(scale=scale, size=size).mean(axis=0)
-    model, _ = np.histogram(A, bins=bins, density=True) * len(data.flatten())
+def emp_pdf(N, size=int(1e6), scale=1. / np.sqrt(2 * np.log(2))):
+    A = np.zeros(size)
+    for m in range(N):
+        A += np.random.rayleigh(scale=scale, size=size)
+    A /= N
+    model, _ = np.histogram(A, bins='auto', density=True)
+    model *= 8128
     max_loc = bins[:-1][model.argmax()]
-    cutoff = min(bins[(model < 1) & (bins[:-1] > max_loc)])
-    data[data > cutoff] = np.ma.masked
+    cutoff = min(bins[:-1][np.logical_and(model < 1, bins[:-1] > max_loc)])
 
-    return(cutoff, data)
+    return(cutoff)

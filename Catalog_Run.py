@@ -14,7 +14,7 @@ obs = args.inpath[0][-17:-7]
 """Input/Output keywords"""
 
 # You can add 'waterfall' to this list to compute another type of catalog
-catalog_types = ['rms', ]
+catalog_types = ['bl_scat', ]
 
 """Object Keywords"""
 
@@ -41,6 +41,9 @@ fraction = True
 invalid_mask = False
 mask = True
 
+"""Match Filter Keywords"""
+shape_dict = {'TV%i' % (k): np.load('/Users/mike_e_dubs/python_stuff/MJW-MWA/Useful_Information/TV%i_Freqs.npy' % (k)) for k in [6, 7, 8]}
+
 
 RFI = rfi.RFI(str(obs), args.inpath[0], args.outpath[0], bad_time_indices=bad_time_indices)
 
@@ -52,3 +55,5 @@ if 'INS' in catalog_types:
 if 'rms' in catalog_types:
     RFI.rms_calc(flag=False)
     RFI.rms_calc()
+if 'bl_scat' in catalog_types:
+    cf.bl_scatter_catalog(RFI)

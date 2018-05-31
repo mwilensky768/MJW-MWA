@@ -3,8 +3,6 @@ import pyuvdata as pyuv
 from math import floor, ceil, log10, pi, log, sqrt
 import os
 import scipy.linalg
-import SumThreshold as ST
-import SIR as SIR
 from scipy.special import erfinv
 import rfiutil
 
@@ -64,8 +62,6 @@ class RFI:
 
         self.flag_titles = {False: 'All', True: 'Post_Flag'}
         for item in self.flag_titles:
-            print(os.path.exists('%sarrs/%s/' % (self.outpath, self.flag_titles[item])))
-            print('%sarrs/%s/' % (self.outpath, self.flag_titles[item]))
             if not os.path.exists('%sarrs/%s/' % (self.outpath, self.flag_titles[item])):
                 os.makedirs('%sarrs/%s/' % (self.outpath, self.flag_titles[item]))
             assert(os.path.exists('%sarrs/%s/' % (self.outpath, self.flag_titles[item])))
@@ -196,83 +192,68 @@ class RFI:
 
         self.apply_flags(flag)
 
-        Nbls_arr = (~self.UV.data_array.mask).sum(axis=1)
+        if flag:
+            Nbls = (~self.UV.data_array.mask).sum(axis=1)
+        else:
+            Nbls = self.UV.Nbls * np.ones((self.UV.Ntimes - 1, self.UV.Nspws, self.UV.Nfreqs, self.UV.Npols), dtype=int)
         INS = np.mean(self.UV.data_array, axis=1)
         MS = INS / INS.mean(axis=0) - 1
         n, bins = np.histogram(MS[~MS.mask], bins='auto')
 
-        fit = rfiutil.INS_hist_fit(bins, MS[~MS.mask], Nbls_arr, sig_thresh)
+        fit = rfiutil.INS_hist_fit(bins, MS[~MS.mask], Nbls, sig_thresh)
 
         base = '%sarrs/%s/%s' % (self.outpath, self.flag_titles[flag], self.obs)
         np.ma.dump(INS, '%s_INS.npym' % (base))
         np.ma.dump(MS, '%s_INS_MS.npym' % (base))
-        np.save('%s_INS_Nbls.npy' % (base), Nbls_arr)
+        np.save('%s_INS_Nbls.npy' % (base), Nbls)
         np.save('%s_INS_counts.npy' % (base), n)
         np.save('%s_INS_bins.npy' % (base), bins)
         np.save('%s_INS_fit.npy' % (base), fit)
 
-        return(INS, MS, Nbls_arr, n, bins, fit)
+        return(INS, MS, Nbls, n, bins, fit)
 
-    def bl_grid(self, events, dt=1, flag=False):
+    def bl_grid_flag(self, events, flag=False, gridsize=50, model_size=1e9,
+                     edges=np.linspace(-3000, 3000, num=51)):
+
         self.apply_flags(flag)
 
-        event_stack = np.vstack(events)
-        events = event_stack[np.where(np.any(event_stack[:-1, :-1] != event_stack[1:, :-1], axis=1) |
-                                      np.diff(event_stack[:, -1]) > dt)]
-        for m, event in enumerate(events):
-            if ((event[:3] == events[m + 1][:3]) and (events[m + 1][3] - event[3]) > dt):
-                time_end = m + 1
-                event_slices.append((event[0], event[1], event[2], slice(time_start, time_end)))
-                time_start = m + 1
-
-        ind, event_bound = rfiutil.event_identify(mask)
-        Nevent = len(event_bound) + 1
+        Nevent = len(events)
         bl_avg = np.zeros([self.UV.Nbls, Nevent])
-        # Average vis. diff. amps. for each event
-        bl_hist2d = []
+        grid = np.zeros([gridsize, gridsize, Nevent])
         bl_hist = []
         bl_bins = []
-        grid = np.zeros([50, 50, Nevents])
-        edges = np.linspace(-3000, 3000, num=51)
+        model_hist = []
+        cutoffs = []
+        med = np.median(self.UV.data_array, axis=(0, 1))
 
         for m in range(Nevent):
-            # Set up the appropriate slices
-            # Event bounds tell us the last index of an event
-            # Start at 0 or the last event bound + 1
-            # End at event bound (slice syntax -> event_bound[m] + 1), or the end
-            if m == 0:
-                p = 0
-            else:
-                p = event_bound[m - 1] + 1
-            if m < Nevent - 1:
-                q = event_bound[m] + 1
-            else:
-                q = len(ind[0])
-            event_slice = slice(p, q)
-            bl_avg[:, m] = np.absolute(self.UV.data_array[ind[2][event_slice],
-                                                          :, ind[0][event_slice],
-                                                          ind[3][event_slice],
-                                                          ind[1][event_slice]]).mean(axis=0)
+            bl_avg[:, m] = (self.UV.data_array[events[m, 3], :, events[m, 0], events[m, 2], events[m, 1]] /
+                            med[events[m, 0], events[m, 2], events[m, 1]]).mean(axis=(0, 2))
 
-            blt_slice = slice(self.UV.Nbls * ind[2][p], self.UV.Nbls * (ind[2][p] + 1))
-            hist2d, xedges, yedges = np.histogram2d(self.UV.uvw_array[blt_slice, 0],
-                                                    self.UV.uvw_array[blt_slice, 1],
-                                                    bins=edges)
-            bl_hist2d.append(hist2d)
+            blt_slice = slice(self.UV.Nbls * events[m, 3].indices(self.UV.Ntimes - 1)[0],
+                              self.UV.Nbls * (events[m, 3].indices(self.UV.Ntimes - 1)[0] + 1))
+
             hist, bins = np.histogram(bl_avg[:, m], bins='auto')
+            print(bins)
+            Nt = events[m, 2].indices(self.UV.Ntimes)[1] - events[m, 2].indices(self.UV.Ntimes)[0] + 1
+            Nf = events[m, 2].indices(self.UV.Nfreqs)[1] - events[m, 2].indices(self.UV.Nfreqs)[0] + 1
+            model, cutoff, data = rfiutil.emp_pdf_flag(Nt * Nf, bl_avg[:, m], bins)
+            self.UV.data_array[events[m, 3], data.mask, events[m, 0], events[m, 2], events[m, 1]] = np.ma.masked
             bl_hist.append(hist)
+            model_hist.append(model)
+            cutoffs.append(cutoff)
             bl_bins.append(bins)
 
             for i in range(50):
                 for k in range(50):
-                    seq = bl_avg[:, m][np.logical_and(np.logical_and(xedges[i] < self.UV.uvw_array[blt_slice, 0],
-                                                                     self.UV.uvw_array[blt_slice, 0] < xedges[i + 1]),
-                                                      np.logical_and(yedges[k] < self.UV.uvw_array[blt_slice, 1],
-                                                                     self.UV.uvw_array[blt_slice, 1] < yedges[k + 1]))]
+                    seq = bl_avg[:, m][np.logical_and(np.logical_and(edges[i] < self.UV.uvw_array[blt_slice, 0],
+                                                                     self.UV.uvw_array[blt_slice, 0] < edges[i + 1]),
+                                                      np.logical_and(edges[k] < self.UV.uvw_array[blt_slice, 1],
+                                                                     self.UV.uvw_array[blt_slice, 1] < edges[k + 1]))]
                     if len(seq) > 0:
                         grid[49 - k, i, m] = np.mean(seq)
 
-        return(bl_avg, ind, event_bound, bl_hist, bl_bins, bl_hist2d, grid, edges)
+        return(bl_avg, bl_hist, bl_bins, model_hist, cutoffs)
 
     def ant_grid(self, mask):
 

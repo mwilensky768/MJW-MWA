@@ -360,38 +360,49 @@ def flag_catalog(RFI, outpath, flag_slices=['Flagged', ], xticks=None,
         fig.savefig('%s%s_flag_map_%s.png' % (outpath, RFI.obs, flag_slice))
 
 
-def bl_scatter_catalog(RFI, outpath, mask, cmap=cm.plasma):
-    """
-    You must have at least numpy 1.13 to run this!
-    """
-    bl_avg, bl_hist, bl_bins, hist2d, grid, xedges, yedges = RFI.bl_scatter(mask)
-    xticklabels = ['%.0f' % (xedges[tick]) for tick in range(0, 50, 10)]
-    yticklabels = ['%.0f' % (yedges[tick]) for tick in range(50, 0, -10)]
+def bl_scatter_catalog(RFI, cmap=cm.plasma, gridsize=50, flag=False, sig_thresh=4,
+                       shape_dict={}, model_size=int(1e6),
+                       edges=np.linspace(-3000, 3000, num=51)):
 
-    fig_hist, ax_hist = plt.subplots(figsize=(14, 8))
-    fig_hist2d, ax_hist2d = plt.subplots(figsize=(14, 8))
+    INS, MS, Nbls, _, _, _ = RFI.INS_prepare(flag=flag, sig_thresh=sig_thresh)
+    INS, MS, n, bins, fit, events = rfiutil.match_filter(INS, MS, Nbls,
+                                                         RFI.UV.freq_array,
+                                                         sig_thresh, shape_dict)
+    if len(events) > 0:
+        bl_avg, bl_hist, bl_bins, model_hist, cutoffs = \
+            RFI.bl_grid_flag(events, gridsize=gridsize, edges=edges, flag=flag,
+                             model_size=model_size)
 
-    hist_labels = ['spw%i' % (m) for m in range(RFI.UV.Nspws)]
+        xticklabels = ['%.0f' % (edges[tick]) for tick in range(0, 50, 10)]
+        yticklabels = ['%.0f' % (edges[tick]) for tick in range(50, 0, -10)]
 
-    plot_lib.one_d_hist_plot(fig_hist, ax_hist, bl_bins[0], bl_hist, xlog=False,
-                             labels=hist_labels, xlabel='Amplitude (%s)' % (RFI.UV.vis_units),
-                             title='%s RFI Event-Averaged Vis. Diff. Amplitude Histogram' % (RFI.obs))
-    plot_lib.image_plot(fig_hist2d, ax_hist2d, hist2d, title='RFI Baseline Grid Histogram',
-                        aspect_ratio=1, xlabel='$\lambda u$ (m)', ylabel='$\lambda v$ (m)',
-                        cbar_label='# Baselines', zero_mask=False)
+        for m in range(bl_avg.shape[2]):
 
-    fig_hist.savefig('%s%s_event_hist.png' % (outpath, RFI.obs))
-    fig_hist2d.savefig('%s%s_event_hist2d.png' % (outpath, RFI.obs))
+            fig_hist, ax_hist = plt.subplots(figsize=(14, 8))
+            fig_grid, ax_grid = plt.subplots(figsize=(14, 8))
 
-    for m in range(RFI.UV.Nspws):
-        fig_grid, ax_grid = ax_constructor(RFI)
-        fig_grid.suptitle('%s RFI Event-Averaged UV Grid' % (RFI.obs))
-        for n, pol in enumerate(RFI.pols):
-            curr_ax = ax_chooser(RFI, ax_grid, n)
-            plot_lib.image_plot(fig_grid, curr_ax, grid[m, n, :, :], title=pol,
+            title_tuple = (RFI.obs,
+                           min(RFI.UV.freq_array[events[m, 0], events[m, 2]]) * 10 ** (-6),
+                           max(RFI.UV.freq_array[events[m, 0], events[m, 2]]) * 10 ** (-6),
+                           events[m, 3].indices(RFI.UV.Ntimes - 1)[0],
+                           events[m, 3].indices(RFI.UV.Ntimes - 1)[1],
+                           RFI.pols[events[m, 1]])
+
+            plot_lib.one_d_hist_plot(fig_hist, ax_hist, bl_bins[m], [bl_hist[m], model_hist[m]], xlog=False,
+                                     labels=['Measurements', 'Monte Carlo'], xlabel='Amplitude (Median)',
+                                     title='%s RFI Event-Averaged Amplitude Histogram %.1f - %.1f Mhz, t%i - t%i, %s' % title_tuple)
+            ax_hist.axvline(x=cutoff[m], color='black')
+            plot_lib.image_plot(fig_grid, ax_grid, bl_avg[:, m],
+                                title='%s RFI Baseline Gridded Average, %.1f - %.1f Mhz, t%i - t%i, %s' % title_tuple,
                                 aspect_ratio=1, xlabel='$\lambda u$ (m)',
-                                xticklabels=xticklabels, yticklabels=yticklabels,
-                                ylabel='$\lambda v$ (m)',
-                                cbar_label='Amplitude (UNCALIB)', zero_mask=False)
+                                ylabel='$\lambda v$ (m)', xticklabels=xticklabels,
+                                yticklabels=yticklabels,
+                                cbar_label='Amp (%s)' % (RFI.UV.vis_units))
 
-        fig_grid.savefig('%s%s_spw%i_event_grid.png' % (outpath, RFI.obs, m))
+            fig_hist.savefig('%sfigs/%s_event_hist_%i.png' % (RFI.outpath, RFI.obs, m))
+            fig_grid.savefig('%sfigs/%s_event_bl_grid_%i.png' % (RFI.outpath, RFI.obs, m))
+
+            plt.close(fig_hist)
+            plt.close(fig_grid)
+    else:
+        print('No events were found in the incoherent noise spectra!')
