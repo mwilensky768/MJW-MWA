@@ -2,7 +2,16 @@ import numpy as np
 from math import floor, ceil, log10, pi, log, sqrt
 from scipy.special import erfinv
 from scipy.integrate import simps
+from scipy.stats import kstest, chisquare
 import time
+
+
+def save(object, path, mask=False):
+
+    if mask:
+        np.ma.dump(object, '%s.npym' % (path))
+    else:
+        np.save('%s.npy' % (path), object)
 
 
 def SumThreshold(x, y, M, chi):
@@ -132,7 +141,7 @@ def edge_detect(frac_diff, RFI_type='streak', sig=2):
     return(smooth, edge)
 
 
-def match_filter(INS, MS, Nbls, freq_array, sig_thresh, shape_dict, dt=1):
+def match_filter(INS, MS, Nbls, freq_array, sig_thresh, shape_dict, outpath, dt=1):
     """
     shape_dict is a dictionary whose key is the name of the shape as a string
     and each entry is a tuple of frequencies given in the units of the freq_array.
@@ -225,6 +234,13 @@ def match_filter(INS, MS, Nbls, freq_array, sig_thresh, shape_dict, dt=1):
     n, bins = np.histogram(MS[~MS.mask], bins='auto')
     fit = INS_hist_fit(bins, MS, Nbls, sig_thresh)
 
+    obj_tup = (INS, MS, events, n, bins, fit)
+    name_tup = ('INS_mask', 'INS_MS_mask', 'INS_events', 'INS_counts_mask', 'INS_bins_mask', 'INS_fit_mask')
+    mask_tup = (True, True, False, False, False, False)
+
+    for obj, name, mask in zip(obj_tup, name_tup, mask_tup):
+        save(obj, '%s_%s' % (outpath, name), mask=mask)
+
     return(INS, MS, n, bins, fit, events)
 
 
@@ -241,6 +257,25 @@ def narrowband_filter(INS, ch_ignore=None):
         INS.mask[:, :, ch_ignore, :] = False
 
     return(INS)
+
+
+def channel_hist(INS):
+
+    hist_total, bins = np.histogram(INS, bins='auto')
+    hist_arr = np.zeros((len(bins) - 1, ) + INS.shape[1:])
+    gauss_arr = np.copy(hist_arr)
+    mu = INS.mean(axis=0)
+    var = INS.var(axis=0)
+    w = bins[1] - bins[0]
+    x = bins[:-1] + 0.5 * w
+    for m in range(INS.shape[1]):
+        for n in range(INS.shape[3]):
+            for p in range(INS.shape[2]):
+                hist_arr[:, m, p, n], _ = np.histogram(INS[:, m, p, n], bins=bins)
+                gauss_arr[:, m, p, n] = INS.shape[0] * w / np.sqrt(2 * pi * var[m, p, n]) *\
+                    np.exp(-(x - mu[m, p, n])**2 / (2 * var[m, p, n]))
+
+    return(hist_total, bins, hist_arr, gauss_arr, mu, var)
 
 
 def event_identify(event_count, dt=1):
@@ -266,14 +301,35 @@ def event_identify(event_count, dt=1):
     return(ind, col_bounds)
 
 
-def emp_pdf(N, size=int(1e6), scale=1. / np.sqrt(2 * np.log(2))):
-    A = np.zeros(size)
-    for m in range(N):
-        A += np.random.rayleigh(scale=scale, size=size)
-    A /= N
-    model, _ = np.histogram(A, bins='auto', density=True)
-    model *= 8128
-    max_loc = bins[:-1][model.argmax()]
-    cutoff = min(bins[:-1][np.logical_and(model < 1, bins[:-1] > max_loc)])
+def emp_pdf(N, Nbls, bins, sig=1. / np.sqrt(2 * np.log(2))):
 
-    return(cutoff)
+    if True:
+        A = np.zeros(Nbls)
+        for m in range(N):
+            A += np.random.rayleigh(scale=sig, size=Nbls)
+        A /= N
+        if bins is 'auto':
+            sim, bins = np.histogram(A, bins='auto')
+            cutoff = bins[-1]
+        else:
+            sim, _ = np.histogram(A, bins=bins)
+            cutoff = bins[min(np.digitize(max(A), bins), len(bins) - 1)]
+    else:
+        var = (2 - pi / 2) * sig**2
+        mu = np.sqrt(pi / 2) * sig
+        if bins is 'auto':
+            h = 4 * np.sqrt(2. / N) * g_sig * erfinv(0.5) / Nbls**(1. / 3)
+            cutoff = mu + g_sig * np.sqrt(2. / N * np.log(Nbls * h * np.sqrt(N / (2 * pi)) / g_sig))
+            sim = None
+        else:
+            h = bins[1] - bins[0]
+            x = bins[:-1] + 0.5 * h
+            sim = Nbls * h * np.sqrt(N / (2 * pi * var)) * np.exp(- N * (x - mu)**2 / (2 * var))
+            if len(bins[:-1][np.logical_and(bins[:-1] > sim.argmax(), sim < 1)]):
+                cutoff = bins[:-1][np.logical_and(bins[:-1] > sim.argmax(), sim < 1)][0]
+            else:
+                cutoff = bins[-1]
+
+        A = None
+
+    return(A, sim, bins, cutoff)

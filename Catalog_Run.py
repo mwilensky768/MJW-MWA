@@ -56,4 +56,4 @@ if 'rms' in catalog_types:
     RFI.rms_calc(flag=False)
     RFI.rms_calc()
 if 'bl_scat' in catalog_types:
-    cf.bl_scatter_catalog(RFI)
+    cf.bl_scatter_catalog(RFI, shape_dict=shape_dict)

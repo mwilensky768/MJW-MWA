@@ -361,22 +361,23 @@ def flag_catalog(RFI, outpath, flag_slices=['Flagged', ], xticks=None,
 
 
 def bl_scatter_catalog(RFI, cmap=cm.plasma, gridsize=50, flag=False, sig_thresh=4,
-                       shape_dict={}, model_size=int(1e6),
-                       edges=np.linspace(-3000, 3000, num=51)):
+                       shape_dict={}, edges=np.linspace(-3000, 3000, num=51)):
 
     INS, MS, Nbls, _, _, _ = RFI.INS_prepare(flag=flag, sig_thresh=sig_thresh)
     INS, MS, n, bins, fit, events = rfiutil.match_filter(INS, MS, Nbls,
                                                          RFI.UV.freq_array,
-                                                         sig_thresh, shape_dict)
+                                                         sig_thresh, shape_dict,
+                                                         '%sarrs/' % (RFI.outpath))
+    if not os.path.exists('%sfigs/' % (RFI.outpath)):
+        os.makedirs('%sfigs/' % (RFI.outpath))
     if len(events) > 0:
-        bl_avg, bl_hist, bl_bins, model_hist, cutoffs = \
-            RFI.bl_grid_flag(events, gridsize=gridsize, edges=edges, flag=flag,
-                             model_size=model_size)
+        grid, bl_hist, bl_bins, sim_hist, cutoffs = \
+            RFI.bl_grid_flag(events, gridsize=gridsize, edges=edges, flag=flag)
 
         xticklabels = ['%.0f' % (edges[tick]) for tick in range(0, 50, 10)]
         yticklabels = ['%.0f' % (edges[tick]) for tick in range(50, 0, -10)]
 
-        for m in range(bl_avg.shape[2]):
+        for m in range(grid.shape[2]):
 
             fig_hist, ax_hist = plt.subplots(figsize=(14, 8))
             fig_grid, ax_grid = plt.subplots(figsize=(14, 8))
@@ -388,12 +389,12 @@ def bl_scatter_catalog(RFI, cmap=cm.plasma, gridsize=50, flag=False, sig_thresh=
                            events[m, 3].indices(RFI.UV.Ntimes - 1)[1],
                            RFI.pols[events[m, 1]])
 
-            plot_lib.one_d_hist_plot(fig_hist, ax_hist, bl_bins[m], [bl_hist[m], model_hist[m]], xlog=False,
+            plot_lib.one_d_hist_plot(fig_hist, ax_hist, bl_bins[m], [bl_hist[m], sim_hist[m]], xlog=False,
                                      labels=['Measurements', 'Monte Carlo'], xlabel='Amplitude (Median)',
                                      title='%s RFI Event-Averaged Amplitude Histogram %.1f - %.1f Mhz, t%i - t%i, %s' % title_tuple)
-            ax_hist.axvline(x=cutoff[m], color='black')
-            plot_lib.image_plot(fig_grid, ax_grid, bl_avg[:, m],
-                                title='%s RFI Baseline Gridded Average, %.1f - %.1f Mhz, t%i - t%i, %s' % title_tuple,
+            ax_hist.axvline(x=cutoffs[m], color='black')
+            plot_lib.image_plot(fig_grid, ax_grid, grid[:, :, m],
+                                title='%s RFI Baseline Gridded Average, %.2f - %.2f Mhz, t%i - t%i, %s' % title_tuple,
                                 aspect_ratio=1, xlabel='$\lambda u$ (m)',
                                 ylabel='$\lambda v$ (m)', xticklabels=xticklabels,
                                 yticklabels=yticklabels,

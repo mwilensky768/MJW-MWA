@@ -203,44 +203,51 @@ class RFI:
         fit = rfiutil.INS_hist_fit(bins, MS[~MS.mask], Nbls, sig_thresh)
 
         base = '%sarrs/%s/%s' % (self.outpath, self.flag_titles[flag], self.obs)
-        np.ma.dump(INS, '%s_INS.npym' % (base))
-        np.ma.dump(MS, '%s_INS_MS.npym' % (base))
-        np.save('%s_INS_Nbls.npy' % (base), Nbls)
-        np.save('%s_INS_counts.npy' % (base), n)
-        np.save('%s_INS_bins.npy' % (base), bins)
-        np.save('%s_INS_fit.npy' % (base), fit)
+        obj_tup = (INS, MS, Nbls, n, bins, fit)
+        name_tup = ('INS', 'INS_MS', 'INS_Nbls', 'INS_counts', 'INS_bins', 'INS_fit')
+        mask_tup = (True, True, False, False, False, False)
+        for obj, name, mask in zip(obj_tup, name_tup, mask_tup):
+            rfiutil.save(obj, '%s_%s' % (base, name), mask=mask)
 
         return(INS, MS, Nbls, n, bins, fit)
 
-    def bl_grid_flag(self, events, flag=False, gridsize=50, model_size=1e9,
+    def bl_grid_flag(self, events, flag=False, gridsize=50,
                      edges=np.linspace(-3000, 3000, num=51)):
 
+        MLE, _ = self.rms_calc(axis=(0, 1)) / np.sqrt(2)
         self.apply_flags(flag)
 
         Nevent = len(events)
-        bl_avg = np.zeros([self.UV.Nbls, Nevent])
-        grid = np.zeros([gridsize, gridsize, Nevent])
+        bl_avg = np.ma.masked_array(np.zeros([self.UV.Nbls, Nevent]))
+        grid = np.ma.masked_array(np.zeros([gridsize, gridsize, Nevent]))
         bl_hist = []
         bl_bins = []
-        model_hist = []
+        sim_hist = []
         cutoffs = []
-        med = np.median(self.UV.data_array, axis=(0, 1))
+        # med = np.median(self.UV.data_array, axis=(0, 1))
 
         for m in range(Nevent):
+            N = np.count_nonzero(~(self.UV.data_array[events[m, 3], :, events[m, 0], events[m, 2], events[m, 1]] /
+                                 MLE[events[m, 0], events[m, 2], events[m, 1]]).mask, axis=(0, 2)).median()
             bl_avg[:, m] = (self.UV.data_array[events[m, 3], :, events[m, 0], events[m, 2], events[m, 1]] /
-                            med[events[m, 0], events[m, 2], events[m, 1]]).mean(axis=(0, 2))
+                            MLE[events[m, 0], events[m, 2], events[m, 1]]).mean(axis=(0, 2))
 
             blt_slice = slice(self.UV.Nbls * events[m, 3].indices(self.UV.Ntimes - 1)[0],
                               self.UV.Nbls * (events[m, 3].indices(self.UV.Ntimes - 1)[0] + 1))
 
-            hist, bins = np.histogram(bl_avg[:, m], bins='auto')
-            print(bins)
-            Nt = events[m, 2].indices(self.UV.Ntimes)[1] - events[m, 2].indices(self.UV.Ntimes)[0] + 1
-            Nf = events[m, 2].indices(self.UV.Nfreqs)[1] - events[m, 2].indices(self.UV.Nfreqs)[0] + 1
-            model, cutoff, data = rfiutil.emp_pdf_flag(Nt * Nf, bl_avg[:, m], bins)
-            self.UV.data_array[events[m, 3], data.mask, events[m, 0], events[m, 2], events[m, 1]] = np.ma.masked
+            hist, bins = np.histogram(bl_avg[:, m][~bl_avg[:, m].mask], bins='auto')
+            Nt = events[m, 3].indices(self.UV.Ntimes)[1] - events[m, 3].indices(self.UV.Ntimes)[0]
+            Nf = events[m, 2].indices(self.UV.Nfreqs)[1] - events[m, 2].indices(self.UV.Nfreqs)[0]
+            if np.any(bl_avg[:, m].mask):
+                Nbls = np.count_nonzero(bl_avg[:, m].mask)
+            else:
+                Nbls = self.UV.Nbls
+            A, sim, bins, cutoff = rfiutil.emp_pdf(N, Nbls, bins, scale=1)
+            # if np.any(bl_avg[:, m] > cutoff):
+                # self.UV.data_array[events[m, 3], bl_avg[:, m] > cutoff,
+                                   # events[m, 0], events[m, 2], events[m, 1]] = np.ma.masked
             bl_hist.append(hist)
-            model_hist.append(model)
+            sim_hist.append(sim)
             cutoffs.append(cutoff)
             bl_bins.append(bins)
 
@@ -253,7 +260,7 @@ class RFI:
                     if len(seq) > 0:
                         grid[49 - k, i, m] = np.mean(seq)
 
-        return(bl_avg, bl_hist, bl_bins, model_hist, cutoffs)
+        return(grid, bl_hist, bl_bins, sim_hist, cutoffs)
 
     def ant_grid(self, mask):
 
