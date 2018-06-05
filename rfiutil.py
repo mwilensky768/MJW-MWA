@@ -301,7 +301,7 @@ def event_identify(event_count, dt=1):
     return(ind, col_bounds)
 
 
-def emp_pdf(N, Nbls, bins, sig=1. / np.sqrt(2 * np.log(2))):
+def emp_pdf(N, Nbls, bins, sig=1):
 
     if True:
         A = np.zeros(Nbls)

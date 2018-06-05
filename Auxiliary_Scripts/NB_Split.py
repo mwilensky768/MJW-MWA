@@ -1,5 +1,6 @@
 from pyuvdata import UVData
 import argparse
+import numpy as np
 
 parser = argparse.ArgumentParser()
 parser.add_argument("inpath", action='store', nargs=1, help="The file you want to process")

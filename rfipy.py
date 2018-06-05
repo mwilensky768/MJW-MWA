@@ -227,8 +227,8 @@ class RFI:
         # med = np.median(self.UV.data_array, axis=(0, 1))
 
         for m in range(Nevent):
-            N = np.count_nonzero(~(self.UV.data_array[events[m, 3], :, events[m, 0], events[m, 2], events[m, 1]] /
-                                 MLE[events[m, 0], events[m, 2], events[m, 1]]).mask, axis=(0, 2)).median()
+            N = np.median(np.count_nonzero(~(self.UV.data_array[events[m, 3], :, events[m, 0], events[m, 2], events[m, 1]] /
+                                           MLE[events[m, 0], events[m, 2], events[m, 1]]).mask, axis=(0, 2)))
             bl_avg[:, m] = (self.UV.data_array[events[m, 3], :, events[m, 0], events[m, 2], events[m, 1]] /
                             MLE[events[m, 0], events[m, 2], events[m, 1]]).mean(axis=(0, 2))
 
@@ -242,7 +242,7 @@ class RFI:
                 Nbls = np.count_nonzero(bl_avg[:, m].mask)
             else:
                 Nbls = self.UV.Nbls
-            A, sim, bins, cutoff = rfiutil.emp_pdf(N, Nbls, bins, scale=1)
+            A, sim, bins, cutoff = rfiutil.emp_pdf(int(N), Nbls, bins)
             # if np.any(bl_avg[:, m] > cutoff):
                 # self.UV.data_array[events[m, 3], bl_avg[:, m] > cutoff,
                                    # events[m, 0], events[m, 2], events[m, 1]] = np.ma.masked

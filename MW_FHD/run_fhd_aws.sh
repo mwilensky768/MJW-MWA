@@ -20,6 +20,8 @@
 #
 # This is adapted by R. Byrne from PIPE_DREAM.SH for running FHD on MIT
 # (written by N. Barry)
+# Example command: bash run_fhd_aws.sh -f ~/MWA/MJW-MWA/Obs_Lists/GS_NB.txt -o /NB_Image -b s3://mw-mwa-ultra-faint-rfi -v mjw_vanilla_test -u mjw
+
 ####################################################
 
 #Clear input parameters
@@ -127,7 +129,7 @@ fi
 if [ -z ${user} ]; then
     user='rlb'
 fi
-if [ ${user} != 'rlb' ] && [ ${user} != 'nb' ] && [ ${user} != mjw ]; then
+if [ ${user} != 'rlb' ] && [ ${user} != 'nb' ] && [ ${user} != 'mjw' ]; then
     echo Invalid user. Option are -u rlb and -u nb and -u mjw
     exit 1
 fi
