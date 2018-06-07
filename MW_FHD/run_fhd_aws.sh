@@ -50,6 +50,7 @@ do
     m) metafits_s3_loc=$OPTARG;;		#Path to metafits files on S3
     i) input_vis=$OPTARG;;              #Optional input visibilities for in situ sim
     j) input_eor=$OPTARG;;             #Optional input eor sim for in situ sim
+    c) cal_s3_loc=$OPTARG;; #Path to calibration on s3
     \?) echo "Unknown option: Accepted flags are -f (obs_file_name), -s (starting_obs), -e (ending obs), -o (output directory), "
         echo "-b (output bucket on S3), -v (version input for FHD),  -n (number of slots to use), "
         echo "-u (user), -p (path to uvfits files on S3), -m (path to metafits files on S3)."
@@ -211,5 +212,5 @@ done
 
 for obs_id in "${good_obs_list[@]}"
 do
-   qsub -V -b y -cwd -v nslots=${nslots},outdir=${outdir},version=${version},s3_path=${s3_path},obs_id=$obs_id,versions_script=$versions_script,uvfits_s3_loc=$uvfits_s3_loc,metafits_s3_loc=$metafits_s3_loc,input_vis=$input_vis,input_eor=$input_eor -e ${logdir} -o ${logdir} -pe smp ${nslots} -sync y fhd_job_aws.sh &
+   qsub -V -b y -cwd -v nslots=${nslots},outdir=${outdir},version=${version},s3_path=${s3_path},obs_id=$obs_id,versions_script=$versions_script,uvfits_s3_loc=$uvfits_s3_loc,metafits_s3_loc=$metafits_s3_loc,input_vis=$input_vis,input_eor=$input_eor,cal_s3_loc=$cal_s3_loc -e ${logdir} -o ${logdir} -pe smp ${nslots} -sync y fhd_job_aws.sh &
 done

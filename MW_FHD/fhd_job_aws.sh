@@ -62,6 +62,13 @@ else
     sudo mkdir -m 777 /uvfits
 fi
 
+#create calibration download location with full permissions
+if [ -d /cal ]; then
+    sudo chmod -R 777 /cal
+else
+    sudo mkdir -m 777 /cal
+fi
+
 # Check if the uvfits file exists locally; if not, download it from S3
 if [ ! -f "/uvfits/${obs_id}.uvfits" ]; then
 
@@ -103,6 +110,29 @@ if [ ! -f "/uvfits/${obs_id}.metafits" ]; then
     # Verify that the metafits downloaded correctly
     if [ ! -f "/uvfits/${obs_id}.metafits" ]; then
         >&2 echo "ERROR: downloading metafits from S3 failed"
+        echo "Job Failed"
+        exit 1
+    fi
+fi
+
+# Check if the cal file exists locally; if not, download it from S3
+if [ ! -f "/cal/${obs_id}_cal.sav" ]; then
+
+    # Check that the calibration file exists on S3
+    cal_exists=$(aws s3 ls ${cal_s3_loc}/${obs_id}_cal.sav)
+    if [ -z "$cal_exists" ]; then
+        >&2 echo "ERROR: calibration file not found"
+        echo "Job Failed"
+        exit 1
+    fi
+
+    # Download calibration from S3
+    sudo aws s3 cp ${cal_s3_loc}/${obs_id}_cal.sav \
+    /cal/${obs_id}_cal.sav --quiet
+
+    # Verify that the calibration downloaded correctly
+    if [ ! -f "/cal/${obs_id}_cal.sav" ]; then
+        >&2 echo "ERROR: downloading calibration from S3 failed"
         echo "Job Failed"
         exit 1
     fi

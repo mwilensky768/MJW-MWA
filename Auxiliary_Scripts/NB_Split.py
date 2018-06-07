@@ -14,6 +14,8 @@ for m in range(len(ind[0])):
     UV.nsample_array[ind[0][m], ind[1][m], ind[2][m], ind[3][m]] = \
         UV.nsample_array[0, ind[1][m], ind[2][m] % 16, ind[3][m]]
 
-UV.flag_array[:, :, 162, :] = 1
+UV.flag_array[:, :, :162, :] = 1
+UV.flag_array[:, :, 162, :] = 0
+UV.flag_array[:, :, 163:, :] = 1
 
 UV.write_uvfits(args.inpath[0])

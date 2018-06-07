@@ -15,23 +15,24 @@ pro mjw_fhd_versions
 
   case version of
 
-    'mjw_Aug23_Jan2018': begin
-      uvfits_version = 4
-      uvfits_subversion = 1
-      transfer_calibration = '/nfs/mwa-04/r1/EoRuvfits/DiffuseSurvey2015/fhd_mjw_Aug23_Jan2018/calibration/1061313128_f181.2_f187.5_t30_t36_cal.sav'
-      cal_bp_transfer = 1
-      bandpass_calibrate = 1
-      ;calibration_catalog_file_path = filepath('master_sgal_cat.sav',root=rootdir('FHD'),subdir='catalog_data')
-      ;calibration_catalog_file_path = filepath('GLEAMIDR4_181_consistent.sav',root=rootdir('FHD'),subdir='catalog_data')
-      filter_background = 1
-      diffuse_calibrate = 0
-      diffuse_model = 0
-      subtract_sidelobe_catalog = filepath('GLEAMIDR4_181_consistent.sav',root=rootdir('FHD'),subdir='catalog_data')
-      dft_threshold = 0
-      ring_radius = 0
-      debug_region_grow = 0
-      recalculate_all = 1
-      vis_file_list = "/nfs/eor-11/r1/EoRuvfits/jd2456528v4_1/1061313128/TV_Cuts/1061313128_f181.2_f187.5_t18_t24.uvfits"
+    'mjw_Aug23_Jan2018_transfer': begin
+    uvfits_version = 4
+    uvfits_subversion = 1
+    transfer_calibration = '/cal/'
+    cal_bp_transfer = 1
+    bandpass_calibrate = 1
+    ;calibration_catalog_file_path = filepath('master_sgal_cat.sav',root=rootdir('FHD'),subdir='catalog_data')
+    calibration_catalog_file_path = filepath('GLEAMIDR4_181_consistent.sav',root=rootdir('FHD'),subdir='catalog_data')
+    filter_background = 1
+    diffuse_calibrate = 0
+    diffuse_model = 0
+    subtract_sidelobe_catalog = filepath('GLEAMIDR4_181_consistent.sav',root=rootdir('FHD'),subdir='catalog_data')
+    dft_threshold = 0
+    ring_radius = 0
+    debug_region_grow = 0
+    recalculate_all = 1
+    vis_file_list = '/Users/mikewilensky/uvfits/1061313128_t11_flag_mod.uvfits'
+    model_visibilities = 1
 
     end
 

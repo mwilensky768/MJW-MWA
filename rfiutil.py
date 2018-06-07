@@ -177,7 +177,7 @@ def match_filter(INS, MS, Nbls, freq_array, sig_thresh, shape_dict, outpath, dt=
                 else:
                     # Average across the shaoe in question specified by slc - output is 1D
                     sliced_arr = MS[:, spw, slice_dict[shape], pol].mean(axis=1)
-                    N = np.count_nonzero(~MS[:, spw, slice_dict[shape], pol].mask, axis=1)
+                    N = np.count_nonzero(no.logical_not(MS[:, spw, slice_dict[shape], pol].mask), axis=1)
                     # Gauss dist, so expected width is as below
                     thresh = sig_thresh * \
                         np.sqrt(np.sum(sigma_calc(Nbls[:, spw, slice_dict[shape], pol])**2, axis=1)) / N
@@ -231,7 +231,7 @@ def match_filter(INS, MS, Nbls, freq_array, sig_thresh, shape_dict, outpath, dt=
 
     events = event_compile(events, dt=dt)
 
-    n, bins = np.histogram(MS[~MS.mask], bins='auto')
+    n, bins = np.histogram(MS[np.logical_not(MS.mask)], bins='auto')
     fit = INS_hist_fit(bins, MS, Nbls, sig_thresh)
 
     obj_tup = (INS, MS, events, n, bins, fit)
@@ -252,7 +252,7 @@ def narrowband_filter(INS, ch_ignore=None):
         FD_CB[:, :, 16 * m:16 * (m + 1), :] = INS[:, :, 16 * m:16 * (m + 1), :] / INS_CBM - 1
     if ch_ignore is not None:
         INS[:, :, ch_ignore, :] = np.ma.masked
-    INS = np.ma.masked_where(np.logical_and(FD_CB > 0.1, ~INS.mask), INS)
+    INS = np.ma.masked_where(np.logical_and(FD_CB > 0.1, np.logical_not(INS.mask)), INS)
     if ch_ignore is not None:
         INS.mask[:, :, ch_ignore, :] = False
 

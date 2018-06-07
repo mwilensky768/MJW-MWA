@@ -14,7 +14,7 @@ obs = args.inpath[0][-17:-7]
 """Input/Output keywords"""
 
 # You can add 'waterfall' to this list to compute another type of catalog
-catalog_types = ['bl_scat', ]
+catalog_types = ['one_d_hist', ]
 
 """Object Keywords"""
 
@@ -57,3 +57,5 @@ if 'rms' in catalog_types:
     RFI.rms_calc()
 if 'bl_scat' in catalog_types:
     cf.bl_scatter_catalog(RFI, shape_dict=shape_dict)
+if 'one_d_hist' in catalog_types:
+    cf.one_d_hist_catalog(RFI, MC=True)

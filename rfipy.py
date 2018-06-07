@@ -68,13 +68,13 @@ class RFI:
 
     def apply_flags(self, app=False):
         if app:
-            if ~np.all(self.UV.data_array.mask == self.UV.flag_array):
+            if not np.all(self.UV.data_array.mask == self.UV.flag_array):
                 self.UV.data_array.mask = self.UV.flag_array
         elif np.any(self.UV.data_array.mask):
             self.UV.data_array.mask = False
 
     def one_d_hist_prepare(self, flag=False, bins=None, fit=False,
-                           bin_window=None):
+                           bin_window=None, norm=False, MC=False, pow=False):
         """
         This function makes one_d visibility difference amplitude histograms.
         You may choose to histogram only subsets of the data using the set of ind
@@ -93,6 +93,7 @@ class RFI:
         suspected RFI.
         """
         self.apply_flags(flag)
+        print(fit)
 
         # Generate the bins or keep the selected ones
         if bins is None:
@@ -120,13 +121,41 @@ class RFI:
         else:
             fit = None
 
-        n, _ = np.histogram(self.UV.data_array[np.logical_not(self.UV.data_array.mask)], bins=bins)
+        if norm:
+            sig_arr, N_arr = self.rms_calc(axis=0, flag=flag) / np.sqrt(2)
+            self.UV.data_array = self.UV.data_array / sig_arr
+            n, bins = np.histogram(self.UV.data_array[np.logical_not(self.UV.data_array.mask)], bins='auto')
+            N = np.count_nonzero(np.logical_not(self.UV.data_array.mask))
+            if MC:
+                fit, _ = np.histogram(np.random.rayleigh(size=N), bins=bins)
+            else:
+                w = np.diff(bins)
+                x = bins[:-1] + 0.5 * w
+                fit = N * w * x * np.exp(-0.5 * x**2)
+        elif pow:
+            self.UV.data_array = 0.5 * self.UV.data_array**2
+            gam = self.UV.data_array.mean(axis=(0, 1))
+            self.UV.data_array /= gam
+            n, bins = np.histogram(self.UV.data_array[np.logical_not(self.UV.data_array.mask)], bins='auto')
+            N = np.sum(n)
+            w = np.diff(bins)
+            x = bins[:-1] + 0.5 * w
+            fit = N * w * np.exp(-x)
+            print(fit)
+        else:
+            n, _ = np.histogram(self.UV.data_array[np.logical_not(self.UV.data_array.mask)], bins=bins)
 
         # Write out the function returns
         base = '%sarrs/%s/%s' % (self.outpath, self.flag_titles[flag], self.obs)
         np.save('%s_hist.npy' % (base), n)
         np.save('%s_bins.npy' % (base), bins)
         np.save('%s_fit.npy' % (base), fit)
+        if n is None:
+            print('n is None')
+        if bins is None:
+            print('bins is None')
+        if fit is None:
+            print('fit is None')
 
         return(n, bins, fit)
 
@@ -193,14 +222,14 @@ class RFI:
         self.apply_flags(flag)
 
         if flag:
-            Nbls = (~self.UV.data_array.mask).sum(axis=1)
+            Nbls = (np.logical_not(self.UV.data_array.mask)).sum(axis=1)
         else:
             Nbls = self.UV.Nbls * np.ones((self.UV.Ntimes - 1, self.UV.Nspws, self.UV.Nfreqs, self.UV.Npols), dtype=int)
         INS = np.mean(self.UV.data_array, axis=1)
         MS = INS / INS.mean(axis=0) - 1
-        n, bins = np.histogram(MS[~MS.mask], bins='auto')
+        n, bins = np.histogram(MS[np.logical_not(MS.mask)], bins='auto')
 
-        fit = rfiutil.INS_hist_fit(bins, MS[~MS.mask], Nbls, sig_thresh)
+        fit = rfiutil.INS_hist_fit(bins, MS[np.logical_not(MS.mask)], Nbls, sig_thresh)
 
         base = '%sarrs/%s/%s' % (self.outpath, self.flag_titles[flag], self.obs)
         obj_tup = (INS, MS, Nbls, n, bins, fit)
@@ -214,7 +243,7 @@ class RFI:
     def bl_grid_flag(self, events, flag=False, gridsize=50,
                      edges=np.linspace(-3000, 3000, num=51)):
 
-        MLE, _ = self.rms_calc(axis=(0, 1)) / np.sqrt(2)
+        # MLE, _ = self.rms_calc(axis=(0, 1)) / np.sqrt(2)
         self.apply_flags(flag)
 
         Nevent = len(events)
@@ -224,25 +253,25 @@ class RFI:
         bl_bins = []
         sim_hist = []
         cutoffs = []
-        # med = np.median(self.UV.data_array, axis=(0, 1))
+        med = np.median(self.UV.data_array, axis=(0, 1))
 
         for m in range(Nevent):
-            N = np.median(np.count_nonzero(~(self.UV.data_array[events[m, 3], :, events[m, 0], events[m, 2], events[m, 1]] /
-                                           MLE[events[m, 0], events[m, 2], events[m, 1]]).mask, axis=(0, 2)))
+            #N = np.median(np.count_nonzero(~(self.UV.data_array[events[m, 3], :, events[m, 0], events[m, 2], events[m, 1]] /
+                                          # MLE[events[m, 0], events[m, 2], events[m, 1]]).mask, axis=(0, 2)))
             bl_avg[:, m] = (self.UV.data_array[events[m, 3], :, events[m, 0], events[m, 2], events[m, 1]] /
-                            MLE[events[m, 0], events[m, 2], events[m, 1]]).mean(axis=(0, 2))
+                            med[events[m, 0], events[m, 2], events[m, 1]]).mean(axis=(0, 2))
 
             blt_slice = slice(self.UV.Nbls * events[m, 3].indices(self.UV.Ntimes - 1)[0],
                               self.UV.Nbls * (events[m, 3].indices(self.UV.Ntimes - 1)[0] + 1))
 
-            hist, bins = np.histogram(bl_avg[:, m][~bl_avg[:, m].mask], bins='auto')
+            hist, bins = np.histogram(bl_avg[:, m][np.logical_not(bl_avg[:, m].mask)], bins='auto')
             Nt = events[m, 3].indices(self.UV.Ntimes)[1] - events[m, 3].indices(self.UV.Ntimes)[0]
             Nf = events[m, 2].indices(self.UV.Nfreqs)[1] - events[m, 2].indices(self.UV.Nfreqs)[0]
             if np.any(bl_avg[:, m].mask):
                 Nbls = np.count_nonzero(bl_avg[:, m].mask)
             else:
                 Nbls = self.UV.Nbls
-            A, sim, bins, cutoff = rfiutil.emp_pdf(int(N), Nbls, bins)
+            A, sim, bins, cutoff = rfiutil.emp_pdf(Nt * Nf, Nbls, bins, sig=1. / np.sqrt(2 * np.log(2)))
             # if np.any(bl_avg[:, m] > cutoff):
                 # self.UV.data_array[events[m, 3], bl_avg[:, m] > cutoff,
                                    # events[m, 0], events[m, 2], events[m, 1]] = np.ma.masked
@@ -296,10 +325,10 @@ class RFI:
 
         return(ant_avg, ant_grid, xedges, yedges)
 
-    def rms_calc(self, axis=None, flag=True):
+    def MLE_calc(self, axis=None, flag=True):
         # Calculate the rms of the unflagged data, splitting according to axis tuple
         self.apply_flags(flag)
-        rms = np.sqrt(np.mean(self.UV.data_array**2, axis=axis))
+        MLE = 0.5 * np.mean(self.UV.data_array**2, axis=axis)
         N = np.count_nonzero(np.logical_not(self.UV.data_array.mask), axis=axis)
 
         fn = filter(str.isalnum, str(axis))
@@ -308,4 +337,4 @@ class RFI:
         np.ma.dump(rms, '%s_rms_%s.npym' % (base, fn))
         np.save('%s_N_%s.npy' % (base, fn), N)
 
-        return(rms, N)
+        return(MLE, N)

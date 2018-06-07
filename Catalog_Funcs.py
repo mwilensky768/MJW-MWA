@@ -407,3 +407,18 @@ def bl_scatter_catalog(RFI, cmap=cm.plasma, gridsize=50, flag=False, sig_thresh=
             plt.close(fig_grid)
     else:
         print('No events were found in the incoherent noise spectra!')
+
+
+def one_d_hist_catalog(RFI, norm=False, pow=False, MC=False):
+    fig, ax = plt.subplots(figsize=(14, 8), nrows=2)
+    fig.suptitle('%s Visibility Difference Amplitude Histogram' % (RFI.obs))
+    amp_labels = ('Amplitude (UNCALIB)', 'Amplitude (Sigma)')
+    for i, norm in enumerate([False, True]):
+        fit = not norm
+        n, bins, fit = RFI.one_d_hist_prepare(flag=True, bins=None, fit=fit,
+                                              norm=norm, MC=MC, pow=pow)
+        plot_lib.one_d_hist_plot(fig, ax[i], bins, [n, fit], labels=['Data', 'Fit'],
+                                 xlog=not norm, xlabel=amp_labels[i])
+    if not os.path.exists('%sfigs/' % (RFI.outpath)):
+        os.makedirs('%sfigs/' % (RFI.outpath))
+    fig.savefig('%sfigs/%s_Amp_Hist.png' % (RFI.outpath, RFI.obs))
