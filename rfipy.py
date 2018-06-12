@@ -10,7 +10,8 @@ import rfiutil
 class RFI:
 
     def __init__(self, obs, filepath, outpath, bad_time_indices=[0, -3, -2, -1],
-                 filetype='uvfits', freq_chans=None, times=None, ant_str='cross'):
+                 filetype='uvfits', freq_chans=None, times=None, ant_str='cross',
+                 polarizations=None):
 
         # These lines establish the most basic attributes of the class, namely
         # its base UVData object and the obsid
@@ -27,9 +28,13 @@ class RFI:
                 for bad_time in bad_times:
                     times.remove(bad_time)
             self.UV.read_uvfits_data(filepath, freq_chans=freq_chans, times=times,
-                                     ant_str=ant_str)
+                                     polarizations=polarizations)
         elif filetype is 'miriad':
             self.UV.read_miriad(filepath)
+            self.UV.select(filepath, freq_chans=freq_chans, times=times,
+                           polarizations=polarizations)
+        if ant_str:
+            self.UV.select(ant_str=ant_str)
 
         # This generalizes polarization references during plotting
         pol_keys = range(-8, 5)
@@ -243,7 +248,7 @@ class RFI:
     def bl_grid_flag(self, events, flag=False, gridsize=50,
                      edges=np.linspace(-3000, 3000, num=51)):
 
-        # MLE, _ = self.rms_calc(axis=(0, 1)) / np.sqrt(2)
+        MLE, _ = self.MLE_calc(axis=0, flag=flag)
         self.apply_flags(flag)
 
         Nevent = len(events)
@@ -253,25 +258,22 @@ class RFI:
         bl_bins = []
         sim_hist = []
         cutoffs = []
-        med = np.median(self.UV.data_array, axis=(0, 1))
 
         for m in range(Nevent):
-            #N = np.median(np.count_nonzero(~(self.UV.data_array[events[m, 3], :, events[m, 0], events[m, 2], events[m, 1]] /
-                                          # MLE[events[m, 0], events[m, 2], events[m, 1]]).mask, axis=(0, 2)))
-            bl_avg[:, m] = (self.UV.data_array[events[m, 3], :, events[m, 0], events[m, 2], events[m, 1]] /
-                            med[events[m, 0], events[m, 2], events[m, 1]]).mean(axis=(0, 2))
+            bl_avg[:, m] = (0.5 * self.UV.data_array[events[m, 3], :, events[m, 0], events[m, 2], events[m, 1]]**2 /
+                            MLE[:, events[m, 0], events[m, 2], events[m, 1]]).mean(axis=1)
 
-            blt_slice = slice(self.UV.Nbls * events[m, 3].indices(self.UV.Ntimes - 1)[0],
-                              self.UV.Nbls * (events[m, 3].indices(self.UV.Ntimes - 1)[0] + 1))
+            blt_slice = slice(self.UV.Nbls * events[m, 3],
+                              self.UV.Nbls * (events[m, 3] + 1))
 
             hist, bins = np.histogram(bl_avg[:, m][np.logical_not(bl_avg[:, m].mask)], bins='auto')
-            Nt = events[m, 3].indices(self.UV.Ntimes)[1] - events[m, 3].indices(self.UV.Ntimes)[0]
             Nf = events[m, 2].indices(self.UV.Nfreqs)[1] - events[m, 2].indices(self.UV.Nfreqs)[0]
             if np.any(bl_avg[:, m].mask):
                 Nbls = np.count_nonzero(bl_avg[:, m].mask)
             else:
                 Nbls = self.UV.Nbls
-            A, sim, bins, cutoff = rfiutil.emp_pdf(Nt * Nf, Nbls, bins, sig=1. / np.sqrt(2 * np.log(2)))
+            A, sim, bins, cutoff = rfiutil.emp_pdf(Nf, Nbls, bins, scale=1, dist='exponential',
+                                                   analytic=True)
             # if np.any(bl_avg[:, m] > cutoff):
                 # self.UV.data_array[events[m, 3], bl_avg[:, m] > cutoff,
                                    # events[m, 0], events[m, 2], events[m, 1]] = np.ma.masked
@@ -329,12 +331,15 @@ class RFI:
         # Calculate the rms of the unflagged data, splitting according to axis tuple
         self.apply_flags(flag)
         MLE = 0.5 * np.mean(self.UV.data_array**2, axis=axis)
-        N = np.count_nonzero(np.logical_not(self.UV.data_array.mask), axis=axis)
+        if flag:
+            N = np.count_nonzero(np.logical_not(self.UV.data_array.mask), axis=axis)
+        else:
+            N = self.UV.Nblts
 
         fn = filter(str.isalnum, str(axis))
 
         base = '%sarrs/%s/%s_' % (self.outpath, self.flag_titles[flag], self.obs)
-        np.ma.dump(rms, '%s_rms_%s.npym' % (base, fn))
+        np.ma.dump(MLE, '%s_MLE_%s.npym' % (base, fn))
         np.save('%s_N_%s.npy' % (base, fn), N)
 
         return(MLE, N)

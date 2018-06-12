@@ -385,16 +385,15 @@ def bl_scatter_catalog(RFI, cmap=cm.plasma, gridsize=50, flag=False, sig_thresh=
             title_tuple = (RFI.obs,
                            min(RFI.UV.freq_array[events[m, 0], events[m, 2]]) * 10 ** (-6),
                            max(RFI.UV.freq_array[events[m, 0], events[m, 2]]) * 10 ** (-6),
-                           events[m, 3].indices(RFI.UV.Ntimes - 1)[0],
-                           events[m, 3].indices(RFI.UV.Ntimes - 1)[1],
+                           events[m, 3],
                            RFI.pols[events[m, 1]])
 
             plot_lib.one_d_hist_plot(fig_hist, ax_hist, bl_bins[m], [bl_hist[m], sim_hist[m]], xlog=False,
                                      labels=['Measurements', 'Monte Carlo'], xlabel='Amplitude (Median)',
-                                     title='%s RFI Event-Averaged Amplitude Histogram %.1f - %.1f Mhz, t%i - t%i, %s' % title_tuple)
+                                     title='%s RFI Event-Averaged Amplitude Histogram %.1f - %.1f Mhz, t%i, %s' % title_tuple)
             ax_hist.axvline(x=cutoffs[m], color='black')
             plot_lib.image_plot(fig_grid, ax_grid, grid[:, :, m],
-                                title='%s RFI Baseline Gridded Average, %.2f - %.2f Mhz, t%i - t%i, %s' % title_tuple,
+                                title='%s RFI Baseline Gridded Average, %.2f - %.2f Mhz, t%i, %s' % title_tuple,
                                 aspect_ratio=1, xlabel='$\lambda u$ (m)',
                                 ylabel='$\lambda v$ (m)', xticklabels=xticklabels,
                                 yticklabels=yticklabels,

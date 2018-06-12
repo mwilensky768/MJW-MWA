@@ -14,7 +14,7 @@ obs = args.inpath[0][-17:-7]
 """Input/Output keywords"""
 
 # You can add 'waterfall' to this list to compute another type of catalog
-catalog_types = ['one_d_hist', ]
+catalog_types = ['bl_scat', ]
 
 """Object Keywords"""
 

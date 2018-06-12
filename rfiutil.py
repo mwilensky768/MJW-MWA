@@ -2,7 +2,7 @@ import numpy as np
 from math import floor, ceil, log10, pi, log, sqrt
 from scipy.special import erfinv
 from scipy.integrate import simps
-from scipy.stats import kstest, chisquare
+import scipy.stats
 import time
 
 
@@ -177,7 +177,7 @@ def match_filter(INS, MS, Nbls, freq_array, sig_thresh, shape_dict, outpath, dt=
                 else:
                     # Average across the shaoe in question specified by slc - output is 1D
                     sliced_arr = MS[:, spw, slice_dict[shape], pol].mean(axis=1)
-                    N = np.count_nonzero(no.logical_not(MS[:, spw, slice_dict[shape], pol].mask), axis=1)
+                    N = np.count_nonzero(np.logical_not(MS[:, spw, slice_dict[shape], pol].mask), axis=1)
                     # Gauss dist, so expected width is as below
                     thresh = sig_thresh * \
                         np.sqrt(np.sum(sigma_calc(Nbls[:, spw, slice_dict[shape], pol])**2, axis=1)) / N
@@ -229,7 +229,8 @@ def match_filter(INS, MS, Nbls, freq_array, sig_thresh, shape_dict, outpath, dt=
         if R_max > -np.inf:
             MS = INS / INS.mean(axis=0) - 1
 
-    events = event_compile(events, dt=dt)
+    if events:
+        events = np.vstack(events)
 
     n, bins = np.histogram(MS[np.logical_not(MS.mask)], bins='auto')
     fit = INS_hist_fit(bins, MS, Nbls, sig_thresh)
@@ -261,75 +262,34 @@ def narrowband_filter(INS, ch_ignore=None):
 
 def channel_hist(INS):
 
-    hist_total, bins = np.histogram(INS, bins='auto')
-    hist_arr = np.zeros((len(bins) - 1, ) + INS.shape[1:])
-    gauss_arr = np.copy(hist_arr)
+    hist_arr = np.zeros(INS.shape[1:], dtype=object)
+    ks_arr = np.zeros(INS.shape[1:], dtype=object)
     mu = INS.mean(axis=0)
     var = INS.var(axis=0)
-    w = bins[1] - bins[0]
-    x = bins[:-1] + 0.5 * w
-    for m in range(INS.shape[1]):
-        for n in range(INS.shape[3]):
-            for p in range(INS.shape[2]):
-                hist_arr[:, m, p, n], _ = np.histogram(INS[:, m, p, n], bins=bins)
-                gauss_arr[:, m, p, n] = INS.shape[0] * w / np.sqrt(2 * pi * var[m, p, n]) *\
-                    np.exp(-(x - mu[m, p, n])**2 / (2 * var[m, p, n]))
+    for i in range(INS.shape[1]):
+        for k in range(INS.shape[2]):
+            for m in range(INS.shape[3]):
+                hist_arr[i, k, m] = np.histogram(INS[:, i, k, m], bins='auto')
+                ks_arr[i, k, m] = scipy.stats.kstest(INS[:, i, k, m], 'norm',
+                                                     args=(mu[i, k, m], np.sqrt(var[i, k, m])))
 
-    return(hist_total, bins, hist_arr, gauss_arr, mu, var)
+    return(hist_arr, ks_arr, mu, var)
 
 
-def event_identify(event_count, dt=1):
-    """
-    Search for events which are contiguous in time, belonging to the same spw
-    and pol
+def emp_pdf(N, Nbls, bins, scale=1, dist='rayleigh', analytic=False):
 
-    dt determines the maximal separation time of flags in order for those flags
-    to belong to the same event
-    """
-    # Find the indices of the masked data in a tuple
-    ind = np.where(mask)
-    # Reorder the tuple to spw, pol, time, freq
-    ind = (ind[1], ind[3], ind[0], ind[2])
-    # stack them vertically and use unique to sort
-    ind_stack = np.unique(np.vstack(ind), axis=1)
-    # take the difference in the stack
-    diff = ind_stack[:-1].diff(axis=1)
-    # Find the column index for the last member of an event
-    col_bounds = np.where(np.logical_or(np.logical_or(diff[0, :], diff[1, :]),
-                                        diff[2, :] > dt))[0]
-
-    return(ind, col_bounds)
-
-
-def emp_pdf(N, Nbls, bins, sig=1):
-
-    if True:
-        A = np.zeros(Nbls)
-        for m in range(N):
-            A += np.random.rayleigh(scale=sig, size=Nbls)
-        A /= N
-        if bins is 'auto':
-            sim, bins = np.histogram(A, bins='auto')
-            cutoff = bins[-1]
-        else:
-            sim, _ = np.histogram(A, bins=bins)
-            cutoff = bins[min(np.digitize(max(A), bins), len(bins) - 1)]
-    else:
-        var = (2 - pi / 2) * sig**2
-        mu = np.sqrt(pi / 2) * sig
-        if bins is 'auto':
-            h = 4 * np.sqrt(2. / N) * g_sig * erfinv(0.5) / Nbls**(1. / 3)
-            cutoff = mu + g_sig * np.sqrt(2. / N * np.log(Nbls * h * np.sqrt(N / (2 * pi)) / g_sig))
-            sim = None
-        else:
-            h = bins[1] - bins[0]
-            x = bins[:-1] + 0.5 * h
-            sim = Nbls * h * np.sqrt(N / (2 * pi * var)) * np.exp(- N * (x - mu)**2 / (2 * var))
-            if len(bins[:-1][np.logical_and(bins[:-1] > sim.argmax(), sim < 1)]):
-                cutoff = bins[:-1][np.logical_and(bins[:-1] > sim.argmax(), sim < 1)][0]
-            else:
-                cutoff = bins[-1]
-
+    if analytic:
+        w = np.diff(bins)
+        x = bins[:-1] + 0.5 * w
+        sim = Nbls * w * scipy.stats.gamma.pdf(x, N, scale=float(scale) / N)
         A = None
+        if np.any(np.logical_and(bins[1:] > sim.argmax(), sim < 1)):
+            cutoff = min(bins[1:][np.logical_and(bins[1:] > sim.argmax(), sim < 1)])
+        else:
+            cutoff = bins[-1]
+    else:
+        A = getattr(np.random, dist)(size=(N, Nbls), scale=scale).mean(axis=0)
+        sim, _ = np.histogram(A, bins=bins)
+        cutoff = bins[min(np.digitize(max(A), bins), len(bins) - 1)]
 
     return(A, sim, bins, cutoff)

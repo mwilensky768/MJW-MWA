@@ -138,6 +138,29 @@ if [ ! -f "/cal/${obs_id}_cal.sav" ]; then
     fi
 fi
 
+# Check if the bandpass file exists locally; if not, download it from S3
+if [ ! -f "/cal/${obs_id}_bandpass.txt" ]; then
+
+    # Check that the bandpass file exists on S3
+    bp_exists=$(aws s3 ls ${cal_s3_loc}/${obs_id}_bandpass.txt)
+    if [ -z "$bp_exists" ]; then
+        >&2 echo "ERROR: bandpass file not found"
+        echo "Job Failed"
+        exit 1
+    fi
+
+    # Download bandpass from S3
+    sudo aws s3 cp ${cal_s3_loc}/${obs_id}_bandpass.txt \
+    /cal/${obs_id}_bandpass.txt --quiet
+
+    # Verify that the bandpass downloaded correctly
+    if [ ! -f "/cal/${obs_id}_bandpass.txt" ]; then
+        >&2 echo "ERROR: downloading bandpass from S3 failed"
+        echo "Job Failed"
+        exit 1
+    fi
+fi
+
 python ~/MWA/MJW-MWA/Auxiliary_Scripts/NB_Split.py /uvfits/${obs_id}.uvfits
 
 #Get input_vis files

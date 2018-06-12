@@ -15,11 +15,11 @@ pro mjw_fhd_versions
 
   case version of
 
-    'mjw_Aug23_Jan2018_transfer': begin
+    'mjw_NB_transfer_1': begin
     uvfits_version = 4
     uvfits_subversion = 1
-    transfer_calibration = '/cal/'
-    cal_bp_transfer = 1
+    transfer_calibration = '/cal/1061318616_cal.sav'
+    cal_bp_transfer = '1061318616_bandpass.txt'
     bandpass_calibrate = 1
     ;calibration_catalog_file_path = filepath('master_sgal_cat.sav',root=rootdir('FHD'),subdir='catalog_data')
     calibration_catalog_file_path = filepath('GLEAMIDR4_181_consistent.sav',root=rootdir('FHD'),subdir='catalog_data')
@@ -31,7 +31,112 @@ pro mjw_fhd_versions
     ring_radius = 0
     debug_region_grow = 0
     recalculate_all = 1
-    vis_file_list = '/Users/mikewilensky/uvfits/1061313128_t11_flag_mod.uvfits'
+    vis_file_list = '/uvfits/1061318616.uvfits'
+    model_visibilities = 1
+
+    end
+
+    'mjw_NB_transfer_2': begin
+    uvfits_version = 4
+    uvfits_subversion = 1
+    transfer_calibration = '/cal/1061318736_cal.sav'
+    cal_bp_transfer = '/cal/1061318736_bandpass.txt'
+    bandpass_calibrate = 1
+    ;calibration_catalog_file_path = filepath('master_sgal_cat.sav',root=rootdir('FHD'),subdir='catalog_data')
+    calibration_catalog_file_path = filepath('GLEAMIDR4_181_consistent.sav',root=rootdir('FHD'),subdir='catalog_data')
+    filter_background = 1
+    diffuse_calibrate = 0
+    diffuse_model = 0
+    subtract_sidelobe_catalog = filepath('GLEAMIDR4_181_consistent.sav',root=rootdir('FHD'),subdir='catalog_data')
+    dft_threshold = 0
+    ring_radius = 0
+    debug_region_grow = 0
+    recalculate_all = 1
+    vis_file_list = '/uvfits/1061318736.uvfits'
+    model_visibilities = 1
+
+    end
+
+    'mjw_NB_transfer_3': begin
+    uvfits_version = 4
+    uvfits_subversion = 1
+    transfer_calibration = '/cal/1061318864_cal.sav'
+    cal_bp_transfer = '/cal/1061318864_bandpass.txt'
+    bandpass_calibrate = 1
+    ;calibration_catalog_file_path = filepath('master_sgal_cat.sav',root=rootdir('FHD'),subdir='catalog_data')
+    calibration_catalog_file_path = filepath('GLEAMIDR4_181_consistent.sav',root=rootdir('FHD'),subdir='catalog_data')
+    filter_background = 1
+    diffuse_calibrate = 0
+    diffuse_model = 0
+    subtract_sidelobe_catalog = filepath('GLEAMIDR4_181_consistent.sav',root=rootdir('FHD'),subdir='catalog_data')
+    dft_threshold = 0
+    ring_radius = 0
+    debug_region_grow = 0
+    recalculate_all = 1
+    vis_file_list = '/uvfits/1061318864.uvfits'
+    model_visibilities = 1
+
+    end
+
+    'mjw_NB_transfer_4': begin
+    uvfits_version = 4
+    uvfits_subversion = 1
+    transfer_calibration = '/cal/1061319224_cal.sav'
+    cal_bp_transfer = '/cal/1061319224_bandpass.txt'
+    bandpass_calibrate = 1
+    ;calibration_catalog_file_path = filepath('master_sgal_cat.sav',root=rootdir('FHD'),subdir='catalog_data')
+    calibration_catalog_file_path = filepath('GLEAMIDR4_181_consistent.sav',root=rootdir('FHD'),subdir='catalog_data')
+    filter_background = 1
+    diffuse_calibrate = 0
+    diffuse_model = 0
+    subtract_sidelobe_catalog = filepath('GLEAMIDR4_181_consistent.sav',root=rootdir('FHD'),subdir='catalog_data')
+    dft_threshold = 0
+    ring_radius = 0
+    debug_region_grow = 0
+    recalculate_all = 1
+    vis_file_list = '/uvfits/1061319224.uvfits'
+    model_visibilities = 1
+
+    end
+
+    'mjw_NB_transfer_5': begin
+    uvfits_version = 4
+    uvfits_subversion = 1
+    transfer_calibration = '/cal/1061319352_cal.sav'
+    cal_bp_transfer = '/cal/1061319352_bandpass.txt'
+    bandpass_calibrate = 1
+    ;calibration_catalog_file_path = filepath('master_sgal_cat.sav',root=rootdir('FHD'),subdir='catalog_data')
+    calibration_catalog_file_path = filepath('GLEAMIDR4_181_consistent.sav',root=rootdir('FHD'),subdir='catalog_data')
+    filter_background = 1
+    diffuse_calibrate = 0
+    diffuse_model = 0
+    subtract_sidelobe_catalog = filepath('GLEAMIDR4_181_consistent.sav',root=rootdir('FHD'),subdir='catalog_data')
+    dft_threshold = 0
+    ring_radius = 0
+    debug_region_grow = 0
+    recalculate_all = 1
+    vis_file_list = '/uvfits/1061319352.uvfits'
+    model_visibilities = 1
+
+    end
+
+    'mjw_NB_transfer_6': begin
+    uvfits_version = 4
+    uvfits_subversion = 1
+    transfer_calibration = '/cal/1061319472_cal.sav'
+    cal_bp_transfer = '/cal/1061319472_bandpass.txt'
+    bandpass_calibrate = 1
+    ;calibration_catalog_file_path = filepath('master_sgal_cat.sav',root=rootdir('FHD'),subdir='catalog_data')
+    calibration_catalog_file_path = filepath('GLEAMIDR4_181_consistent.sav',root=rootdir('FHD'),subdir='catalog_data')
+    filter_background = 1
+    diffuse_calibrate = 0
+    diffuse_model = 0
+    subtract_sidelobe_catalog = filepath('GLEAMIDR4_181_consistent.sav',root=rootdir('FHD'),subdir='catalog_data')
+    dft_threshold = 0
+    ring_radius = 0
+    debug_region_grow = 0
+    recalculate_all = 1
+    vis_file_list = '/uvfits/1061319472.uvfits'
     model_visibilities = 1
 
     end
