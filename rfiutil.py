@@ -141,7 +141,7 @@ def edge_detect(frac_diff, RFI_type='streak', sig=2):
     return(smooth, edge)
 
 
-def match_filter(INS, MS, Nbls, freq_array, sig_thresh, shape_dict, outpath, dt=1):
+def match_filter(INS, MS, Nbls, outpath, freq_array, sig_thresh=4, shape_dict={}, dt=1):
     """
     shape_dict is a dictionary whose key is the name of the shape as a string
     and each entry is a tuple of frequencies given in the units of the freq_array.
@@ -229,8 +229,7 @@ def match_filter(INS, MS, Nbls, freq_array, sig_thresh, shape_dict, outpath, dt=
         if R_max > -np.inf:
             MS = INS / INS.mean(axis=0) - 1
 
-    if events:
-        events = np.vstack(events)
+    events = event_compile(events)
 
     n, bins = np.histogram(MS[np.logical_not(MS.mask)], bins='auto')
     fit = INS_hist_fit(bins, MS, Nbls, sig_thresh)
@@ -276,20 +275,9 @@ def channel_hist(INS):
     return(hist_arr, ks_arr, mu, var)
 
 
-def emp_pdf(N, Nbls, bins, scale=1, dist='rayleigh', analytic=False):
+def emp_pdf(Nt, Nf, Nbls, bins, scale=1, dist='rayleigh'):
 
-    if analytic:
-        w = np.diff(bins)
-        x = bins[:-1] + 0.5 * w
-        sim = Nbls * w * scipy.stats.gamma.pdf(x, N, scale=float(scale) / N)
-        A = None
-        if np.any(np.logical_and(bins[1:] > sim.argmax(), sim < 1)):
-            cutoff = min(bins[1:][np.logical_and(bins[1:] > sim.argmax(), sim < 1)])
-        else:
-            cutoff = bins[-1]
-    else:
-        A = getattr(np.random, dist)(size=(N, Nbls), scale=scale).mean(axis=0)
-        sim, _ = np.histogram(A, bins=bins)
-        cutoff = bins[min(np.digitize(max(A), bins), len(bins) - 1)]
+    A = getattr(np.random, dist)(size=(Nt, Nbls, Nf), scale=scale).mean(axis=(0, 2))
+    sim, _ = np.histogram(A, bins=bins)
 
-    return(A, sim, bins, cutoff)
+    return(A, sim)

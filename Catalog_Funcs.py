@@ -208,16 +208,9 @@ def waterfall_catalog(RFI, amp_range={False: [1e3, 1e5], True: 'fit'},
             plt.close(fig)
 
 
-def INS_catalog(RFI, aspect_ratio=3, invalid_mask=False, mask=True,
-                sig_thresh=5):
+def INS(RFI, match_filter_kwargs={}):
 
     """
-    Makes incoherent noise spectra for an obs. Requires a target directory.
-
-    flag_slices: Compute the INS depending on which members of the visibility pairs were flagged
-                 All, Flagged (boolean or), Unflagged (Neither seen as contaminated by COTTER)
-    aspect_ratio: You will want to modify this if different than 80kHz
-    invalid_mask: choose to mask nan's should they be present (they shouldn't be)
     mask: Choose to flag the outputs according to predictions made by the Central Limit Theorem
           This option is experimental right now and very incomplete
     """
@@ -227,14 +220,14 @@ def INS_catalog(RFI, aspect_ratio=3, invalid_mask=False, mask=True,
     figpath = make_outdirs(RFI)
 
     for flag in [True, False]:
-        INS, MS, Nbls_arr, n, bins, fit = \
+        INS, MS, Nbls, n, bins, fit = \
             RFI.INS_prepare(flag=flag)
 
-        for p in range(1 + mask):
-            if p > 0:
+        for p in range(2):
+            if p:
                 INS, MS, n, bins, fit = \
-                    rfiutil.match_filter(INS, MS, Nbls_arr, RFI.UV.freq_array,
-                                         sig_thresh, RFI.obs)
+                    rfiutil.match_filter(INS, MS, Nbls, '%sarrs/' % (RFI.outpath),
+                                         RFI.UV.freq_array, **match_filter_kwargs)
 
             fig_hist, ax_hist = plt.subplots(figsize=(14, 8))
             plot_lib.one_d_hist_plot(fig_hist, ax_hist, bins, [n, fit],
@@ -243,8 +236,11 @@ def INS_catalog(RFI, aspect_ratio=3, invalid_mask=False, mask=True,
                                      title='Incoherent Noise Spectrum Fractional Deviation Histogram %s' % (flag_titles[p]))
 
             for k in range(RFI.UV.Nspws):
-                fig, ax = ax_constructor(RFI)
+                fig_INS, ax_INS = ax_constructor(RFI)
                 _, _, _, xticks, xminors, yminors, xticklabels = plot_lib.four_panel_tf_setup(RFI.UV.freq_array[k, :])
+                plot_kwargs = {'xticks': xticks, 'xminors': xminors,
+                               'yminors': yminors, 'xticklabels': xticklabels,
+                               'aspect_ratio': float(RFI.UV.Nfreqs) / (RFI.UV.Ntimes - 1) / 2.5}
                 fig_diff, ax_diff = ax_constructor(RFI)
 
                 fig.suptitle('%s Incoherent Noise Spectrum, %s %s' %
@@ -258,17 +254,11 @@ def INS_catalog(RFI, aspect_ratio=3, invalid_mask=False, mask=True,
 
                     plot_lib.image_plot(fig, curr_ax, INS[:, k, :, m],
                                         title=pol, cbar_label=RFI.UV.vis_units,
-                                        xticks=xticks, xminors=xminors,
-                                        xticklabels=xticklabels, yminors=yminors,
-                                        aspect_ratio=aspect_ratio, invalid_mask=invalid_mask,
-                                        zero_mask=False)
+                                        **plot_kwargs)
                     plot_lib.image_plot(fig_diff, curr_ax_diff, MS[:, k, :, m],
                                         cmap=cm.coolwarm, title=pol,
-                                        cbar_label='Fraction of Mean', xticks=xticks,
-                                        xminors=xminors, xticklabels=xticklabels,
-                                        yminors=yminors, aspect_ratio=aspect_ratio,
-                                        invalid_mask=invalid_mask, zero_mask=False,
-                                        mask_color='black')
+                                        cbar_label='Fraction of Mean', mask_color='black',
+                                        **plot_kwargs)
 
                 base = '%s%s/spw%i/%s_%s' % (figpath, RFI.flag_titles[flag], k,
                                              RFI.obs, flag_titles[p])
@@ -330,52 +320,18 @@ def ant_pol_catalog(RFI, outpath, times=[], freqs=[], band=[], clip=False):
             plt.close(fig)
 
 
-def flag_catalog(RFI, outpath, flag_slices=['Flagged', ], xticks=None,
-                 xminors=None, fraction=True):
-    """
-    Generate waterfall plots of flags, summed over baselines. In other words,
-    how many baselines at a given time-pair/freq/pol were of a certain flag variety.
-    Set fraction=True for the fraction of baselines.
-    """
-    for flag_slice in flag_slices:
-        flags = RFI.flag_operations(flag_slice)
-        flags = np.sum(flags, axis=1)
-        if fraction:
-            flags = flags.astype(float) / RFI.UV.Nbls
+def bl_grid(RFI, bl_grid_kwargs={}, INS_kwargs={}, match_filter_kwargs={}):
 
-        fig, ax = ax_constructor(RFI)
-        fig.suptitle('%s Visibility Difference Flag Map (%s)' %
-                     (RFI.obs, flag_slice))
-
-        for m in range(RFI.UV.Npols):
-            curr_ax = ax_chooser(RFI, ax, m)
-
-            plot_lib.image_plot(fig, curr_ax, flags[:, 0, :, m], cmap=cm.cool,
-                                title=RFI.pols[m],
-                                xticks=xticks, xminors=xminors,
-                                xticklabels=['%.1f' % ((10 ** (-6)) *
-                                             RFI.UV.freq_array[0, tick]) for
-                                             tick in xticks])
-
-        fig.savefig('%s%s_flag_map_%s.png' % (outpath, RFI.obs, flag_slice))
-
-
-def bl_scatter_catalog(RFI, cmap=cm.plasma, gridsize=50, flag=False, sig_thresh=4,
-                       shape_dict={}, edges=np.linspace(-3000, 3000, num=51)):
-
-    INS, MS, Nbls, _, _, _ = RFI.INS_prepare(flag=flag, sig_thresh=sig_thresh)
+    INS, MS, Nbls, _, _, _ = RFI.INS(**INS_kwargs)
     INS, MS, n, bins, fit, events = rfiutil.match_filter(INS, MS, Nbls,
+                                                         '%sarrs/' % (RFI.outpath),
                                                          RFI.UV.freq_array,
-                                                         sig_thresh, shape_dict,
-                                                         '%sarrs/' % (RFI.outpath))
+                                                         **match_filter_kwargs)
     if not os.path.exists('%sfigs/' % (RFI.outpath)):
         os.makedirs('%sfigs/' % (RFI.outpath))
     if len(events) > 0:
         grid, bl_hist, bl_bins, sim_hist, cutoffs = \
-            RFI.bl_grid_flag(events, gridsize=gridsize, edges=edges, flag=flag)
-
-        xticklabels = ['%.0f' % (edges[tick]) for tick in range(0, 50, 10)]
-        yticklabels = ['%.0f' % (edges[tick]) for tick in range(50, 0, -10)]
+            RFI.bl_grid_flag(events, **bl_grid_kwargs)
 
         for m in range(grid.shape[2]):
 
@@ -385,18 +341,19 @@ def bl_scatter_catalog(RFI, cmap=cm.plasma, gridsize=50, flag=False, sig_thresh=
             title_tuple = (RFI.obs,
                            min(RFI.UV.freq_array[events[m, 0], events[m, 2]]) * 10 ** (-6),
                            max(RFI.UV.freq_array[events[m, 0], events[m, 2]]) * 10 ** (-6),
-                           events[m, 3],
+                           events[m, 3].indices(RFI.UV.Ntimes - 1)[0],
+                           events[m, 3].indices(RFI.UV.Ntimes - 1)[1],
                            RFI.pols[events[m, 1]])
 
             plot_lib.one_d_hist_plot(fig_hist, ax_hist, bl_bins[m], [bl_hist[m], sim_hist[m]], xlog=False,
                                      labels=['Measurements', 'Monte Carlo'], xlabel='Amplitude (Median)',
-                                     title='%s RFI Event-Averaged Amplitude Histogram %.1f - %.1f Mhz, t%i, %s' % title_tuple)
-            ax_hist.axvline(x=cutoffs[m], color='black')
+                                     title='%s RFI Event-Averaged Amplitude Histogram %.1f - %.1f Mhz, t%i - t%i, %s' % title_tuple)
+            ax_hist.axvline(x=cutoffs[m][0], color='black')
+            ax_hist.axvline(x=cutoffs[m][1], color='black')
             plot_lib.image_plot(fig_grid, ax_grid, grid[:, :, m],
-                                title='%s RFI Baseline Gridded Average, %.2f - %.2f Mhz, t%i, %s' % title_tuple,
+                                title='%s RFI Baseline Gridded Average, %.2f - %.2f Mhz, t%i - t%i, %s' % title_tuple,
                                 aspect_ratio=1, xlabel='$\lambda u$ (m)',
-                                ylabel='$\lambda v$ (m)', xticklabels=xticklabels,
-                                yticklabels=yticklabels,
+                                ylabel='$\lambda v$ (m)',
                                 cbar_label='Amp (%s)' % (RFI.UV.vis_units))
 
             fig_hist.savefig('%sfigs/%s_event_hist_%i.png' % (RFI.outpath, RFI.obs, m))

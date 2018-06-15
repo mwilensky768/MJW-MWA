@@ -101,7 +101,7 @@ def line_plot(fig, ax, data, title='Visibility Difference Average',
 def image_plot(fig, ax, data, cmap=cm.plasma, vmin=None, vmax=None, title='',
                aspect_ratio=3, xlabel='Frequency (Mhz)', ylabel='Time Pair',
                cbar_label='Counts RFI', xticks=[], yticks=[], xminors=None,
-               yminors=None, xticklabels=None, yticklabels=None, zero_mask=True,
+               yminors=None, xticklabels=None, yticklabels=None, zero_mask=False,
                mask_color='white', invalid_mask=False):
 
     if zero_mask:
