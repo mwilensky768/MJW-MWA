@@ -2,37 +2,47 @@ import rfiutil
 import plot_lib as pl
 import matplotlib.pyplot as plt
 import numpy as np
-import glob
 import os
 import scipy.stats
+from scipy.special import erfc, erfinv
+from math import pi
+import glob
+from matplotlib import cm
 
 indir = '/Users/mike_e_dubs/MWA/Catalogs/Grand_Catalog/Golden_Set_8s_Autos/Vis_Avg/Averages'
-arrs = glob.glob('%s/*.npy' % (indir))
+# obsids = ['1131739792', '1131739912', '1131740032', '1131740152', '1131740272',
+            # '1131740392', '1131740512', '1131740632', '1131740752']
+obs_list = '/Users/mike_e_dubs/python_stuff/MJW-MWA/Obs_Lists/GS_NB.txt'
+with open(obs_list) as f:
+    obsids = f.readlines()
+obsids = [obsid.strip() for obsid in obsids]
+arrs = ['%s/%s_Vis_Avg_Amp_All.npy' % (indir, obsid) for obsid in obsids]
+# arrs = glob.glob('%s/*.npy' % (indir))
 arrs.sort()
-outpath = '/Users/mike_e_dubs/MWA/Test_Plots/channel_hist/'
+outpath = '/Users/mike_e_dubs/MWA/Test_Plots/match_filter/GS_NB_Hists/'
+freq_arr = np.zeros([1, 384])
+freq_arr[0, :] = np.load('/Users/mike_e_dubs/python_stuff/MJW-MWA/Useful_Information/MWA_Highband_Freq_Array.npy')
 if not os.path.exists(outpath):
     os.makedirs(outpath)
+C = (4 / np.pi - 1)
+
+counts = []
 
 for path in arrs:
-    INS = np.load(path)
+    INS = np.ma.masked_array(np.load(path))
+    Nbls = 8001 * np.ones(INS.shape)
+    MS = (INS / INS.mean(axis=0) - 1) * np.sqrt(Nbls / C)
     obs = path[len(indir) + 1:len(indir) + 11]
-    if not os.path.exists('%s%s/' % (outpath, obs)):
-        os.makedirs('%s%s/' % (outpath, obs))
-
-    hist_arr, ks_arr, mu, var = rfiutil.channel_hist(INS)
-
-    for i in range(hist_arr.shape[0]):
-        for k in range(hist_arr.shape[1]):
-            for m in range(hist_arr.shape[2]):
-
-                fig, ax = plt.subplots(figsize=(14, 8))
-                w = np.diff(hist_arr[i, k, m][1])
-                x = hist_arr[i, k, m][1][:-1] + 0.5 * w
-                gauss = w * INS.shape[0] * scipy.stats.norm.pdf(x, loc=mu[i, k, m],
-                                                                scale=np.sqrt(var[i, k, m]))
-                pl.one_d_hist_plot(fig, ax, hist_arr[i, k, m][1],
-                                   [hist_arr[i, k, m][0], gauss],
-                                   labels=['INS', 'Gaussian Fit'], xlog=False,
-                                   title='%s f%i pol%i ks = %.4f, p = %.4f' % (obs, k, m, ks_arr[i, k, m][0], ks_arr[i, k, m][1]))
-                fig.savefig('%s/%s/INS_channel_hist_spw%i_f%i_p%i.png' % (outpath, obs, i, k, m))
-                plt.close(fig)
+    fig1, ax1 = plt.subplots(nrows=2, ncols=2)
+    fig2, ax2 = plt.subplots(nrows=2, ncols=2)
+    fig1.suptitle('RFI Contaminated')
+    fig2.suptitle('Clean')
+    for i in range(INS.shape[3]):
+        hist1, bins1 = np.histogram(INS[:, 0, 162, i], bins='auto')
+        hist2, bins2 = np.histogram(INS[:, 0, 180, i], bins='auto')
+        pl.one_d_hist_plot(fig1, ax1[i / 2][i % 2], bins1, [hist1, ], xlog=False)
+        pl.one_d_hist_plot(fig2, ax2[i / 2][i % 2], bins2, [hist2, ], xlog=False)
+    fig1.savefig('%s%s_NB_hist.png' % (outpath, obs))
+    fig2.savefig('%s%s_NB_hist_clean.png' % (outpath, obs))
+    plt.close(fig1)
+    plt.close(fig2)

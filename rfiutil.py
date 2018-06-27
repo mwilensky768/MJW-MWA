@@ -170,66 +170,52 @@ def match_filter(INS, MS, Nbls, outpath, freq_array, sig_thresh=4, shape_dict={}
         for shape in slice_dict:
             if slice_dict[shape] is not None:
                 if shape is 'point':
-                    thresh = sig_thresh * sigma_calc(Nbls[:, spw, :, pol])
-                    t, f = np.unravel_index((MS[:, spw, :, pol] / thresh).argmax(), MS[:, spw, :, pol].shape)
-                    R = MS[t, spw, f, pol] / thresh[t, f]
+                    t, f = np.unravel_index(np.absolute(MS[:, spw, :, pol] / sig_thresh).argmax(), MS[:, spw, :, pol].shape)
+                    R = np.absolute(MS[t, spw, f, pol] / sig_thresh)
                     f = slice(f, f + 1)
                 else:
                     # Average across the shaoe in question specified by slc - output is 1D
-                    sliced_arr = MS[:, spw, slice_dict[shape], pol].mean(axis=1)
                     N = np.count_nonzero(np.logical_not(MS[:, spw, slice_dict[shape], pol].mask), axis=1)
+                    sliced_arr = np.absolute(MS[:, spw, slice_dict[shape], pol].mean(axis=1)) * np.sqrt(N)
                     # Gauss dist, so expected width is as below
-                    thresh = sig_thresh * \
-                        np.sqrt(np.sum(sigma_calc(Nbls[:, spw, slice_dict[shape], pol])**2, axis=1)) / N
-                    t, f = ((sliced_arr / thresh).argmax(), slice_dict[shape])
-                    R = sliced_arr[t] / thresh[t]
+                    t, f = ((sliced_arr / sig_thresh).argmax(), slice_dict[shape])
+                    R = sliced_arr[t] / sig_thresh
                 if R > 1:
                     if R > R_max:
                         t_max, f_max, R_max = (t, f, R)
 
         return(t_max, f_max, R_max)
 
-    def event_compile(events, dt=1):
+    def hist_construct(MS, event):
+        data = MS[:, event[0], event[2], event[1]]
+        N = np.count_nonzero(np.logical_not(data.mask), axis=1)
+        data = data.mean(axis=1) * np.sqrt(N)
+        n, bins = np.histogram(data[np.logical_not(data.mask)], bins='auto')
+        fit = np.sum(n) * (scipy.stats.norm.cdf(bins[1:]) - scipy.stats.norm.cdf(bins[:-1]))
+        return(n, fit, bins)
 
-        # Sort the flagged events basically in chronological order and stack them
-        if events:
-            events.sort()
-            event_stack = np.vstack(events)
-            # print(event_stack)
-            # Find where the spw/pol/freqs do not agree OR where time separation is greater than dt
-            # Add one so that the bounds mark the start of a new event
-            row_bounds = np.where(np.logical_or(np.any(event_stack[:-1, :-1] != event_stack[1:, :-1], axis=1),
-                                                np.diff(event_stack[:, -1], axis=0) > dt))[0]
-            # insert zero and N_event so that making slices is more straightforward than otherwise
-            # first slice goes from zero, last slice goes to the end
-            row_bounds = np.insert(row_bounds, 0, -1)
-            row_bounds = np.append(row_bounds, len(event_stack) - 1)
-            # print(row_bounds)
-
-            # Generate a list of time_slices to be hstacked with the events
-            time_slices = []
-            for m, row in enumerate(row_bounds[:-1]):
-                # Has to shift up from the row entry to start, then go to the row_bound, and add 1 to the time obtained
-                time_slices.append(slice(event_stack[row + 1, -1], event_stack[row_bounds[m + 1], -1] + 1))
-            events = np.hstack((event_stack[row_bounds[:-1], :-1], np.array(time_slices, ndmin=2).transpose()))
-            # print(events)
-
-            return(events)
-
-    R_max = 0
     events = []
-    while R_max > -np.inf:
+    hists = []
+    count = 1
+    while count > 0:
+        count = 0
         for m in range(MS.shape[1]):
             slice_dict = shape_slicer(shape_dict, freq_array, m)
             for n in range(MS.shape[3]):
                 t_max, f_max, R_max = match_test(MS, Nbls, m, n, sig_thresh, slice_dict)
                 if R_max > -np.inf:
+                    count += 1
                     INS[t_max, m, f_max, n] = np.ma.masked
                     events.append((m, n, f_max, t_max))
-        if R_max > -np.inf:
-            MS = INS / INS.mean(axis=0) - 1
+        MS = (INS / INS.mean(axis=0) - 1) * np.sqrt(Nbls / (4 / np.pi - 1))
+        if count:
+            for p in range(1, count + 1):
+                hists.append(hist_construct(MS, events[-p]))
 
-    events = event_compile(events)
+    if events:
+        hists = [x for _, x in sorted(zip(events, hists), key=lambda pair: pair[0][:-1])]
+        events = sorted(events, key=lambda events: events[:-1])
+        events = np.vstack(events)
 
     n, bins = np.histogram(MS[np.logical_not(MS.mask)], bins='auto')
     fit = INS_hist_fit(bins, MS, Nbls, sig_thresh)
@@ -241,7 +227,7 @@ def match_filter(INS, MS, Nbls, outpath, freq_array, sig_thresh=4, shape_dict={}
     for obj, name, mask in zip(obj_tup, name_tup, mask_tup):
         save(obj, '%s_%s' % (outpath, name), mask=mask)
 
-    return(INS, MS, n, bins, fit, events)
+    return(INS, MS, n, bins, fit, events, hists)
 
 
 def narrowband_filter(INS, ch_ignore=None):
@@ -262,17 +248,19 @@ def narrowband_filter(INS, ch_ignore=None):
 def channel_hist(INS):
 
     hist_arr = np.zeros(INS.shape[1:], dtype=object)
-    ks_arr = np.zeros(INS.shape[1:], dtype=object)
+    sw_arr = np.zeros(INS.shape[1:], dtype=object)
     mu = INS.mean(axis=0)
     var = INS.var(axis=0)
     for i in range(INS.shape[1]):
         for k in range(INS.shape[2]):
             for m in range(INS.shape[3]):
                 hist_arr[i, k, m] = np.histogram(INS[:, i, k, m], bins='auto')
-                ks_arr[i, k, m] = scipy.stats.kstest(INS[:, i, k, m], 'norm',
-                                                     args=(mu[i, k, m], np.sqrt(var[i, k, m])))
+                if np.count_nonzero(np.logical_not(INS.mask[:, i, k, m])) > 3:
+                    sw_arr[i, k, m] = scipy.stats.shapiro(INS[:, i, k, m][np.logical_not(INS.mask[:, i, k, m])])
+                else:
+                    sw_arr[i, k, m] = (None, None)
 
-    return(hist_arr, ks_arr, mu, var)
+    return(hist_arr, sw_arr, mu, var)
 
 
 def emp_pdf(Nt, Nf, Nbls, bins, scale=1, dist='rayleigh'):
@@ -281,3 +269,32 @@ def emp_pdf(Nt, Nf, Nbls, bins, scale=1, dist='rayleigh'):
     sim, _ = np.histogram(A, bins=bins)
 
     return(A, sim)
+
+
+def event_compile(events, dt=1):
+
+    # Sort the flagged events basically in chronological order and stack them
+    if events:
+        perm = sorted(range(len(events)), key=events.__getitem__())
+        events.sort()
+        event_stack = np.vstack(events)
+        # print(event_stack)
+        # Find where the spw/pol/freqs do not agree OR where time separation is greater than dt
+        # Add one so that the bounds mark the start of a new event
+        row_bounds = np.where(np.logical_or(np.any(event_stack[:-1, :-1] != event_stack[1:, :-1], axis=1),
+                                            np.diff(event_stack[:, -1], axis=0) > dt))[0]
+        # insert zero and N_event so that making slices is more straightforward than otherwise
+        # first slice goes from zero, last slice goes to the end
+        row_bounds = np.insert(row_bounds, 0, -1)
+        row_bounds = np.append(row_bounds, len(event_stack) - 1)
+        # print(row_bounds)
+
+        # Generate a list of time_slices to be hstacked with the events
+        time_slices = []
+        for m, row in enumerate(row_bounds[:-1]):
+            # Has to shift up from the row entry to start, then go to the row_bound, and add 1 to the time obtained
+            time_slices.append(slice(event_stack[row + 1, -1], event_stack[row_bounds[m + 1], -1] + 1))
+        events = np.hstack((event_stack[row_bounds[:-1] + 1, :-1], np.array(time_slices, ndmin=2).transpose()))
+        # print(events)
+
+        return(events, perm)

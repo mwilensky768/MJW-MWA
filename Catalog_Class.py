@@ -1,26 +1,13 @@
-import plot_lib as pl
+import catalog_plot as cp
 import rfiutil
 import numpy as np
+import os
 
-def RFI_Catalog(RFI, data_product=None, data_args=[], data_kwargs={}, plot_kwargs={}):
 
-    """
-    Data products include the INS, the one_d_histograms, waterfall histograms,
-    filtered_INS, and bl_grid
-    """
+def Catalog_Generate(RFI, data_product, data_kwargs={}, plot_kwargs={}):
 
-    data = getattr(RFI, data_product)(*data_args, **data_kwargs)
-
-    plot_args = pl.plot_args(data_product)
-    plots = getattr(pl, data_product)(*plot_args, **plot_kwargs)
-
-    for i, prod in enumerate(data[:-1]):
-        if type(prod) is np.ma.core.Masked_Array:
-            prod.dump(data[-1][i])
-        else:
-            prod.save(data[-1][i])
-
-    for i, fig in enumerate(plots[:-1]):
-        fig.savefig(plots[-1][i])
-
-class Catalog_Plot(type, N, plot_kwargs)
+    data = getattr(RFI, data_product)(**data_kwargs)
+    fig_outpath = '%sfigs/%s/' % (RFI.outpath, data_product)
+    if not os.path.exists(fig_outpath):
+        os.makedirs(fig_outpath)
+    getattr(cp, data_product)(RFI, data, fig_outpath, plot_kwargs=plot_kwargs)

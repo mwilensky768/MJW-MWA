@@ -1,5 +1,6 @@
 import rfipy as rfi
 import Catalog_Funcs as cf
+import Catalog_Class as cc
 import argparse
 import glob
 import numpy as np
@@ -14,13 +15,16 @@ obs = args.inpath[0][-17:-7]
 """Input/Output keywords"""
 
 RFI_kwargs = {}
-catalog_types = ['bl_grid', ]
-catalog_kw_list = [{'bl_grid_kwargs': {}, 'INS_kwargs': {},
-                    'match_filter_kwargs': {'shape_dict': {'TV%i' % (k): np.load('./Useful_Information/TV%i_freqs.npy' % (k))
-                                                           for k in range(6, 9)}}}, ]
+catalog_kwargs = {}
+catalog_types = ['INS', ]
+data_kwargs = {'typ': 'var'}
+catalog_kwargs['bl_grid'] = {'bl_grid_kwargs': {'MLE_kwargs': {'axis': 0,
+                                                               'flag_kwargs': {'choice': 'INS'}},
+                                                'INS_kwargs': {'match_filter': True,
+                                                               'match_filter_kwargs': {'shape_dict': {'TV%i' % (7): np.load('./Useful_Information/TV%i_freqs.npy' % (7)) + np.array([-2, 2])}}}}}
 
 
 RFI = rfi.RFI(str(obs), args.inpath[0], args.outpath[0], **RFI_kwargs)
 
-for catalog_type, catalog_kwargs in zip(catalog_types, catalog_kw_list):
-    getattr(cf, catalog_type)(RFI, **catalog_kwargs)
+for catalog_type in catalog_types:
+    cc.Catalog_Generate(RFI, catalog_type, data_kwargs=data_kwargs)

@@ -65,36 +65,44 @@ class RFI:
                                          self.UV.Nspws, self.UV.Nfreqs,
                                          self.UV.Npols]).astype(bool)
 
-        self.flag_titles = {False: 'All', True: 'Post_Flag'}
+        self.flag_titles = {'custom': 'Custom_Flag', 'COTTER': 'COTTER_Flags',
+                            'INS': 'INS_Flags', None: 'All'}
         for item in self.flag_titles:
             if not os.path.exists('%sarrs/%s/' % (self.outpath, self.flag_titles[item])):
                 os.makedirs('%sarrs/%s/' % (self.outpath, self.flag_titles[item]))
             assert(os.path.exists('%sarrs/%s/' % (self.outpath, self.flag_titles[item])))
 
-    def apply_flags(self, app=False):
-        if app:
-            if not np.all(self.UV.data_array.mask == self.UV.flag_array):
-                self.UV.data_array.mask = self.UV.flag_array
+    def apply_flags(self, choice=None, INS=None, custom=None):
+        if choice is 'Original':
+            self.UV.data_array.mask = self.UV.flag_array
+        elif choice is 'INS':
+            ind = np.where(INS.mask)
+            self.UV.data_array[ind[0], :, ind[1], ind[2], ind[3]] = np.ma.masked
+        elif choice is 'custom':
+            self.UV.data_array[custom] = np.ma.masked
         elif np.any(self.UV.data_array.mask):
             self.UV.data_array.mask = False
 
-    def one_d_hist_prepare(self, flag=False, bins=None, fit=False):
+    def one_d_hist_prepare(self, choice=None, INS=None, custom=None,
+                           bins=None, fit=False):
 
-        self.apply_flags(flag)
+        app_flags_kwargs = {'choice': choice,
+                            'INS': INS,
+                            'custom': custom}
+
+        self.apply_flags(**app_flags_kwargs)
 
         # Generate the bins or keep the selected ones
         if bins is None:
             MIN = np.amin(self.UV.data_array)
             MAX = np.amax(self.UV.data_array)
-            bins = np.logspace(floor(log10(MIN)), ceil(log10(MAX)), num=1001)
+            bins = np.logspace(np.floor(np.log10(MIN)), np.ceil(np.log10(MAX)), num=1001)
 
         if fit:
             bin_widths = np.diff(bins)
             bin_centers = bins[:-1] + 0.5 * bin_widths
             fit = np.zeros(len(bins) - 1)
-            sig_arr, N_arr = np.sqrt(self.MLE_calc(axis=0))
-            if bin_window:
-                self.apply_flags(flag)
+            sig_arr, N_arr = np.sqrt(self.MLE_calc(axis=0, **app_flags_kwargs))
             for p in range(sig_arr.shape[0]):
                 for q in range(sig_arr.shape[1]):
                     for r in range(sig_arr.shape[2]):
@@ -111,25 +119,24 @@ class RFI:
         np.save('%s_hist.npy' % (base), n)
         np.save('%s_bins.npy' % (base), bins)
         np.save('%s_fit.npy' % (base), fit)
-        if n is None:
-            print('n is None')
-        if bins is None:
-            print('bins is None')
-        if fit is None:
-            print('fit is None')
 
         return(n, bins, fit)
 
-    def waterfall_hist_prepare(self, amp_range, flag=False, fraction=True, axis=1):
+    def waterfall_hist_prepare(self, amp_range, choice=None, INS=None, custom=None,
+                               fraction=True, axis=1):
 
-        self.apply_flags(flag)
+        app_flags_kwargs = {'choice': choice,
+                            'INS': INS,
+                            'custom': custom}
+
+        self.apply_flags(**app_flags_kwargs)
 
         # Find vis. diff. amps. in a given range. Could be unflagged data or all data.
         # and sum across a given axis to report the number of measurements affected
         # in the remaining space. Can also give as a fraction.
-        H = ((min(amp_range) < self.UV.data_array) &
-             (self.UV.data_array < max(amp_range)) &
-             (self.UV.data_array.mask == 0)).sum(axis=axis)
+        H = np.logical_and(np.logical_and(min(amp_range) < self.UV.data_array,
+                                          self.UV.data_array < max(amp_range)),
+                           self.UV.data_array.mask == 0).sum(axis=axis)
         if fraction:
             # ugly if statement for syntactical reasons...
             if type(axis) is int:
@@ -143,54 +150,65 @@ class RFI:
 
         return(H)
 
-
-    def INS(self, flag=False, sig_thresh=4):
+    def INS(self, choice=None, INS=None, custom=None, sig_thresh=4,
+            shape_dict={}, dt=1,
+            match_filter=False, typ='mean'):
         """
-        Generate an incoherent noise spectrum. The amp_avg keyword determines
-        the order of amplitude vs. average.
+        Generate an incoherent noise spectrum.
         """
 
-        self.apply_flags(flag)
+        app_flags_kwargs = {'choice': choice,
+                            'INS': INS,
+                            'custom': custom}
 
-        if flag:
+        match_filter_kwargs = {'sig_thresh': sig_thresh,
+                               'shape_dict': shape_dict,
+                               'dt': dt}
+
+        self.apply_flags(**app_flags_kwargs)
+
+        if np.any(self.UV.data_array.mask):
             Nbls = (np.logical_not(self.UV.data_array.mask)).sum(axis=1)
         else:
-            Nbls = self.UV.Nbls * np.ones((self.UV.Ntimes - 1, self.UV.Nspws, self.UV.Nfreqs, self.UV.Npols), dtype=int)
-        INS = np.mean(self.UV.data_array, axis=1)
-        MS = INS / INS.mean(axis=0) - 1
-        n, bins = np.histogram(MS[np.logical_not(MS.mask)], bins='auto')
+            Nbls = self.UV.Nbls * np.ones((self.UV.Ntimes - 1, ) +
+                                          self.UV.data_array.shape[2:], dtype=int)
 
-        fit = rfiutil.INS_hist_fit(bins, MS[np.logical_not(MS.mask)], Nbls, sig_thresh)
+        INS = getattr(np, typ)(self.UV.data_array, axis=1)
+        MS = (INS / INS.mean(axis=0) - 1) * np.sqrt(Nbls / (4 / np.pi - 1))
 
-        base = '%sarrs/%s/%s' % (self.outpath, self.flag_titles[flag], self.obs)
-        obj_tup = (INS, MS, Nbls, n, bins, fit)
-        name_tup = ('INS', 'INS_MS', 'INS_Nbls', 'INS_counts', 'INS_bins', 'INS_fit')
-        mask_tup = (True, True, False, False, False, False)
-        for obj, name, mask in zip(obj_tup, name_tup, mask_tup):
-            rfiutil.save(obj, '%s_%s' % (base, name), mask=mask)
+        if match_filter:
+            match_filter_args = (INS, MS, Nbls, RFI.outpath, RFI.UV.freq_array)
+            INS, MS, events = rfiutil.match_filter(*match_filter_args,
+                                                   **match_filter_kwargs)
+        else:
+            events = None
 
-        return(INS, MS, Nbls, n, bins, fit)
+        return(INS, MS, Nbls, events)
 
-    def bl_grid_flag(self, events, flag=False, gridsize=50,
-                     edges=np.linspace(-3000, 3000, num=51)):
+    def bl_grid_flag(self, INS_kwargs={}, MLE_kwargs={}, flag_kwargs={},
+                     gridsize=50, edges=np.linspace(-3000, 3000, num=51)):
 
-        MLE, _ = self.MLE_calc(axis=0, flag=flag)
-        self.apply_flags(flag)
+        INS, _, _, _, _, _, events = self.INS(**INS_kwargs)
+        MLE_kwargs['flag_kwargs']['INS'] = INS
+        MLE, _ = self.MLE_calc(**MLE_kwargs)
+        self.apply_flags(**flag_kwargs)
         sim_data = np.ma.masked_array(np.random.rayleigh(size=(self.UV.data_array.shape),
                                                          scale=np.sqrt(MLE)))
         sim_data[self.UV.data_array.mask] = np.ma.masked
+        temp_mask = np.zeros(self.UV.data_array.shape, dtype=bool)
+        temp_mask[self.UV.data_array.mask] = 1
 
         Nevent = len(events)
         bl_avg = np.ma.masked_array(np.zeros(self.UV.Nbls))
         grid = np.ma.masked_array(np.zeros([gridsize, gridsize, Nevent]))
-        bl_hists, bl_bins, sim_hists, cutoffs, max_locs = [], [], [], [], []
+        bl_hists, bl_bins, sim_hists, cutoffs, max_locs, flags = [], [], [], [], [], []
 
         for m in range(Nevent):
-            bl_avg = self.UV.data_array[events[m, 3], :, events[m, 0], events[m, 2], events[m, 1]].mean(axis=(0, 2))
-            sim_avg = sim_data[events[m, 3], :, events[m, 0], events[m, 2], events[m, 1]].mean(axis=(0, 2))
+            bl_avg = self.UV.data_array[events[m, 3], :, events[m, 0], events[m, 2], events[m, 1]].mean(axis=1)
+            sim_avg = sim_data[events[m, 3], :, events[m, 0], events[m, 2], events[m, 1]].mean(axis=1)
 
-            blt_slice = slice(self.UV.Nbls * events[m, 3].indices(self.UV.Ntimes - 1)[0],
-                              self.UV.Nbls * (events[m, 3].indices(self.UV.Ntimes - 1)[0] + 1))
+            blt_slice = slice(self.UV.Nbls * events[m, 3],
+                              self.UV.Nbls * (events[m, 3] + 1))
 
             hist, bins = np.histogram(bl_avg[np.logical_not(bl_avg.mask)], bins='auto')
             sim_hist, _ = np.histogram(sim_avg[np.logical_not(sim_avg.mask)], bins=bins)
@@ -207,9 +225,11 @@ class RFI:
                 rcut = bins[:-1][min(np.where(rcut_cond)[0])]
             else:
                 rcut = bins[-1]
-            # if np.any(bl_avg[:, m] > cutoff):
-                # self.UV.data_array[events[m, 3], bl_avg > cutoff,
-                                   # events[m, 0], events[m, 2], events[m, 1]] = np.ma.masked
+            cut_cond = np.logical_or(bl_avg > rcut, bl_avg < lcut)
+            np.save('%sarrs/Flag_Fraction_%i.npy' % (self.outpath, m), cut_cond.mean())
+            if np.any(cut_cond):
+                temp_mask[events[m, 3], cut_cond, events[m, 0], events[m, 2], events[m, 1]] = 1
+
             bl_hists.append(hist)
             sim_hists.append(sim_hist)
             cutoffs.append((lcut, rcut))
@@ -225,54 +245,32 @@ class RFI:
                     if len(seq) > 0:
                         grid[49 - k, i, m] = np.mean(seq)
 
-        np.save('%smax_locs.npy' % (self.outpath), max_locs)
+        self.UV.data_array.mask = temp_mask
+        np.save('%sarrs/Mean_Flag_Per_Time.npy' % (self.outpath), temp_mask.mean(axis=(1, 2, 3, 4)))
+        np.save('%sarrs/Mean_Flag.npy' % (self.outpath), temp_mask.mean())
+        INS = self.UV.data_array.mean(axis=1)
+        MS = INS / INS.mean(axis=0) - 1
 
-        return(grid, bl_hists, bl_bins, sim_hists, cutoffs)
+        return(grid, bl_bins, bl_hists, sim_hists, cutoffs, events, INS, MS)
 
-    def MLE_calc(self, axis=None, flag=True):
+    def MLE_calc(self, axis=None, choice=None, INS=None, custom=None):
         # Calculate the rms of the unflagged data, splitting according to axis tuple
-        self.apply_flags(flag)
+
+        app_flags_kwargs = {'choice': choice,
+                            'INS': INS,
+                            'custom': custom}
+
+        self.apply_flags(**app_flags_kwargs)
         MLE = 0.5 * np.mean(self.UV.data_array**2, axis=axis)
-        if flag:
+        if np.any(self.UV.data_array.mask):
             N = np.count_nonzero(np.logical_not(self.UV.data_array.mask), axis=axis)
         else:
             N = self.UV.Nblts
 
         fn = filter(str.isalnum, str(axis))
 
-        base = '%sarrs/%s/%s_' % (self.outpath, self.flag_titles[flag], self.obs)
+        base = '%sarrs/%s/%s_' % (self.outpath, self.flag_titles[flag_kwargs['choice']], self.obs)
         np.ma.dump(MLE, '%s_MLE_%s.npym' % (base, fn))
         np.save('%s_N_%s.npy' % (base, fn), N)
 
         return(MLE, N)
-
-    def ant_pol_prepare(self, time, freq, spw, amp=False):
-
-        """
-        This function no longer works since I am only using amplitudes right now
-        """
-
-        dim = 2 * self.UV.Nants_telescope
-
-        T = np.zeros([dim, dim])
-        q_keys = [self.pols[k] for k in range(self.UV.Npols)]
-        q_values = [[0, 0], [self.UV.Nants_telescope, self.UV.Nants_telescope],
-                    [0, self.UV.Nants_telescope], [self.UV.Nants_telescope, 0]]
-
-        q = dict(zip(q_keys, q_values))
-
-        for m in range(self.UV.Nbls):
-            for n in range(self.UV.Npols):
-                A = self.UV.data_array[time, m, spw, freq, n]
-                if amp:
-                    T[self.UV.ant_1_array[m] + q[self.pols[n]][0],
-                      self.UV.ant_2_array[m] + q[self.pols[n]][1]] = np.absolute(A.imag)
-                    T[self.UV.ant_2_array[m] + q[self.pols[n]][0],
-                      self.UV.ant_1_array[m] + q[self.pols[n]][1]] = np.absolute(A.real)
-                else:
-                    T[self.UV.ant_1_array[m] + q[self.pols[n]][0],
-                      self.UV.ant_2_array[m] + q[self.pols[n]][1]] = A.imag
-                    T[self.UV.ant_2_array[m] + q[self.pols[n]][0],
-                      self.UV.ant_1_array[m] + q[self.pols[n]][1]] = A.real
-
-        return(T)

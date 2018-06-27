@@ -5,6 +5,7 @@ from matplotlib.ticker import FixedLocator, AutoMinorLocator
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import matplotlib.colors as colors
+import os
 
 
 class MidpointNormalize(colors.Normalize):
@@ -51,7 +52,7 @@ def one_d_hist_plot(fig, ax, bin_edges, counts, zorder=None, labels=None, xlog=T
         ax.step(bin_centers, count, where='mid', label=labels[i],
                 zorder=zorder[i])
 
-    ax.set_ylim([10**(-1), 10 * max([np.amax(x) for x in counts])])
+    ax.set_ylim([0.5, 2 * max([np.amax(x) for x in counts])])
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
@@ -99,8 +100,8 @@ def line_plot(fig, ax, data, title='Visibility Difference Average',
 
 
 def image_plot(fig, ax, data, cmap=cm.plasma, vmin=None, vmax=None, title='',
-               aspect_ratio=3, xlabel='Frequency (Mhz)', ylabel='Time Pair',
-               cbar_label='Counts RFI', xticks=[], yticks=[], xminors=None,
+               xlabel='Channel #', ylabel='Time Pair',
+               cbar_label=None, xticks=None, yticks=None, xminors=None,
                yminors=None, xticklabels=None, yticklabels=None, zero_mask=False,
                mask_color='white', invalid_mask=False):
 
@@ -150,7 +151,7 @@ def image_plot(fig, ax, data, cmap=cm.plasma, vmin=None, vmax=None, title='',
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
 
-    ax.set_aspect(aspect_ratio)
+    ax.set_aspect(data.shape[1] / (data.shape[0] * 2.5))
 
 
 def scatter_plot_2d(fig, ax, x_data, y_data, title='', xlabel='', ylabel='',
