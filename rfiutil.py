@@ -190,9 +190,8 @@ def match_filter(INS, MS, Nbls, outpath, freq_array, sig_thresh=4, shape_dict={}
         data = MS[:, event[0], event[2], event[1]]
         N = np.count_nonzero(np.logical_not(data.mask), axis=1)
         data = data.mean(axis=1) * np.sqrt(N)
-        n, bins = np.histogram(data[np.logical_not(data.mask)], bins='auto')
-        fit = np.sum(n) * (scipy.stats.norm.cdf(bins[1:]) - scipy.stats.norm.cdf(bins[:-1]))
-        return(n, fit, bins)
+        n, bins = np.histogram(data[np.logical_not(data.mask)], bins=np.linspace(-4, 4, num=9))
+        return(n, bins)
 
     events = []
     hists = []
@@ -217,17 +216,14 @@ def match_filter(INS, MS, Nbls, outpath, freq_array, sig_thresh=4, shape_dict={}
         events = sorted(events, key=lambda events: events[:-1])
         events = np.vstack(events)
 
-    n, bins = np.histogram(MS[np.logical_not(MS.mask)], bins='auto')
-    fit = INS_hist_fit(bins, MS, Nbls, sig_thresh)
-
-    obj_tup = (INS, MS, events, n, bins, fit)
-    name_tup = ('INS_mask', 'INS_MS_mask', 'INS_events', 'INS_counts_mask', 'INS_bins_mask', 'INS_fit_mask')
+    obj_tup = (INS, MS, events)
+    name_tup = ('INS_mask', 'INS_MS_mask', 'INS_events')
     mask_tup = (True, True, False, False, False, False)
 
     for obj, name, mask in zip(obj_tup, name_tup, mask_tup):
         save(obj, '%s_%s' % (outpath, name), mask=mask)
 
-    return(INS, MS, n, bins, fit, events, hists)
+    return(INS, MS, events, hists)
 
 
 def narrowband_filter(INS, ch_ignore=None):
@@ -245,22 +241,16 @@ def narrowband_filter(INS, ch_ignore=None):
     return(INS)
 
 
-def channel_hist(INS):
+def ks_test(MS, mode='approx'):
 
-    hist_arr = np.zeros(INS.shape[1:], dtype=object)
-    sw_arr = np.zeros(INS.shape[1:], dtype=object)
-    mu = INS.mean(axis=0)
-    var = INS.var(axis=0)
-    for i in range(INS.shape[1]):
-        for k in range(INS.shape[2]):
-            for m in range(INS.shape[3]):
-                hist_arr[i, k, m] = np.histogram(INS[:, i, k, m], bins='auto')
-                if np.count_nonzero(np.logical_not(INS.mask[:, i, k, m])) > 3:
-                    sw_arr[i, k, m] = scipy.stats.shapiro(INS[:, i, k, m][np.logical_not(INS.mask[:, i, k, m])])
-                else:
-                    sw_arr[i, k, m] = (None, None)
+    ks_arr = np.zeros(MS.shape[1:], dtype=object)
+    for i in range(MS.shape[1]):
+        for k in range(MS.shape[2]):
+            for m in range(MS.shape[3]):
+                ks_arr[i, k, m] = scipy.stats.kstest(MS[:, i, k, m][np.logical_not(MS[:, i, k, m].mask)],
+                                                     'norm', mode=mode)
 
-    return(hist_arr, sw_arr, mu, var)
+    return(ks_arr)
 
 
 def emp_pdf(Nt, Nf, Nbls, bins, scale=1, dist='rayleigh'):

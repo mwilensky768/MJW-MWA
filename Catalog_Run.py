@@ -17,7 +17,11 @@ obs = args.inpath[0][-17:-7]
 RFI_kwargs = {}
 catalog_kwargs = {}
 catalog_types = ['INS', ]
-data_kwargs = {'typ': 'var'}
+data_kwargs = {'pow': 1,
+               'typ': 'var',
+               'match_filter': False,
+               'sig_thresh': 4.5,
+               'shape_dict': {'TV%i' % (i): np.load('./Useful_Information/TV%i_freqs.npy' % (i)) + np.array([-2, 2]) for i in [6, 7, 8]}}
 catalog_kwargs['bl_grid'] = {'bl_grid_kwargs': {'MLE_kwargs': {'axis': 0,
                                                                'flag_kwargs': {'choice': 'INS'}},
                                                 'INS_kwargs': {'match_filter': True,

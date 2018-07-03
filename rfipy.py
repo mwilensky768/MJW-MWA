@@ -152,7 +152,7 @@ class RFI:
 
     def INS(self, choice=None, INS=None, custom=None, sig_thresh=4,
             shape_dict={}, dt=1,
-            match_filter=False, typ='mean'):
+            match_filter=False, pow=1, typ='mean'):
         """
         Generate an incoherent noise spectrum.
         """
@@ -173,13 +173,15 @@ class RFI:
             Nbls = self.UV.Nbls * np.ones((self.UV.Ntimes - 1, ) +
                                           self.UV.data_array.shape[2:], dtype=int)
 
-        INS = getattr(np, typ)(self.UV.data_array, axis=1)
-        MS = (INS / INS.mean(axis=0) - 1) * np.sqrt(Nbls / (4 / np.pi - 1))
+        INS = getattr(np, typ)(self.UV.data_array**pow, axis=1) / pow
+        C = {'mean': [4 / np.pi - 1, 1],
+             'var': [1, 1]}
+        MS = (INS / INS.mean(axis=0) - 1) * np.sqrt(Nbls / C[typ][pow - 1])
 
         if match_filter:
-            match_filter_args = (INS, MS, Nbls, RFI.outpath, RFI.UV.freq_array)
-            INS, MS, events = rfiutil.match_filter(*match_filter_args,
-                                                   **match_filter_kwargs)
+            match_filter_args = (INS, MS, Nbls, self.outpath, self.UV.freq_array)
+            INS, MS, events, hists = rfiutil.match_filter(*match_filter_args,
+                                                          **match_filter_kwargs)
         else:
             events = None
 

@@ -99,6 +99,17 @@ def line_plot(fig, ax, data, title='Visibility Difference Average',
         ax.xaxis.set_minor_locator(xminors)
 
 
+def error_plot(fig, ax, x, y, xerr, yerr, title=None, xlabel=None, ylabel=None,
+               legend=True, label=None, drawstyle=None, linestyle=None, marker="o"):
+
+    ax.errorbar(x, y, xerr=xerr, yerr=yerr, label=label, drawstyle=drawstyle)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    if legend:
+        ax.legend()
+
+
 def image_plot(fig, ax, data, cmap=cm.plasma, vmin=None, vmax=None, title='',
                xlabel='Channel #', ylabel='Time Pair',
                cbar_label=None, xticks=None, yticks=None, xminors=None,
