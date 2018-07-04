@@ -141,7 +141,7 @@ def edge_detect(frac_diff, RFI_type='streak', sig=2):
     return(smooth, edge)
 
 
-def match_filter(INS, MS, Nbls, outpath, freq_array, sig_thresh=4, shape_dict={}, dt=1):
+def match_filter(INS, MS, Nbls, outpath, freq_array, sig_thresh=4, shape_dict={}):
     """
     shape_dict is a dictionary whose key is the name of the shape as a string
     and each entry is a tuple of frequencies given in the units of the freq_array.
@@ -162,7 +162,7 @@ def match_filter(INS, MS, Nbls, outpath, freq_array, sig_thresh=4, shape_dict={}
         slice_dict['point'] = slice(None)
         return(slice_dict)
 
-    def match_test(MS, Nbls, spw, pol, sig_thresh, slice_dict):
+    def match_test(MS, Nbls, spw, sig_thresh, slice_dict):
         # Treat point and slices separately
         R_max = -np.inf
         t_max = None
@@ -170,16 +170,17 @@ def match_filter(INS, MS, Nbls, outpath, freq_array, sig_thresh=4, shape_dict={}
         for shape in slice_dict:
             if slice_dict[shape] is not None:
                 if shape is 'point':
-                    t, f = np.unravel_index(np.absolute(MS[:, spw, :, pol] / sig_thresh).argmax(), MS[:, spw, :, pol].shape)
-                    R = np.absolute(MS[t, spw, f, pol] / sig_thresh)
+                    t, f, p = np.unravel_index(np.absolute(MS[:, spw] / sig_thresh).argmax(), MS[:, spw].shape)
+                    R = np.absolute(MS[t, spw, f, p] / sig_thresh)
                     f = slice(f, f + 1)
                 else:
                     # Average across the shaoe in question specified by slc - output is 1D
-                    N = np.count_nonzero(np.logical_not(MS[:, spw, slice_dict[shape], pol].mask), axis=1)
-                    sliced_arr = np.absolute(MS[:, spw, slice_dict[shape], pol].mean(axis=1)) * np.sqrt(N)
+                    N = np.count_nonzero(np.logical_not(MS[:, spw, slice_dict[shape]].mask), axis=1)
+                    sliced_arr = np.absolute(MS[:, spw, slice_dict[shape]].mean(axis=1)) * np.sqrt(N)
                     # Gauss dist, so expected width is as below
-                    t, f = ((sliced_arr / sig_thresh).argmax(), slice_dict[shape])
-                    R = sliced_arr[t] / sig_thresh
+                    t, p = np.unravel_index((sliced_arr / sig_thresh).argmax(), sliced_arr.shape)
+                    f = slice_dict[shape]
+                    R = sliced_arr[t, p] / sig_thresh
                 if R > 1:
                     if R > R_max:
                         t_max, f_max, R_max = (t, f, R)
@@ -200,12 +201,11 @@ def match_filter(INS, MS, Nbls, outpath, freq_array, sig_thresh=4, shape_dict={}
         count = 0
         for m in range(MS.shape[1]):
             slice_dict = shape_slicer(shape_dict, freq_array, m)
-            for n in range(MS.shape[3]):
-                t_max, f_max, R_max = match_test(MS, Nbls, m, n, sig_thresh, slice_dict)
-                if R_max > -np.inf:
-                    count += 1
-                    INS[t_max, m, f_max, n] = np.ma.masked
-                    events.append((m, n, f_max, t_max))
+            t_max, f_max, R_max = match_test(MS, Nbls, m, n, sig_thresh, slice_dict)
+            if R_max > -np.inf:
+                count += 1
+                INS[t_max, m, f_max] = np.ma.masked
+                events.append((m, f_max, t_max))
         MS = (INS / INS.mean(axis=0) - 1) * np.sqrt(Nbls / (4 / np.pi - 1))
         if count:
             for p in range(1, count + 1):

@@ -5,6 +5,7 @@ import os
 import scipy.linalg
 from scipy.special import erfinv
 import rfiutil
+import warnings
 
 
 class RFI:
@@ -151,19 +152,21 @@ class RFI:
         return(H)
 
     def INS(self, choice=None, INS=None, custom=None, sig_thresh=4,
-            shape_dict={}, dt=1,
-            match_filter=False, pow=1, typ='mean'):
+            shape_dict={}, match_filter=False, pow=1, typ='mean'):
         """
         Generate an incoherent noise spectrum.
         """
+
+        if choice is 'INS':
+            warnings.warn('Using an INS flag mask to generate an INS will\
+                          generate a redundant INS')
 
         app_flags_kwargs = {'choice': choice,
                             'INS': INS,
                             'custom': custom}
 
         match_filter_kwargs = {'sig_thresh': sig_thresh,
-                               'shape_dict': shape_dict,
-                               'dt': dt}
+                               'shape_dict': shape_dict}
 
         self.apply_flags(**app_flags_kwargs)
 
@@ -185,7 +188,20 @@ class RFI:
         else:
             events = None
 
-        return(INS, MS, Nbls, events)
+        return(INS, events, MS, Nbls)
+
+    def bl_flag(self,  choice=None, custom=None):
+
+        MLE_kwargs = {'choice': 'INS',
+                      'INS': INS,
+                      'axis': 0}
+
+        flag_kwargs = {'choice': choice,
+                       'custom': custom}
+
+        MLE, _ = self.MLE_calc(**MLE_kwargs)
+
+
 
     def bl_grid_flag(self, INS_kwargs={}, MLE_kwargs={}, flag_kwargs={},
                      gridsize=50, edges=np.linspace(-3000, 3000, num=51)):

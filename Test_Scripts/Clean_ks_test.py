@@ -1,4 +1,4 @@
-import rfiutil
+wimport rfiutil
 import numpy as np
 import scipy.stats
 import plot_lib as pl
