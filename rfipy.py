@@ -151,7 +151,7 @@ class RFI:
 
         return(H)
 
-    def INS(self, choice=None, INS=None, custom=None, sig_thresh=4,
+    def INS(self, choice=None, custom=None, sig_thresh=4,
             shape_dict={}, match_filter=False, pow=1, typ='mean'):
         """
         Generate an incoherent noise spectrum.
@@ -188,9 +188,19 @@ class RFI:
         else:
             events = None
 
-        return(INS, events, MS, Nbls)
+        return(INS, MS, Nbls, events)
 
-    def bl_flag(self,  choice=None, custom=None):
+    def bl_flag(self, choice=None, custom=None, sig_thresh=4, shape_dict={}):
+
+        INS_kwargs = {'choice': choice,
+                      'custom': custom,
+                      'sig_thresh': sig_thresh,
+                      'shape_dict': shape_dict,
+                      'match_filter': True,
+                      'pow': 1,
+                      'typ': 'mean'}
+
+        INS, _, _, events = self.INS(**INS_kwargs)
 
         MLE_kwargs = {'choice': 'INS',
                       'INS': INS,
@@ -200,8 +210,52 @@ class RFI:
                        'custom': custom}
 
         MLE, _ = self.MLE_calc(**MLE_kwargs)
+        self.apply_flags(**flag_kwargs)
 
+        temp_mask = np.zeros(self.UV.data_array.shape, dtype=bool)
+        temp_mask[self.UV.data_array.mask] = 1
 
+        bl_hist = []
+        bl_bins = []
+        sim_hist = []
+        cutoffs = []
+
+        for i in range(len(events)):
+            bl_avg = self.UV.data_array[events[m, 2], :, events[m, 0], events[m, 1]]
+            init_shape = bl_avg.shape
+            init_mask = bl_avg.mask
+            bl_avg = bl_avg.mean(axis=1)
+            counts, bins = np.histogram(bl_avg[np.logical_not(bl_avg.mask)], bins='auto')
+            sim_counts = np.zeros(len(bins) - 1)
+            for k in range(int(1e4)):
+                sim_data = np.random.rayleigh(size=init_shape,
+                                              scale=MLE[:, events[m, 0], events[m, 1]])
+                sim_data = np.ma.masked_where(init_mask, sim_data)
+                sim_data = sim_data.mean(axis=1)
+                sim_counts += np.histogram(sim_data, bins=bins)
+            sim_counts /= 1e4
+            max_loc = bins[:-1][sim_counts.argmax()] + 0.5 * (bins[1] - bins[0])
+            R = counts.astype(float) / sim_counts.astype(float)
+            lcut_cond = np.logical_and(R > 10, bins[1:] < max_loc)
+            rcut_cond = np.logical_and(R > 10, bins[:-1] > max_loc)
+            if np.any(lcut_cond):
+                lcut = bins[1:][max(np.where(lcut_cond)[0])]
+            else:
+                lcut = bins[0]
+            if np.any(rcut_cond):
+                rcut = bins[:-1][min(np.where(rcut_cond)[0])]
+            else:
+                rcut = bins[-1]
+            cut_cond = np.logical_or(bl_avg > rcut, bl_avg < lcut)
+            cut_ind = np.where(cut_cond)
+            if np.any(cut_cond):
+                temp_mask[events[m, 2], cut_ind[0], events[m, 0], events[m, 2], cut_ind[1]] = 1
+            bl_hist.append(counts)
+            bl_bins.append(bins)
+            sim_hist.append(sim_counts)
+            cutoffs.append(lcut, rcut)
+
+        return(bl_hist, sim_hist, bl_bins, cutoffs)
 
     def bl_grid_flag(self, INS_kwargs={}, MLE_kwargs={}, flag_kwargs={},
                      gridsize=50, edges=np.linspace(-3000, 3000, num=51)):

@@ -8,10 +8,13 @@ import matplotlib.pyplot as plt
 import os
 from time import strftime
 
-arr_path = '/Users/mike_e_dubs/MWA/Catalogs/Grand_Catalog/Golden_Set_8s_Autos/Vis_Avg/Averages/'
-outpath = '/Users/mike_e_dubs/MWA/Catalogs/Grand_Catalog/Templates/Golden_Set_8s_Autos/Match_Filter/'
-arr_list = glob.glob('%s*.npy' % (arr_path))
-arr_list.sort()
+arr_path = '/Users/mike_e_dubs/MWA/Catalogs/Grand_Catalog/Golden_Set_8s_Autos/Vis_Avg/Averages'
+outpath = '/Users/mike_e_dubs/MWA/Catalogs/Grand_Catalog/Templates/Golden_Set_8s_Autos/Match_Filter/NB_sample_cutoff'
+obs_list = '/Users/mike_e_dubs/python_stuff/MJW-MWA/Obs_Lists/GS_NB.txt'
+with open(obs_list) as f:
+    obsids = f.readlines()
+obsids = [obsid.strip() for obsid in obsids]
+arrs = ['%s/%s_Vis_Avg_Amp_All.npy' % (indir, obsid) for obsid in obsids]
 occ_num = np.zeros(22)
 occ_den = np.copy(occ_num)
 occ_freq_num = np.zeros([22, 384])

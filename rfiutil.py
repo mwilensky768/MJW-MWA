@@ -141,7 +141,28 @@ def edge_detect(frac_diff, RFI_type='streak', sig=2):
     return(smooth, edge)
 
 
-def match_filter(INS, MS, Nbls, outpath, freq_array, sig_thresh=4, shape_dict={}):
+def hist_construct(MS, event, sig_thresh):
+    data = MS[:, event[0], event[1]]
+    N = np.count_nonzero(np.logical_not(data.mask), axis=1)
+    data = data.mean(axis=1) * np.sqrt(N)
+    bins = np.linspace(-sig_thresh, sig_thresh, num=2 * int(np.ceil(2 * sig_thresh + 1)))
+    if np.amin(data) < -sig_thresh:
+        bins = np.insert(bins, 0, np.amin(data))
+    if np.amax(data) > sig_thresh:
+        bins = np.append(bins, np.amax(data))
+    n, _ = np.histogram(data[np.logical_not(data.mask)], bins=bins)
+    return(n, bins)
+
+
+def hist_prob(bins, dist='norm', args=()):
+
+    cdf = getattr(scipy.stats, dist).cdf
+    prob = cdf(bins[1:], *args) - cdf(bins[:-1], *args)
+    return(prob)
+
+
+def match_filter(INS, MS, Nbls, outpath, freq_array, sig_thresh=4, shape_dict={},
+                 samp_thresh=20):
     """
     shape_dict is a dictionary whose key is the name of the shape as a string
     and each entry is a tuple of frequencies given in the units of the freq_array.
@@ -187,13 +208,6 @@ def match_filter(INS, MS, Nbls, outpath, freq_array, sig_thresh=4, shape_dict={}
 
         return(t_max, f_max, R_max)
 
-    def hist_construct(MS, event):
-        data = MS[:, event[0], event[2], event[1]]
-        N = np.count_nonzero(np.logical_not(data.mask), axis=1)
-        data = data.mean(axis=1) * np.sqrt(N)
-        n, bins = np.histogram(data[np.logical_not(data.mask)], bins=np.linspace(-4, 4, num=9))
-        return(n, bins)
-
     events = []
     hists = []
     count = 1
@@ -201,7 +215,7 @@ def match_filter(INS, MS, Nbls, outpath, freq_array, sig_thresh=4, shape_dict={}
         count = 0
         for m in range(MS.shape[1]):
             slice_dict = shape_slicer(shape_dict, freq_array, m)
-            t_max, f_max, R_max = match_test(MS, Nbls, m, n, sig_thresh, slice_dict)
+            t_max, f_max, R_max = match_test(MS, Nbls, m, sig_thresh, slice_dict)
             if R_max > -np.inf:
                 count += 1
                 INS[t_max, m, f_max] = np.ma.masked
@@ -209,12 +223,15 @@ def match_filter(INS, MS, Nbls, outpath, freq_array, sig_thresh=4, shape_dict={}
         MS = (INS / INS.mean(axis=0) - 1) * np.sqrt(Nbls / (4 / np.pi - 1))
         if count:
             for p in range(1, count + 1):
-                hists.append(hist_construct(MS, events[-p]))
+                hists.append(hist_construct(MS, events[-p], sig_thresh))
 
     if events:
         hists = [x for _, x in sorted(zip(events, hists), key=lambda pair: pair[0][:-1])]
         events = sorted(events, key=lambda events: events[:-1])
         events = np.vstack(events)
+
+    if np.any(INS.mask):
+        INS[:, np.count_nonzero(INS.mask, axis=0) > samp_thresh] = np.ma.masked
 
     obj_tup = (INS, MS, events)
     name_tup = ('INS_mask', 'INS_MS_mask', 'INS_events')
@@ -241,16 +258,57 @@ def narrowband_filter(INS, ch_ignore=None):
     return(INS)
 
 
-def ks_test(MS, mode='approx'):
+def ks_test(MS, event, mode='approx'):
 
-    ks_arr = np.zeros(MS.shape[1:], dtype=object)
-    for i in range(MS.shape[1]):
-        for k in range(MS.shape[2]):
-            for m in range(MS.shape[3]):
-                ks_arr[i, k, m] = scipy.stats.kstest(MS[:, i, k, m][np.logical_not(MS[:, i, k, m].mask)],
-                                                     'norm', mode=mode)
+    stat, p = scipy.stats.kstest(MS[:, event[0], event[1]].mean(axis=1).flatten(),
+                                 'norm', mode=mode)
 
-    return(ks_arr)
+    return(stat, p)
+
+
+def bin_combine(counts, exp, prob, bins, weight='exp'):
+
+    if weight is 'exp':
+        c_cond = np.logical_or(exp < 5, counts < 5)
+    elif weight is 'var':
+        var = np.sum(counts) * prob * (1 - prob)
+        c_cond = var < 1
+
+    while np.any(c_cond):
+        ind = np.where(c_cond)[0][0]
+        # If the index is zero, add the bin on the right and delete the bin on
+        # the right. Else, add the bin on the left and delete the bin on the left.
+        counts[ind] += counts[ind + (-1)**(bool(ind))]
+        counts = np.delete(counts, ind + (-1)**(bool(ind)))
+        exp[ind] += exp[ind + (-1)**(bool(ind))]
+        exp = np.delete(exp, ind + (-1)**(bool(ind)))
+        prob[ind] += prob[ind + (-1)**(bool(ind))]
+        prob = np.delete(prob, ind + (-1)**(bool(ind)))
+        bins = np.delete(bins, ind + (-1)**(bool(ind)))
+        if weight is 'exp':
+            c_cond = np.logical_or(exp < 5, counts < 5)
+        elif weight is 'var':
+            var = np.sum(counts) * prob * (1 - prob)
+            c_cond = var < 1
+
+    return(counts, exp, prob, bins)
+
+
+def chisq_test(MS, sig_thresh, event, weight='exp'):
+
+    counts, bins = hist_construct(MS, event, sig_thresh)
+    N = np.sum(counts)
+    prob = hist_prob(bins)
+    exp = N * prob
+    counts, exp, prob, bins = bin_combine(counts, exp, prob, bins, weight=weight)
+    var = N * prob * (1 - prob)
+    if weight is 'exp':
+        stat, p = scipy.stats.chisquare(counts, exp, ddof=2)
+    elif weight is 'var':
+        stat = np.sum((counts - exp)**2 / var)
+        p = scipy.stats.chi2.isf(stat, len(var) - 3)
+
+    return(stat, p, counts, exp, var, bins)
 
 
 def emp_pdf(Nt, Nf, Nbls, bins, scale=1, dist='rayleigh'):

@@ -52,7 +52,6 @@ def one_d_hist_plot(fig, ax, bin_edges, counts, zorder=None, labels=None, xlog=T
         ax.step(bin_centers, count, where='mid', label=labels[i],
                 zorder=zorder[i])
 
-    ax.set_ylim([0.5, 2 * max([np.amax(x) for x in counts])])
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)

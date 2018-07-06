@@ -10,8 +10,8 @@ import glob
 from matplotlib import cm
 
 indir = '/Users/mike_e_dubs/MWA/Catalogs/Grand_Catalog/Golden_Set_8s_Autos/Vis_Avg/Averages'
-# obsids = ['1131739792', '1131739912', '1131740032', '1131740152', '1131740272',
-            # '1131740392', '1131740512', '1131740632', '1131740752']
+#obsids = ['1131739792', '1131739912', '1131740032', '1131740152', '1131740272',
+             #'1131740392', '1131740512', '1131740632', '1131740752']
 obs_list = '/Users/mike_e_dubs/python_stuff/MJW-MWA/Obs_Lists/GS_NB.txt'
 with open(obs_list) as f:
     obsids = f.readlines()
