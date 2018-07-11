@@ -28,8 +28,8 @@ class RFI:
                     bad_times.append(times[k])
                 for bad_time in bad_times:
                     times.remove(bad_time)
-            self.UV.read_uvfits_data(filepath, freq_chans=freq_chans, times=times,
-                                     polarizations=polarizations)
+            self.UV.read_uvfits(filepath, freq_chans=freq_chans, times=times,
+                                polarizations=polarizations)
         elif filetype is 'miriad':
             self.UV.read_miriad(filepath)
             self.UV.select(filepath, freq_chans=freq_chans, times=times,

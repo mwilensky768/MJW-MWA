@@ -260,14 +260,6 @@ def chisq_test(MS, sig_thresh, event, weight='exp'):
     return(stat, p, counts, exp, var, bins)
 
 
-def emp_pdf(Nt, Nf, Nbls, bins, scale=1, dist='rayleigh'):
-
-    A = getattr(np.random, dist)(size=(Nt, Nbls, Nf), scale=scale).mean(axis=(0, 2))
-    sim, _ = np.histogram(A, bins=bins)
-
-    return(A, sim)
-
-
 def event_compile(events, dt=1):
 
     # Sort the flagged events basically in chronological order and stack them
