@@ -3,6 +3,7 @@ use('Agg')
 import matplotlib.pyplot as plt
 import plot_lib as pl
 
+
 def fig_construct(N_ax):
 
     fig_kwargs = {'figsize': (14, 8),
@@ -12,7 +13,7 @@ def fig_construct(N_ax):
     return(plt.subplots(**fig_kwargs))
 
 
-def INS(RFI, data, outpath, plot_kwargs={}):
+def INS(RFI, data, outpath, plot_kwargs={}, data_kwargs={}):
 
     im_kwargs = [{'cmap': cm.plasma,
                   'cbar_label': 'Amplitude (%s)' % (RFI.UV.vis_units)},
@@ -25,17 +26,19 @@ def INS(RFI, data, outpath, plot_kwargs={}):
     im_tags = ['INS',
                'MS']
 
-    for i in range(RFI.UV.Nspws):
-        fig_INS, ax_INS = fig_construct(RFI.UV.Npols)
-        fig_MS, ax_MS = fig_construct(RFI.UV.Npols)
+    for i in range(data[0].shape[1]):
+        fig_INS, ax_INS = fig_construct(data[0].shape[3])
+        fig_MS, ax_MS = fig_construct(data[0].shape[3])
 
         for k, (fig, ax) in enumerate(zip([fig_INS, fig_MS], [ax_INS, ax_MS])):
             plot_kwargs.update(im_kwargs[k])
-            for m in range(RFI.UV.Npols):
+            for m in range(data[0].shape[3]):
                 fig.suptitle(im_titles[k])
                 im_args = [fig, ax[m / 2][m % 2], data[k][:, i, :, m]]
                 pl.image_plot(*im_args, title=RFI.pols[m], **plot_kwargs)
-            fig.savefig('%s%s_%s_spw%i.png' % (outpath, RFI.obs, im_tags[k], i))
+            fig.savefig('%s/%s_%s_spw%i_%s.png' % (outpath, RFI.obs,
+                                                   RFI.flag_titles[data_kwargs['choice']],
+                                                   i, im_tags[k]))
             plt.close(fig)
 
 

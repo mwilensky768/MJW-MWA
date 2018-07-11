@@ -17,15 +17,15 @@ freqs[0, :] = np.load(freq_arr_path)
 test = 'chisq_test'
 test_kwargs = {'chisq_test': {'weight': 'var'},
                'ks_test': {}}
-N = 51 * 384 * 4
+N = 51 * 384
 sig_thresh = np.sqrt(2) * erfcinv(1. / N)
-outpath = '/Users/mike_e_dubs/MWA/Test_Plots/match_filter_hist_converge_4sig/all_obs_errorbar_var_%s_%s_shape_check_tune_ind_pol_streak' % (test, sig_thresh)
+outpath = '/Users/mike_e_dubs/MWA/Test_Plots/match_filter_combine_pols'
 if not os.path.exists(outpath):
     os.makedirs(outpath)
 shape_dir = '/Users/mike_e_dubs/python_stuff/MJW-MWA/Useful_Information'
 
 shape_dict = {'TV%i' % (i): np.load('%s/TV%i_freqs.npy' % (shape_dir, i)) for i in [6, 7, 8]}
-pols = ['XX', 'YY', 'XY', 'YX']
+# pols = ['XX', 'YY', 'XY', 'YX']
 C = 4 / np.pi - 1
 image_plot_kwargs = {'xticks': [64 * k for k in range(6)],
                      'xticklabels': [freqs[0, tick] * 10 ** (-6) for tick in [64 * k for k in range(6)]],
@@ -37,30 +37,27 @@ shape_test = True
 
 for arr in arr_list:
     obs = arr[len(indir) + 1: len(indir) + 11]
-    if not os.path.exists('%s/%s/' % (outpath, obs)):
-        os.makedirs('%s/%s/' % (outpath, obs))
-    INS = np.ma.masked_array(np.load(arr))
-    Nbls = 8001 * np.ones(INS.shape)
+    INS = np.ma.masked_array(np.load(arr)).mean(axis=3)
+    Nbls = 8001 * 4 * np.ones(INS.shape)
     MS = (INS / INS.mean(axis=0) - 1) * np.sqrt(Nbls / C)
 
     INS, MS, events, hists = \
         rfiutil.match_filter(INS, MS, Nbls, outpath, freqs, shape_dict=shape_dict, samp_thresh=50)
 
     MS_slc = MS.mean(axis=2) * np.sqrt(np.count_nonzero(np.logical_not(MS.mask), axis=2))
-    print(MS_slc.max())
-    fig, ax = plt.subplots(figsize=(14, 8), nrows=2, ncols=2)
-    fig.suptitle('%s Match Filtered, MS Streaks %s' % (obs, test))
-    for i in range(4):
-        n, bins = np.histogram(MS_slc[:, 0, i][np.logical_not(MS_slc.mask[:, 0, i])], bins=np.linspace(-sig_thresh, sig_thresh, num=9))
-        x = bins[:-1] + 0.5 * np.diff(bins)
-        P = scipy.stats.norm.cdf(bins[1:]) - scipy.stats.norm.cdf(bins[:-1])
-        exp = P * np.sum(n)
-        var = exp * (1 - P)
-        pl.error_plot(fig, ax[i / 2][i % 2], x, n, None, None, label='Measurements', drawstyle='steps-mid')
-        pl.error_plot(fig, ax[i / 2][i % 2], x, exp, None, np.sqrt(var), label='Fit', drawstyle='steps-mid',
-                      title=pols[i], xlabel='$\sigma$', ylabel='Counts')
+    """fig, ax = plt.subplots(figsize=(14, 8))
+    n, bins = np.histogram(MS_slc[:, 0][np.logical_not(MS_slc.mask[:, 0])],
+                           bins=np.linspace(-sig_thresh, sig_thresh, num=9))
+    x = bins[:-1] + 0.5 * np.diff(bins)
+    P = scipy.stats.norm.cdf(bins[1:]) - scipy.stats.norm.cdf(bins[:-1])
+    exp = P * np.sum(n)
+    var = exp * (1 - P)
+    pl.error_plot(fig, ax, x, n, None, None, label='Measurements', drawstyle='steps-mid')
+    pl.error_plot(fig, ax, x, exp, None, np.sqrt(var), label='Fit', drawstyle='steps-mid',
+                  title='%s Match Filtered, MS Streaks %s' % (obs, test),
+                  xlabel='$\sigma$', ylabel='Counts')
     fig.savefig('%s/%s/%s_MS_streak_compare.png' % (outpath, obs, obs))
-    plt.close(fig)
+    plt.close(fig)"""
 
     fig, ax = plt.subplots(figsize=(14, 8))
     n, bins = np.histogram(MS_slc[:, 0][np.logical_not(MS_slc.mask[:, 0])],
@@ -72,7 +69,7 @@ for arr in arr_list:
     pl.error_plot(fig, ax, x, n, None, None, label='Measurements', drawstyle='steps-mid')
     pl.error_plot(fig, ax, x, exp, None, np.sqrt(var), label='Fit', drawstyle='steps-mid',
                   title='%s Match Filtered, MS Streaks %s' % (obs, test), xlabel='$\sigma$', ylabel='Counts')
-    fig.savefig('%s/%s/%s_MS_streak_allpol.png' % (outpath, obs, obs))
+    fig.savefig('%s/%s_MS_streak_allpol.png' % (outpath, obs))
     plt.close(fig)
 
     """event_shapes = np.unique(events[:, :-1])
@@ -98,12 +95,10 @@ for arr in arr_list:
             fig.savefig('%s/%s/%s_%s.png' % (outpath, obs, obs, slc))
             plt.close(fig)"""
 
-    fig, ax = plt.subplots(figsize=(14, 8), nrows=2, ncols=2)
-    fig.suptitle('%s Match Filtered, %s' % (obs, test))
-    for i in range(4):
-        pl.image_plot(fig, ax[i / 2][i % 2], INS[:, 0, :, i], title=pols[i],
-                      **image_plot_kwargs)
-    fig.savefig('%s/%s/%s_INS_Filtered_%s.png' % (outpath, obs, obs, test))
+    fig, ax = plt.subplots(figsize=(14, 8))
+    pl.image_plot(fig, ax, INS[:, 0, :], title='%s Match Filtered, %s' % (obs, test),
+                  **image_plot_kwargs)
+    fig.savefig('%s/%s_INS_Filtered_%s.png' % (outpath, obs, test))
     plt.close(fig)
 
     """for m, (event, hist) in enumerate(zip(events, hists)):

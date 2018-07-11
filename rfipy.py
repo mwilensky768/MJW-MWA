@@ -66,12 +66,17 @@ class RFI:
                                          self.UV.Nspws, self.UV.Nfreqs,
                                          self.UV.Npols]).astype(bool)
 
-        self.flag_titles = {'custom': 'Custom_Flag', 'COTTER': 'COTTER_Flags',
+        self.flag_titles = {'custom': 'Custom_Flags', 'Original': 'Original_Flags',
                             'INS': 'INS_Flags', None: 'All'}
-        for item in self.flag_titles:
-            if not os.path.exists('%sarrs/%s/' % (self.outpath, self.flag_titles[item])):
-                os.makedirs('%sarrs/%s/' % (self.outpath, self.flag_titles[item]))
-            assert(os.path.exists('%sarrs/%s/' % (self.outpath, self.flag_titles[item])))
+        for subdir in ['arrs', 'figs', 'metadata']:
+            path = '%s/%s/' % (self.outpath, subdir)
+            if not os.path.exists(path):
+                os.makedirs(path)
+            assert os.path.exists(path), 'Output directories could not be created. Check permissions.'
+
+        np.save('%s/metadata/%s_pols.npy' % (self.outpath, obs), self.pols)
+        np.save('%s/metadata/%s.npy' % (self.outpath, obs), self.obs)
+        np.save('%s/metadata/%s_vis_units.npy' % (self.outpath, obs), self.UV.vis_units)
 
     def apply_flags(self, choice=None, INS=None, custom=None):
         if choice is 'Original':
@@ -116,7 +121,9 @@ class RFI:
         n, _ = np.histogram(self.UV.data_array[np.logical_not(self.UV.data_array.mask)], bins=bins)
 
         # Write out the function returns
-        base = '%sarrs/%s/%s' % (self.outpath, self.flag_titles[flag], self.obs)
+        base = '%s/arrs/one_d_hist/%s_%s' % (self.outpath, self.obs, self.flag_titles[choice],)
+        if not os.path.exists('%s/arrs/one_d_hist' % (self.outpath)):
+            os.makedirs('%s/arrs/one_d_hist' % (self.outpath))
         np.save('%s_hist.npy' % (base), n)
         np.save('%s_bins.npy' % (base), bins)
         np.save('%s_fit.npy' % (base), fit)
@@ -158,11 +165,9 @@ class RFI:
         """
 
         if choice is 'INS':
-            warnings.warn('Using an INS flag mask to generate an INS will\
-                          generate a redundant INS')
+            warnings.warn('This function does not support this flag choice')
 
         app_flags_kwargs = {'choice': choice,
-                            'INS': INS,
                             'custom': custom}
 
         match_filter_kwargs = {'sig_thresh': sig_thresh,
@@ -171,7 +176,7 @@ class RFI:
         self.apply_flags(**app_flags_kwargs)
 
         if np.any(self.UV.data_array.mask):
-            Nbls = (np.logical_not(self.UV.data_array.mask)).sum(axis=1)
+            Nbls = np.logical_not(self.UV.data_array.mask).sum(axis=1)
         else:
             Nbls = self.UV.Nbls * np.ones((self.UV.Ntimes - 1, ) +
                                           self.UV.data_array.shape[2:], dtype=int)
@@ -182,13 +187,26 @@ class RFI:
         MS = (INS / INS.mean(axis=0) - 1) * np.sqrt(Nbls / C[typ][pow - 1])
 
         if match_filter:
-            match_filter_args = (INS, MS, Nbls, self.outpath, self.UV.freq_array)
+            match_filter_args = (INS, MS, Nbls,
+                                 '%s/arrs/match_filter' % (self.outpath),
+                                 self.UV.freq_array, self.obs, choice)
             INS, MS, events, hists = rfiutil.match_filter(*match_filter_args,
                                                           **match_filter_kwargs)
         else:
             events = None
+            hists = None
 
-        return(INS, MS, Nbls, events)
+        if not os.path.exists('%s/arrs/INS' % (self.outpath)):
+            os.makedirs('%s/arrs/INS' % (self.outpath))
+
+        base = '%s/arrs/INS/%s_%s' % (self.outpath, self.obs, self.flag_titles[choice])
+        np.ma.dump(INS, '%s_INS.npym' % (base))
+        np.ma.dump(MS, '%s_MS.npym' % (base))
+        np.ma.dump(Nbls, '%s_Nbls.npym' % (base))
+        np.save('%s_events.npy' % (base), events)
+        np.save('%s_hists.npy' % (base), hists)
+
+        return(INS, MS, Nbls, events, hists)
 
     def bl_flag(self, choice=None, custom=None, sig_thresh=4, shape_dict={}):
 

@@ -70,7 +70,7 @@ def one_d_hist_plot(fig, ax, bin_edges, counts, zorder=None, labels=None, xlog=T
         ax.set_yscale('linear')
 
 
-def line_plot(fig, ax, data, title='Visibility Difference Average',
+def line_plot(fig, ax, x, data, title='Visibility Difference Average',
               xlabel='Frequency (Mhz)', ylabel='Visibility Amplitude',
               zorder=None, labels=None, xticks=None, xticklabels=None,
               xminors=None, legend=True, ylog=False):  # Please pass data as a list
@@ -81,7 +81,7 @@ def line_plot(fig, ax, data, title='Visibility Difference Average',
         labels = len(data) * ['']
 
     for k in range(len(data)):
-        ax.plot(data[k], label=labels[k], zorder=zorder[k])
+        ax.plot(x, data[k], label=labels[k], zorder=zorder[k])
 
     ax.set_title(title)
     ax.set_ylabel(ylabel)

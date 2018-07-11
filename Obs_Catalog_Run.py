@@ -18,8 +18,7 @@ RFI_kwargs = {}
 catalog_kwargs = {}
 catalog_types = ['INS', ]
 data_kwargs = {'pow': 1,
-               'choice': None,
-               'typ': 'mean',
+               'typ': 'var',
                'match_filter': False,
                'sig_thresh': 4.5,
                'shape_dict': {'TV%i' % (i): np.load('./Useful_Information/TV%i_freqs.npy' % (i)) + np.array([-2, 2]) for i in [6, 7, 8]}}

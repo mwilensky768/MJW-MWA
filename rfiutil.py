@@ -1,6 +1,6 @@
 import numpy as np
 from math import floor, ceil, log10, pi, log, sqrt
-from scipy.special import erfinv
+from scipy.special import erfinv, erfcinv
 from scipy.integrate import simps
 import scipy.stats
 import time
@@ -87,60 +87,6 @@ def SIROperator(FMi, Agg):  # Takes a (1-d) flag mask and aggression param. (sca
     return(FMf)
 
 
-def sigma_calc(Nbls):
-    sigma = np.sqrt((4 - pi) / (Nbls * pi))
-
-    return(sigma)
-
-
-def INS_hist_fit(bins, MS, Nbls, sig_thresh):
-
-    bin_widths = np.diff(bins)
-    bin_centers = bins[:-1] + 0.5 * bin_widths
-
-    sigma = sigma_calc(np.amax(Nbls))
-    thresh = sig_thresh * sigma
-    data_cond = np.logical_and(-thresh < MS, MS < thresh)
-
-    N = len(MS[data_cond])
-    mu = np.mean(MS[data_cond])
-    sigma_sq = np.var(MS[data_cond])
-    fit = N * bin_widths / np.sqrt(2 * pi * sigma_sq) * \
-        np.exp(-((bin_centers - mu) ** 2) / (2 * sigma_sq))
-
-    return(fit)
-
-
-def edge_detect(frac_diff, RFI_type='streak', sig=2):
-    # Essentially Prewitt filter different RFI shapes
-
-    H = np.zeros([5, 5])
-
-    if RFI_type is 'streak':
-        for m in range(5):
-            for n in range(5):
-                H[m, n] = 1 / (2 * pi * sig**2) * np.exp(-((m - 6)**2 + (n - 6)**2) / (2 * sig**2))
-
-        A = np.zeros([3, frac_diff.shape[2] - 4])
-        A[0, :] = 1
-        A[2, :] = -1
-
-    smooth = np.zeros(np.array(frac_diff.shape) - [4, 0, 4, 0])
-    for m in range(smooth.shape[1]):
-        for n in range(smooth.shape[3]):
-            for p in range(smooth.shape[0]):
-                for q in range(smooth.shape[2]):
-                    smooth[p, m, q, n] = np.sum(H * frac_diff[p:p + 5, m, q:q + 5, n])
-
-    edge = np.zeros([smooth.shape[0] - 2, smooth.shape[1], smooth.shape[3]])
-    for m in range(edge.shape[1]):
-        for n in range(edge.shape[2]):
-            for p in range(edge.shape[0]):
-                edge[p, m, n] = np.sum(A * smooth[p:p + 3, m, :, n])
-
-    return(smooth, edge)
-
-
 def hist_construct(MS, event, sig_thresh):
     data = MS[:, event[0], event[1]]
     N = np.count_nonzero(np.logical_not(data.mask), axis=1)
@@ -161,7 +107,7 @@ def hist_prob(bins, dist='norm', args=()):
     return(prob)
 
 
-def match_filter(INS, MS, Nbls, outpath, freq_array, sig_thresh=4, shape_dict={},
+def match_filter(INS, MS, Nbls, outpath, freq_array, obs, choice, shape_dict={},
                  samp_thresh=20):
     """
     shape_dict is a dictionary whose key is the name of the shape as a string
@@ -170,18 +116,23 @@ def match_filter(INS, MS, Nbls, outpath, freq_array, sig_thresh=4, shape_dict={}
 
     def shape_slicer(shape_dict, freq_array, spw):
         slice_dict = {}
+        sig_thresh = {}
         for shape in shape_dict:
             # Ask if any of the shape is in the freq_array
             if (min(freq_array[spw, :]) < min(shape_dict[shape])) or (max(freq_array[spw, :]) > max(shape_dict[shape])):
                 # Rewrite the shape_dict entry in terms of channel numbers which match the shape best
                 slice_dict[shape] = slice(np.argmin(np.abs(freq_array[spw, :] - min(shape_dict[shape]))),
                                           np.argmin(np.abs(freq_array[spw, :] - max(shape_dict[shape]))))
+                N = slice_dict[shape].indices(INS.shape[2])[1] - slice_dict[shape].indices(INS.shape[2])[0]
+                sig_thresh[shape] = np.sqrt(2) * erfcinv(float(N) / np.prod(INS.shape))
             # Set the slice to None if the shape is not at all in the freq_array
             else:
                 slice_dict[shape] = None
         slice_dict['streak'] = slice(None)
         slice_dict['point'] = slice(None)
-        return(slice_dict)
+        sig_thresh['streak'] = np.sqrt(2) * erfcinv(float(INS.shape[2]) / np.prod(INS.shape))
+        sig_thresh['point'] = np.sqrt(2) * erfcinv(1. / np.prod(INS.shape))
+        return(slice_dict, sig_thresh)
 
     def match_test(MS, Nbls, spw, sig_thresh, slice_dict):
         # Treat point and slices separately
@@ -191,17 +142,17 @@ def match_filter(INS, MS, Nbls, outpath, freq_array, sig_thresh=4, shape_dict={}
         for shape in slice_dict:
             if slice_dict[shape] is not None:
                 if shape is 'point':
-                    t, f, p = np.unravel_index(np.absolute(MS[:, spw] / sig_thresh).argmax(), MS[:, spw].shape)
-                    R = np.absolute(MS[t, spw, f, p] / sig_thresh)
+                    t, f, p = np.unravel_index(np.absolute(MS[:, spw] / sig_thresh[shape]).argmax(), MS[:, spw].shape)
+                    R = np.absolute(MS[t, spw, f, p] / sig_thresh[shape])
                     f = slice(f, f + 1)
                 else:
                     # Average across the shaoe in question specified by slc - output is 1D
                     N = np.count_nonzero(np.logical_not(MS[:, spw, slice_dict[shape]].mask), axis=1)
                     sliced_arr = np.absolute(MS[:, spw, slice_dict[shape]].mean(axis=1)) * np.sqrt(N)
                     # Gauss dist, so expected width is as below
-                    t, p = np.unravel_index((sliced_arr / sig_thresh).argmax(), sliced_arr.shape)
+                    t, p = np.unravel_index((sliced_arr / sig_thresh[shape]).argmax(), sliced_arr.shape)
                     f = slice_dict[shape]
-                    R = sliced_arr[t, p] / sig_thresh
+                    R = sliced_arr[t, p] / sig_thresh[shape]
                 if R > 1:
                     if R > R_max:
                         t_max, f_max, R_max = (t, f, R)
@@ -211,19 +162,24 @@ def match_filter(INS, MS, Nbls, outpath, freq_array, sig_thresh=4, shape_dict={}
     events = []
     hists = []
     count = 1
+    total = 0
+    base = '%s/%s_%s'
     while count > 0:
         count = 0
         for m in range(MS.shape[1]):
-            slice_dict = shape_slicer(shape_dict, freq_array, m)
+            slice_dict, sig_thresh = shape_slicer(shape_dict, freq_array, m)
             t_max, f_max, R_max = match_test(MS, Nbls, m, sig_thresh, slice_dict)
             if R_max > -np.inf:
                 count += 1
+                total += 1
                 INS[t_max, m, f_max] = np.ma.masked
                 events.append((m, f_max, t_max))
         MS = (INS / INS.mean(axis=0) - 1) * np.sqrt(Nbls / (4 / np.pi - 1))
+        np.ma.dump(INS, '%s_INS_mf_%i.npym' % (base, total))
+        np.ma.dump(MS, '%s_MS_mf_%i.npym' % (base, total))
         if count:
             for p in range(1, count + 1):
-                hists.append(hist_construct(MS, events[-p], sig_thresh))
+                hists.append(hist_construct(MS, events[-p], sig_thresh['point']))
 
     if events:
         hists = [x for _, x in sorted(zip(events, hists), key=lambda pair: pair[0][:-1])]
@@ -232,13 +188,6 @@ def match_filter(INS, MS, Nbls, outpath, freq_array, sig_thresh=4, shape_dict={}
 
     if np.any(INS.mask):
         INS[:, np.count_nonzero(INS.mask, axis=0) > samp_thresh] = np.ma.masked
-
-    obj_tup = (INS, MS, events)
-    name_tup = ('INS_mask', 'INS_MS_mask', 'INS_events')
-    mask_tup = (True, True, False, False, False, False)
-
-    for obj, name, mask in zip(obj_tup, name_tup, mask_tup):
-        save(obj, '%s_%s' % (outpath, name), mask=mask)
 
     return(INS, MS, events, hists)
 
