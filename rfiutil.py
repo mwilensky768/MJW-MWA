@@ -1,17 +1,7 @@
 import numpy as np
-from math import floor, ceil, log10, pi, log, sqrt
-from scipy.special import erfinv, erfcinv
-from scipy.integrate import simps
+from scipy.special import erfcinv
 import scipy.stats
 import time
-
-
-def save(object, path, mask=False):
-
-    if mask:
-        np.ma.dump(object, '%s.npym' % (path))
-    else:
-        np.save('%s.npy' % (path), object)
 
 
 def SumThreshold(x, y, M, chi):
@@ -205,14 +195,6 @@ def narrowband_filter(INS, ch_ignore=None):
         INS.mask[:, :, ch_ignore, :] = False
 
     return(INS)
-
-
-def ks_test(MS, event, mode='approx'):
-
-    stat, p = scipy.stats.kstest(MS[:, event[0], event[1]].mean(axis=1).flatten(),
-                                 'norm', mode=mode)
-
-    return(stat, p)
 
 
 def bin_combine(counts, exp, prob, bins, weight='exp'):

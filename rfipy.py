@@ -6,6 +6,7 @@ import scipy.linalg
 from scipy.special import erfinv
 import rfiutil
 import warnings
+import scipy.stats
 
 
 class RFI:
@@ -107,16 +108,20 @@ class RFI:
         if fit:
             bin_widths = np.diff(bins)
             bin_centers = bins[:-1] + 0.5 * bin_widths
-            fit = np.zeros(len(bins) - 1)
             sig_arr, N_arr = np.sqrt(self.MLE_calc(axis=0, **app_flags_kwargs))
+            N = N_arr.sum()
             for p in range(sig_arr.shape[0]):
                 for q in range(sig_arr.shape[1]):
                     for r in range(sig_arr.shape[2]):
-                        if N_arr[p, q, r] > 0:
-                            fit += N_arr[p, q, r] * bin_widths * (bin_centers / sig_arr[p, q, r]**2) * \
-                                np.exp(- bin_centers**2 / (2 * sig_arr[p, q, r]**2))
+                        if N_arr[p, q, r]:
+                            P += N_arr[p, q, r] / N * \
+                                scipy.stats.rayleigh.cdf(bins[1:], scale=sig_arr[p, q, r]) -\
+                                scipy.stats.rayleigh.cdf(bins[:-1], scale=sig_arr[p, q, r])
+            fit = N * P
+            error = np.sqrt(N * P * (1 - P))
         else:
             fit = None
+            error = None
 
         n, _ = np.histogram(self.UV.data_array[np.logical_not(self.UV.data_array.mask)], bins=bins)
 
@@ -127,8 +132,9 @@ class RFI:
         np.save('%s_hist.npy' % (base), n)
         np.save('%s_bins.npy' % (base), bins)
         np.save('%s_fit.npy' % (base), fit)
+        np.save('%s_error.npy' % (base), error)
 
-        return(n, bins, fit)
+        return(n, bins, fit, error)
 
     def waterfall_hist_prepare(self, amp_range, choice=None, INS=None, custom=None,
                                fraction=True, axis=1):
