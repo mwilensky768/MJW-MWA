@@ -209,12 +209,9 @@ def bin_combine(counts, exp, prob, bins, weight='exp'):
         ind = np.where(c_cond)[0][0]
         # If the index is zero, add the bin on the right and delete the bin on
         # the right. Else, add the bin on the left and delete the bin on the left.
-        counts[ind] += counts[ind + (-1)**(bool(ind))]
-        counts = np.delete(counts, ind + (-1)**(bool(ind)))
-        exp[ind] += exp[ind + (-1)**(bool(ind))]
-        exp = np.delete(exp, ind + (-1)**(bool(ind)))
-        prob[ind] += prob[ind + (-1)**(bool(ind))]
-        prob = np.delete(prob, ind + (-1)**(bool(ind)))
+        for dat in [counts, exp, prob]:
+            dat[ind] += dat[ind + (-1)**(bool(ind))]
+            dat = np.delete(dat, ind + (-1)**(bool(ind)))
         bins = np.delete(bins, ind + (-1)**(bool(ind)))
         if weight is 'exp':
             c_cond = np.logical_or(exp < 5, counts < 5)

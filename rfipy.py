@@ -11,32 +11,15 @@ import scipy.stats
 
 class RFI:
 
-    def __init__(self, obs, filepath, outpath, bad_time_indices=[0, -3, -2, -1],
-                 filetype='uvfits', freq_chans=None, times=None, ant_str='cross',
-                 polarizations=None):
+    def __init__(self, obs, inpath, outpath, filetype, bad_time_indices=[0, -3, -2, -1],
+                 read_kwargs={}):
 
         # These lines establish the most basic attributes of the class, namely
         # its base UVData object and the obsid
         self.obs = obs
         self.UV = pyuv.UVData()
         self.outpath = outpath
-        if filetype is 'uvfits':
-            if bad_time_indices:
-                self.UV.read_uvfits(filepath, read_data=False)
-                times = np.unique(self.UV.time_array).tolist()
-                bad_times = []
-                for k in bad_time_indices:
-                    bad_times.append(times[k])
-                for bad_time in bad_times:
-                    times.remove(bad_time)
-            self.UV.read_uvfits(filepath, freq_chans=freq_chans, times=times,
-                                polarizations=polarizations)
-        elif filetype is 'miriad':
-            self.UV.read_miriad(filepath)
-            self.UV.select(filepath, freq_chans=freq_chans, times=times,
-                           polarizations=polarizations)
-        if ant_str:
-            self.UV.select(ant_str=ant_str)
+        getattr(self.UV, 'read_%s' % (filetype))(inpath, **read_kwargs)
 
         # This generalizes polarization references during plotting
         pol_keys = range(-8, 5)
@@ -75,9 +58,10 @@ class RFI:
                 os.makedirs(path)
             assert os.path.exists(path), 'Output directories could not be created. Check permissions.'
 
-        np.save('%s/metadata/%s_pols.npy' % (self.outpath, obs), self.pols)
-        np.save('%s/metadata/%s.npy' % (self.outpath, obs), self.obs)
-        np.save('%s/metadata/%s_vis_units.npy' % (self.outpath, obs), self.UV.vis_units)
+        np.save('%s/metadata/%s_pols.npy' % (self.outpath, self.obs), self.pols)
+        np.save('%s/metadata/%s_obs.npy' % (self.outpath, self.obs), self.obs)
+        np.save('%s/metadata/%s_vis_units.npy' % (self.outpath, self.obs), self.UV.vis_units)
+        np.save('%s/metadata/%s_freq_array.npy' % (self.outpath, self.obs), self.UV.freq_array)
 
     def apply_flags(self, choice=None, INS=None, custom=None):
         if choice is 'Original':
@@ -163,56 +147,6 @@ class RFI:
                                                    self.obs))
 
         return(H)
-
-    def INS(self, choice=None, custom=None, sig_thresh=4,
-            shape_dict={}, match_filter=False, pow=1, typ='mean'):
-        """
-        Generate an incoherent noise spectrum.
-        """
-
-        if choice is 'INS':
-            warnings.warn('This function does not support this flag choice')
-
-        app_flags_kwargs = {'choice': choice,
-                            'custom': custom}
-
-        match_filter_kwargs = {'sig_thresh': sig_thresh,
-                               'shape_dict': shape_dict}
-
-        self.apply_flags(**app_flags_kwargs)
-
-        if np.any(self.UV.data_array.mask):
-            Nbls = np.logical_not(self.UV.data_array.mask).sum(axis=1)
-        else:
-            Nbls = self.UV.Nbls * np.ones((self.UV.Ntimes - 1, ) +
-                                          self.UV.data_array.shape[2:], dtype=int)
-
-        INS = getattr(np, typ)(self.UV.data_array**pow, axis=1) / pow
-        C = {'mean': [4 / np.pi - 1, 1],
-             'var': [1, 1]}
-        MS = (INS / INS.mean(axis=0) - 1) * np.sqrt(Nbls / C[typ][pow - 1])
-
-        if match_filter:
-            match_filter_args = (INS, MS, Nbls,
-                                 '%s/arrs/match_filter' % (self.outpath),
-                                 self.UV.freq_array, self.obs, choice)
-            INS, MS, events, hists = rfiutil.match_filter(*match_filter_args,
-                                                          **match_filter_kwargs)
-        else:
-            events = None
-            hists = None
-
-        if not os.path.exists('%s/arrs/INS' % (self.outpath)):
-            os.makedirs('%s/arrs/INS' % (self.outpath))
-
-        base = '%s/arrs/INS/%s_%s' % (self.outpath, self.obs, self.flag_titles[choice])
-        np.ma.dump(INS, '%s_INS.npym' % (base))
-        np.ma.dump(MS, '%s_MS.npym' % (base))
-        np.ma.dump(Nbls, '%s_Nbls.npym' % (base))
-        np.save('%s_events.npy' % (base), events)
-        np.save('%s_hists.npy' % (base), hists)
-
-        return(INS, MS, Nbls, events, hists)
 
     def bl_flag(self, choice=None, custom=None, sig_thresh=4, shape_dict={}):
 
