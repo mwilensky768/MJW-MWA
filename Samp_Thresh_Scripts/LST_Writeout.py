@@ -11,6 +11,6 @@ args = parser.parse_args()
 UV = UVData()
 UV.read(args.infile, file_type='uvfits', read_data=False)
 lst_arr = np.unique(UV.lst_array)[1:-3]
-times_arr = np.unique(UV.times_array)[1:-3]
+times_arr = np.unique(UV.time_array)[1:-3]
 np.save('%s/%s_lst_arr.npy' % (args.outdir, args.obsid), lst_arr)
 np.save('%s/%s_times_arr.npy' % (args.outdir, args.obsid), times_arr)
