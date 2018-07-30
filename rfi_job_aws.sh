@@ -76,7 +76,7 @@ if [ ! -f "/uvfits/${obs_id}.uvfits" ]; then
 fi
 
 # Run python catalog script
-python $script ${obs_id} /uvfits/${obs_id}.uvfits $outdir
+python $script ${obs_id} /uvfits/${obs_id}.uvfits $outdir/
 
 # Move rfi outputs to S3
 i=1  #initialize counter
