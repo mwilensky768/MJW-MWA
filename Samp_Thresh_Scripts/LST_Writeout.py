@@ -1,4 +1,4 @@
-from import pyuvdata import UVData
+from pyuvdata import UVData
 import argparse
 import numpy as np
 
