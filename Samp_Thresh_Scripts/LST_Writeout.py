@@ -5,7 +5,7 @@ import numpy as np
 parser = argparse.ArgumentParser()
 parser.add_argument('infile')
 parser.add_argument('outdir')
-args = parser.parse_args
+args = parser.parse_args()
 
 UV = UVData()
 UV.read(args.infile, file_type='uvfits', read_data=False)
