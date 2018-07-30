@@ -32,7 +32,7 @@ unset outdir
 #######Gathering the input arguments and applying defaults if necessary
 
 #Parse flags for inputs
-while getopts ":f:s:e:o:b:n:r:p:" option
+while getopts ":f:s:e:o:b:n:r:p:q:" option
 do
    case $option in
     f) obs_file_name="$OPTARG";;	#text file of observation id's
@@ -43,6 +43,7 @@ do
 		#Example: nb_foo creates folder named fhd_nb_foo
     n) nslots=$OPTARG;;		#Number of slots for grid engine
     p) uvfits_s3_loc=$OPTARG;;		#Path to uvfits files on S3
+    q) script=$OPTARG #The script to run
     \?) echo "Unknown option: Accepted flags are -f (obs_file_name), -s (starting_obs), -e (ending obs), -o (output directory), "
         echo "-b (output bucket on S3),  -n (number of slots to use), "
         echo "-u (user), -p (path to uvfits files on S3)."
@@ -175,5 +176,5 @@ done
 
 for obs_id in "${good_obs_list[@]}"
 do
-   qsub -V -b y -cwd -v nslots=${nslots},outdir=${outdir},s3_path=${s3_path},obs_id=$obs_id,uvfits_s3_loc=$uvfits_s3_loc -e ${logdir} -o ${logdir} -pe smp ${nslots} -sync y ~/MWA/MJW-MWA/rfi_job_aws.sh &
+   qsub -V -b y -cwd -v nslots=${nslots},outdir=${outdir},s3_path=${s3_path},obs_id=$obs_id,uvfits_s3_loc=$uvfits_s3_loc,script=$script -e ${logdir} -o ${logdir} -pe smp ${nslots} -sync y ~/MWA/MJW-MWA/rfi_job_aws.sh &
 done
