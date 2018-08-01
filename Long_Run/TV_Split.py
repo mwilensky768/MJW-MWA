@@ -26,13 +26,13 @@ for channel in args.channels:
             UV_TV.nsample_array[0, ind[1][m], ind[2][m] % 16, ind[3][m]]
     UV_TV.flag_array[:, :, freq_chans[channel]] = 0
     UV_TV.flag_array[:, :, :min(freq_chans[channel])] = 1
-    UV_TV.flag_array[:, :, max(freq_chans[channel]:)] = 1
+    UV_TV.flag_array[:, :, max(freq_chans[channel]):] = 1
 
     UV_cal = UV.select(times=np.unique(UV.time_array)[min(args.cal_ind):max(args.cal_ind)],
                        inplace=False)
     UV_cal.flag_array[:, :, freq_chans[channel]] = 0
     UV_cal.flag_array[:, :, :min(freq_chans[channel])] = 1
-    UV_cal.flag_array[:, :, max(freq_chans[channel]:)] = 1
+    UV_cal.flag_array[:, :, max(freq_chans[channel]):] = 1
 
     ind = np.where(UV_cal.nsample_array == 0)
     for m in range(len(ind[0])):
