@@ -44,7 +44,9 @@ do
     n) nslots=$OPTARG;;		#Number of slots for grid engine
     p) uvfits_s3_loc=$OPTARG;;		#Path to uvfits files on S3
     q) script=$OPTARG;; #The script to run
-    a) add_args=$OPTARG;; #Additional arguments for the script
+    a) set -f
+       IFS=' '
+       add_args=($OPTARG) ;; #Additional arguments for the script
     \?) echo "Unknown option: Accepted flags are -f (obs_file_name), -s (starting_obs), -e (ending obs), -o (output directory), "
         echo "-b (output bucket on S3),  -n (number of slots to use), "
         echo "-u (user), -p (path to uvfits files on S3)."
