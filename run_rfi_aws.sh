@@ -44,9 +44,11 @@ do
     n) nslots=$OPTARG;;		#Number of slots for grid engine
     p) uvfits_s3_loc=$OPTARG;;		#Path to uvfits files on S3
     q) script=$OPTARG;; #The script to run
-    a) set -f
-       IFS=' '
-       add_args=($OPTARG) ;; #Additional arguments for the script
+    T) TV_min=$OPTARG;; #Additional arguments for the script
+    V) TV_max=$OPTARG;;
+    c) cal_min=$OPTARG;;
+    a) cal_max=$OPTARG;;
+    h) chan=$OPTARG;;
     \?) echo "Unknown option: Accepted flags are -f (obs_file_name), -s (starting_obs), -e (ending obs), -o (output directory), "
         echo "-b (output bucket on S3),  -n (number of slots to use), "
         echo "-u (user), -p (path to uvfits files on S3)."
@@ -179,5 +181,5 @@ done
 
 for obs_id in "${good_obs_list[@]}"
 do
-   qsub -V -b y -cwd -v nslots=${nslots},outdir=${outdir},s3_path=${s3_path},obs_id=$obs_id,uvfits_s3_loc=$uvfits_s3_loc,script=$script,add_args=$add_args -e ${logdir} -o ${logdir} -pe smp ${nslots} -sync y ~/MWA/MJW-MWA/rfi_job_aws.sh &
+   qsub -V -b y -cwd -v nslots=${nslots},outdir=${outdir},s3_path=${s3_path},obs_id=$obs_id,uvfits_s3_loc=$uvfits_s3_loc,script=$script,TV_min=$TV_min,TV_max=$TV_max,cal_min=$cal_min, cal_max=$cal_max,chan=$chan -e ${logdir} -o ${logdir} -pe smp ${nslots} -sync y ~/MWA/MJW-MWA/rfi_job_aws.sh &
 done
