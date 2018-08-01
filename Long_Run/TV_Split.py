@@ -18,11 +18,11 @@ freq_chans = {6: range(87, 174),
               8: range(262, 349)}
 
 for channel in args.channels:
-    UV_TV = UV.select(times=np.unique(UV.times_array)[min(args.TV_ind):max(args.TV_ind)],
+    UV_TV = UV.select(times=np.unique(UV.time_array)[min(args.TV_ind):max(args.TV_ind)],
                       freq_chans=freq_chans[channel],
                       inplace=False)
 
-    UV_cal = UV.select(times=np.unique(UV.times_array)[min(args.cal_ind):max(args.cal_ind)],
+    UV_cal = UV.select(times=np.unique(UV.time_array)[min(args.cal_ind):max(args.cal_ind)],
                        freq_chans=freq_chans[channel],
                        inplace=False)
 
