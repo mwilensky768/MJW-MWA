@@ -32,7 +32,7 @@ unset outdir
 #######Gathering the input arguments and applying defaults if necessary
 
 #Parse flags for inputs
-while getopts ":f:s:e:o:b:n:r:p:q:a:" option
+while getopts ":f:s:e:o:b:n:r:p:q:T:V:c:a:h:" option
 do
    case $option in
     f) obs_file_name="$OPTARG";;	#text file of observation id's
