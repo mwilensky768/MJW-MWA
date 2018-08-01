@@ -8,7 +8,7 @@ parser.add_argument('inpath')
 parser.add_argument('outpath')
 parser.add_argument('TV_ind', nargs=2, type=int)
 parser.add_argument('cal_ind', nargs=2, type=int)
-parser.add_argument('channels', nargs=*, type=int)
+parser.add_argument('channels', nargs='*', type=int)
 args = parser.parse_args()
 
 UV = UVData()
