@@ -181,5 +181,5 @@ done
 
 for obs_id in "${good_obs_list[@]}"
 do
-   qsub -V -b y -cwd -v nslots=${nslots},outdir=${outdir},s3_path=${s3_path},obs_id=$obs_id,uvfits_s3_loc=$uvfits_s3_loc,script=$script,TV_min=$TV_min,TV_max=$TV_max,cal_min=$cal_min, cal_max=$cal_max,chan=$chan -e ${logdir} -o ${logdir} -pe smp ${nslots} -sync y ~/MWA/MJW-MWA/rfi_job_aws.sh &
+   qsub -V -b y -cwd -v nslots=${nslots},outdir=${outdir},s3_path=${s3_path},obs_id=$obs_id,uvfits_s3_loc=$uvfits_s3_loc,script=$script,TV_min=$TV_min,TV_max=$TV_max,cal_min=$cal_min,cal_max=$cal_max,chan=$chan -e ${logdir} -o ${logdir} -pe smp ${nslots} -sync y ~/MWA/MJW-MWA/rfi_job_aws.sh &
 done
