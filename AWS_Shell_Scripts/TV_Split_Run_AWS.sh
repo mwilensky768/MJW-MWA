@@ -1,38 +1,13 @@
 #!/bin/bash
 
-####################################################
-#
-# RUN_FHD_AWS.SH
-#
-# Top level script to run a list of observation IDs through Mike Wilensky's
-# RFI code on AWS.
-#
-#
-# Required input arguments are obs_file_name (-f /path/to/obsfile)
-#
-# Optional input arguments are:
-# starting_obs (-s 1061311664) which is defaulted to the beginning obsid of
-# the specified file
-# ending_obs (-e 1061323008) which is defaulted to the ending obsid of the
-# specified file
-# outdir (-o /path/to/output/directory) which is defaulted to /FHD_output
-# nslots (-n 10) which is defaulted to 10
-#
-# This is adapted by R. Byrne from PIPE_DREAM.SH for running FHD on MIT
-# (written by N. Barry)
-# This was further adapted by Mike Wilensky
-####################################################
-
 #Clear input parameters
 unset obs_file_name
 unset starting_obs
 unset ending_obs
 unset outdir
 
-#######Gathering the input arguments and applying defaults if necessary
-
 #Parse flags for inputs
-while getopts ":f:s:e:o:b:n:r:p:q:" option
+while getopts ":f:s:e:o:b:n:r:p:T:V:c:a:h:" option
 do
    case $option in
     f) obs_file_name="$OPTARG";;	#text file of observation id's
@@ -43,7 +18,11 @@ do
 		#Example: nb_foo creates folder named fhd_nb_foo
     n) nslots=$OPTARG;;		#Number of slots for grid engine
     p) uvfits_s3_loc=$OPTARG;;		#Path to uvfits files on S3
-    q) script=$OPTARG;; #The script to run
+    T) TV_min=$OPTARG;; #text file of tv min
+    V) TV_max=$OPTARG;; #text file of tv max
+    c) cal_min=$OPTARG;; #text file of cal min
+    a) cal_max=$OPTARG;; #text file of cal max
+    h) chan=$OPTARG;; #text file of chan
     \?) echo "Unknown option: Accepted flags are -f (obs_file_name), -s (starting_obs), -e (ending obs), -o (output directory), "
         echo "-b (output bucket on S3),  -n (number of slots to use), "
         echo "-u (user), -p (path to uvfits files on S3)."
@@ -128,53 +107,57 @@ do
    fi
 done < "$obs_file_name"
 
-#Find the max and min of the obs id array
-max=${obs_id_array[0]}
-min=${obs_id_array[0]}
-
-for obs_id in "${obs_id_array[@]}"
+#Read the TV_mins and put into an array, skipping blank lines if they exist
+i=0
+while read line
 do
-   #Update max if applicable
-   if [[ "$obs_id" -gt "$max" ]]
-   then
-	max="$obs_id"
+   if [ ! -z "$line" ]; then
+      TV_min_array[$i]=$line
+      i=$((i + 1))
    fi
+done < "$TV_min"
 
-   #Update min if applicable
-   if [[ "$obs_id" -lt "$min" ]]
-   then
-	min="$obs_id"
-   fi
-done
-
-#If minimum not specified, start at minimum of obs_file
-if [ -z ${starting_obs} ]
-then
-   echo "Starting observation not specified: Starting at minimum of $obs_file_name"
-   starting_obs=$min
-fi
-
-#If maximum not specified, end at maximum of obs_file
-if [ -z ${ending_obs} ]
-then
-   echo "Ending observation not specified: Ending at maximum of $obs_file_name"
-   ending_obs=$max
-fi
-
-#Create a list of observations using the specified range, or the full observation id file.
-unset good_obs_list
-for obs_id in "${obs_id_array[@]}"; do
-    if [ $obs_id -ge $starting_obs ] && [ $obs_id -le $ending_obs ]; then
-	good_obs_list+=($obs_id)
-    fi
-done
-
-#######End of gathering the input arguments and applying defaults if necessary
-
-
-#######Submit the firstpass jobs and wait for output
-
-for obs_id in "${good_obs_list[@]}"
+#Read the TV_maxs and put into an array, skipping blank lines if they exist
+i=0
+while read line
 do
-   qsub -V -b y -cwd -v nslots=${nslots},outdir=${outdir},s3_path=${s3_path},obs_id=$obs_id,uvfits_s3_loc=$uvfits_s3_loc,script=$script -e ${logdir} -o ${logdir} -pe smp ${nslots} -sync y ~/MWA/MJW-MWA/rfi_job_aws.sh &
+   if [ ! -z "$line" ]; then
+      TV_max_array[$i]=$line
+      i=$((i + 1))
+   fi
+done < "$TV_max"
+
+#Read the cal_mins and put into an array, skipping blank lines if they exist
+i=0
+while read line
+do
+   if [ ! -z "$line" ]; then
+      cal_min_array[$i]=$line
+      i=$((i + 1))
+   fi
+done < "$cal_min"
+
+#Read the cal_maxs and put into an array, skipping blank lines if they exist
+i=0
+while read line
+do
+   if [ ! -z "$line" ]; then
+      cal_max_array[$i]=$line
+      i=$((i + 1))
+   fi
+done < "$cal_max"
+
+#Read the chans and put into an array, skipping blank lines if they exist
+i=0
+while read line
+do
+   if [ ! -z "$line" ]; then
+      chan_array[$i]=$line
+      i=$((i + 1))
+   fi
+done < "$chan"
+
+for i in "${!obs_id_array[*]}"
+do
+   qsub -V -b y -cwd -v nslots=${nslots},outdir=${outdir},s3_path=${s3_path},obs_id=${obs_id_array[$i]},uvfits_s3_loc=$uvfits_s3_loc,TV_min=${TV_min_array[$i]},TV_max=${TV_max_array[$i]},cal_min=${cal_min_array[$i]},cal_max=${cal_max_array[$i]},chan=${chan_array[$i]} -e ${logdir} -o ${logdir} -pe smp ${nslots} -sync y ~/MWA/MJW-MWA/AWS_Shell_Scripts/TV_Split_Job_AWS.sh &
 done
