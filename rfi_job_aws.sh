@@ -54,7 +54,7 @@ fi
 
 # Check if the outputs have already been computed. If so, exit.
 outputs_exists=$(aws s3 ls ${s3_path}/${obs_id}_lst_arr.npy)
-if [ -z "$output_exists" ]; then
+if [ "$outputs_exists" ]; then
     echo "Outputs have already been computed"
     exit 2
 fi
