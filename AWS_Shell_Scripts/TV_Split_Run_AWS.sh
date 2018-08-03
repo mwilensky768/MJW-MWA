@@ -157,7 +157,7 @@ do
    fi
 done < "$chan"
 
-for i in "${1..23}"
+for i in {1..23}
 do
    qsub -V -b y -cwd -v nslots=${nslots},outdir=${outdir},s3_path=${s3_path},obs_id=${obs_id_array[${i}]},uvfits_s3_loc=$uvfits_s3_loc,TV_min=${TV_min_array[${i}]},TV_max=${TV_max_array[${i}]},cal_min=${cal_min_array[${i}]},cal_max=${cal_max_array[${i}]},chan=${chan_array[${i}]} -e ${logdir} -o ${logdir} -pe smp ${nslots} -sync y ~/MWA/MJW-MWA/AWS_Shell_Scripts/TV_Split_Job_AWS.sh &
 done
