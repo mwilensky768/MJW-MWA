@@ -73,6 +73,7 @@ fi
 if [ ! -f "/uvfits/${obs_id}_cal${chan}_t${cal_min}_t${cal_max}.uvfits" ]; then
 
     # Check that the uvfits file exists on S3
+    echo "aws s3 ls ${uvfits_s3_loc}/${obs_id}_cal${chan}_t${cal_min}_t${cal_max}.uvfits"
     uvfits_exists=$(aws s3 ls ${uvfits_s3_loc}/${obs_id}_cal${chan}_t${cal_min}_t${cal_max}.uvfits)
     if [ -z "$uvfits_exists" ]; then
         >&2 echo "ERROR: uvfits file not found"
