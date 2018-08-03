@@ -70,7 +70,7 @@ else
 fi
 
 # Check if the uvfits file exists locally; if not, download it from S3
-if [ ! -f "/uvfits/${obs_id}_TV${chan}_t${TV_min}_t${TV_max}.uvfits" ]; then
+if [ ! -f "/uvfits/${obs_id}_cal${chan}_t${TV_min}_t${TV_max}.uvfits" ]; then
 
     # Check that the uvfits file exists on S3
     uvfits_exists=$(aws s3 ls ${uvfits_s3_loc}/${obs_id}_cal${chan}_t${cal_min}_t${cal_max}.uvfits)
