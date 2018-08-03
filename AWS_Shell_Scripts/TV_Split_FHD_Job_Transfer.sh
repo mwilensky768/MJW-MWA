@@ -82,7 +82,7 @@ if [ ! -f "/uvfits/${obs_id}_TV${chan}_t${TV_min}_t${TV_max}.uvfits" ]; then
 
     # Download uvfits from S3
     sudo aws s3 cp ${uvfits_s3_loc}/${obs_id}_TV${chan}_t${TV_min}_t${TV_max}.uvfits \
-    /uvfits/${obs_id}.uvfits --quiet
+    /uvfits/${obs_id}_TV${chan}_t${TV_min}_t${TV_max}.uvfits --quiet
 
     # Verify that the uvfits downloaded correctly
     if [ ! -f "/uvfits/${obs_id}.uvfits" ]; then
