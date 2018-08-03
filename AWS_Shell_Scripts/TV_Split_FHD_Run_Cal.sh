@@ -209,6 +209,56 @@ for obs_id in "${obs_id_array[@]}"; do
     fi
 done
 
+#Read the TV_mins and put into an array, skipping blank lines if they exist
+i=0
+while read line
+do
+   if [ ! -z "$line" ]; then
+      TV_min_array[$i]=$line
+      i=$((i + 1))
+   fi
+done < "$TV_min"
+
+#Read the TV_maxs and put into an array, skipping blank lines if they exist
+i=0
+while read line
+do
+   if [ ! -z "$line" ]; then
+      TV_max_array[$i]=$line
+      i=$((i + 1))
+   fi
+done < "$TV_max"
+
+#Read the cal_mins and put into an array, skipping blank lines if they exist
+i=0
+while read line
+do
+   if [ ! -z "$line" ]; then
+      cal_min_array[$i]=$line
+      i=$((i + 1))
+   fi
+done < "$cal_min"
+
+#Read the cal_maxs and put into an array, skipping blank lines if they exist
+i=0
+while read line
+do
+   if [ ! -z "$line" ]; then
+      cal_max_array[$i]=$line
+      i=$((i + 1))
+   fi
+done < "$cal_max"
+
+#Read the chans and put into an array, skipping blank lines if they exist
+i=0
+while read line
+do
+   if [ ! -z "$line" ]; then
+      chan_array[$i]=$line
+      i=$((i + 1))
+   fi
+done < "$chan"
+
 #######End of gathering the input arguments and applying defaults if necessary
 
 
