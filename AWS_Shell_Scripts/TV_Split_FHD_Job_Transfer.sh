@@ -111,6 +111,7 @@ if [ ! -f "/uvfits/${obs_id}.metafits" ]; then
     if [ ! -f "/uvfits/${obs_id}.metafits" ]; then
         >&2 echo "ERROR: downloading metafits from S3 failed"
         echo "Job Failed"
+        echo $obs_id >> /obs_fail.txt
         exit 1
     fi
 fi

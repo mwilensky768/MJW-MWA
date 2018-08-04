@@ -92,6 +92,7 @@ if [ ! -f "/uvfits/${obs_id}_cal${chan}_t${cal_min}_t${cal_max}.uvfits" ]; then
     # Verify that the uvfits downloaded correctly
     if [ ! -f "/uvfits/${obs_id}_cal${chan}_t${cal_min}_t${cal_max}.uvfits" ]; then
         >&2 echo "ERROR: downloading uvfits from S3 failed"
+        echo $obs_id >> /obs_fail.txt
         echo "Job Failed"
         exit 1
     fi
