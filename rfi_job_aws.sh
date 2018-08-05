@@ -52,13 +52,6 @@ else
     sudo mkdir -m 777 /uvfits
 fi
 
-# Check if the outputs have already been computed. If so, exit.
-outputs_exists=$(aws s3 ls ${s3_path}/${obs_id}_lst_arr.npy)
-if [ "$outputs_exists" ]; then
-    echo "Outputs have already been computed"
-    exit 2
-fi
-
 # Check if the uvfits file exists locally; if not, download it from S3
 if [ ! -f "/uvfits/${obs_id}.uvfits" ]; then
 
@@ -78,6 +71,7 @@ if [ ! -f "/uvfits/${obs_id}.uvfits" ]; then
     # Verify that the uvfits downloaded correctly
     if [ ! -f "/uvfits/${obs_id}.uvfits" ]; then
         >&2 echo "ERROR: downloading uvfits from S3 failed"
+        echo $obs_id >> ./Obs_Lists/obs_fail.txt
         echo "Job Failed"
         exit 1
     fi
