@@ -239,20 +239,20 @@ while [ $? -ne 0 ] && [ $i -lt 10 ]; do
     --recursive --exclude "*" --include "*${obs_id}*" --quiet
 done
 
-# Remove uvfits and metafits from the instance
-sudo rm /uvfits/${obs_id}.uvfits
+# Remove uvfits and metafits and cal from the instance
+sudo rm /uvfits/${obs_id}_TV${chan}_t${TV_min}_t${TV_max}.uvfits
 sudo rm /uvfits/${obs_id}.metafits
 
 echo "JOB END TIME" `date +"%Y-%m-%d_%H:%M:%S"`
 
 # Copy gridengine stdout to S3
 aws s3 cp ~/grid_out/fhd_job_aws.sh.o${JOB_ID} \
-${s3_path}/fhd_${version}/grid_out/fhd_job_aws.sh.o${JOB_ID}_${myip}.txt \
+${s3_path}/fhd_${version}/grid_out/TV_Split_FHD_Job_Transfer.sh.o${JOB_ID}_${myip}.txt \
 --quiet
 
 # Copy gridengine stderr to S3
 aws s3 cp ~/grid_out/fhd_job_aws.sh.e${JOB_ID} \
-${s3_path}/fhd_${version}/grid_out/fhd_job_aws.sh.e${JOB_ID}_${myip}.txt \
+${s3_path}/fhd_${version}/grid_out/TV_Split_FHD_Job_Transfer.sh.e${JOB_ID}_${myip}.txt \
 --quiet
 
 exit $error_mode
