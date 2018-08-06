@@ -37,6 +37,7 @@ if [ -z ${version} ]; then
     exit 1
 fi
 if [ -z ${obs_id} ]; then
+    >&2 echo ${obs_id}
     >&2 echo "ERROR: no obs ID provided"
     exit 1
 fi
