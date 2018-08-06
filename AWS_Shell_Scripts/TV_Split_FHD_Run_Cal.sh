@@ -168,6 +168,8 @@ do
    fi
 done < "$obs_file_name"
 
+echo $obs_id_array
+
 #Find the max and min of the obs id array
 max=${obs_id_array[0]}
 min=${obs_id_array[0]}
@@ -266,6 +268,5 @@ done < "$chan"
 
 for i in {0..22}
 do
-   >&2 echo ${obs_id_array[${i}]}
    qsub -V -b y -cwd -v nslots=${nslots},outdir=${outdir},version=${version},s3_path=${s3_path},obs_id=${obs_id_array[${i}]},versions_script=$versions_script,uvfits_s3_loc=$uvfits_s3_loc,metafits_s3_loc=$metafits_s3_loc,input_vis=$input_vis,input_eor=$input_eor,TV_min=${TV_min_array[${i}]},TV_max=${TV_max_array[${i}]},cal_min=${cal_min_array[${i}]},cal_max=${cal_max_array[${i}]},chan=${chan_array[${i}]} -e ${logdir} -o ${logdir} -pe smp ${nslots} -sync y ~/MWA/MJW-MWA/AWS_Shell_Scripts/TV_Split_FHD_Job_Cal.sh &
 done
