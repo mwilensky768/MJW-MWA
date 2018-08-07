@@ -165,47 +165,6 @@ done < "$obs_file_name"
 
 echo $obs_id_array
 
-#Find the max and min of the obs id array
-max=${obs_id_array[0]}
-min=${obs_id_array[0]}
-
-for obs_id in "${obs_id_array[@]}"
-do
-   #Update max if applicable
-   if [[ "$obs_id" -gt "$max" ]]
-   then
-	max="$obs_id"
-   fi
-
-   #Update min if applicable
-   if [[ "$obs_id" -lt "$min" ]]
-   then
-	min="$obs_id"
-   fi
-done
-
-#If minimum not specified, start at minimum of obs_file
-if [ -z ${starting_obs} ]
-then
-   echo "Starting observation not specified: Starting at minimum of $obs_file_name"
-   starting_obs=$min
-fi
-
-#If maximum not specified, end at maximum of obs_file
-if [ -z ${ending_obs} ]
-then
-   echo "Ending observation not specified: Ending at maximum of $obs_file_name"
-   ending_obs=$max
-fi
-
-#Create a list of observations using the specified range, or the full observation id file.
-unset good_obs_list
-for obs_id in "${obs_id_array[@]}"; do
-    if [ $obs_id -ge $starting_obs ] && [ $obs_id -le $ending_obs ]; then
-	good_obs_list+=($obs_id)
-    fi
-done
-
 #######End of gathering the input arguments and applying defaults if necessary
 
 
