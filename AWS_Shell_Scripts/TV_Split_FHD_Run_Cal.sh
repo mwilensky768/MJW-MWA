@@ -50,11 +50,6 @@ do
     m) metafits_s3_loc=$OPTARG;;		#Path to metafits files on S3
     i) input_vis=$OPTARG;;              #Optional input visibilities for in situ sim
     j) input_eor=$OPTARG;;             #Optional input eor sim for in situ sim
-    T) TV_min=$OPTARG;; #text file of tv min
-    V) TV_max=$OPTARG;; #text file of tv max
-    C) cal_min=$OPTARG;; #text file of cal min
-    A) cal_max=$OPTARG;; #text file of cal max
-    H) chan=$OPTARG;; #text file of chan
     \?) echo "Unknown option: Accepted flags are -f (obs_file_name), -s (starting_obs), -e (ending obs), -o (output directory), "
         echo "-b (output bucket on S3), -v (version input for FHD),  -n (number of slots to use), "
         echo "-u (user), -p (path to uvfits files on S3), -m (path to metafits files on S3)."
@@ -211,56 +206,6 @@ for obs_id in "${obs_id_array[@]}"; do
     fi
 done
 
-#Read the TV_mins and put into an array, skipping blank lines if they exist
-i=0
-while read line
-do
-   if [ ! -z "$line" ]; then
-      TV_min_array[$i]=$line
-      i=$((i + 1))
-   fi
-done < "$TV_min"
-
-#Read the TV_maxs and put into an array, skipping blank lines if they exist
-i=0
-while read line
-do
-   if [ ! -z "$line" ]; then
-      TV_max_array[$i]=$line
-      i=$((i + 1))
-   fi
-done < "$TV_max"
-
-#Read the cal_mins and put into an array, skipping blank lines if they exist
-i=0
-while read line
-do
-   if [ ! -z "$line" ]; then
-      cal_min_array[$i]=$line
-      i=$((i + 1))
-   fi
-done < "$cal_min"
-
-#Read the cal_maxs and put into an array, skipping blank lines if they exist
-i=0
-while read line
-do
-   if [ ! -z "$line" ]; then
-      cal_max_array[$i]=$line
-      i=$((i + 1))
-   fi
-done < "$cal_max"
-
-#Read the chans and put into an array, skipping blank lines if they exist
-i=0
-while read line
-do
-   if [ ! -z "$line" ]; then
-      chan_array[$i]=$line
-      i=$((i + 1))
-   fi
-done < "$chan"
-
 #######End of gathering the input arguments and applying defaults if necessary
 
 
@@ -268,5 +213,5 @@ done < "$chan"
 
 for i in {0..22}
 do
-   qsub -V -b y -cwd -v nslots=${nslots},outdir=${outdir},version=${version},s3_path=${s3_path},obs_id=${obs_id_array[${i}]},versions_script=$versions_script,uvfits_s3_loc=$uvfits_s3_loc,metafits_s3_loc=$metafits_s3_loc,input_vis=$input_vis,input_eor=$input_eor,TV_min=${TV_min_array[${i}]},TV_max=${TV_max_array[${i}]},cal_min=${cal_min_array[${i}]},cal_max=${cal_max_array[${i}]},chan=${chan_array[${i}]} -e ${logdir} -o ${logdir} -pe smp ${nslots} -sync y ~/MWA/MJW-MWA/AWS_Shell_Scripts/TV_Split_FHD_Job_Cal.sh &
+   qsub -V -b y -cwd -v nslots=${nslots},outdir=${outdir},version=${version},s3_path=${s3_path},obs_id=${obs_id_array[${i}]},versions_script=$versions_script,uvfits_s3_loc=$uvfits_s3_loc,metafits_s3_loc=$metafits_s3_loc,input_vis=$input_vis,input_eor=$input_eor -e ${logdir} -o ${logdir} -pe smp ${nslots} -sync y ~/MWA/MJW-MWA/AWS_Shell_Scripts/TV_Split_FHD_Job_Cal.sh &
 done

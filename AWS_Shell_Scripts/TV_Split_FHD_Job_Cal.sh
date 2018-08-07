@@ -71,10 +71,10 @@ else
 fi
 
 # Check if the uvfits file exists locally; if not, download it from S3
-if [ ! -f "/uvfits/${obs_id}_cal${chan}_t${cal_min}_t${cal_max}.uvfits" ]; then
+if [ ! -f "/uvfits/${obs_id}.uvfits" ]; then
 
     # Check that the uvfits file exists on S3
-    uvfits_exists=$(aws s3 ls ${uvfits_s3_loc}/${obs_id}_cal${chan}_t${cal_min}_t${cal_max}.uvfits)
+    uvfits_exists=$(aws s3 ls ${uvfits_s3_loc}/${obs_id}.uvfits)
     if [ -z "$uvfits_exists" ]; then
         >&2 echo "ERROR: uvfits file not found"
         >&2 echo ${uvfits_s3_loc}
@@ -87,11 +87,11 @@ if [ ! -f "/uvfits/${obs_id}_cal${chan}_t${cal_min}_t${cal_max}.uvfits" ]; then
     fi
 
     # Download uvfits from S3
-    sudo aws s3 cp ${uvfits_s3_loc}/${obs_id}_cal${chan}_t${cal_min}_t${cal_max}.uvfits \
-    /uvfits/${obs_id}_cal${chan}_t${cal_min}_t${cal_max}.uvfits --quiet
+    sudo aws s3 cp ${uvfits_s3_loc}/${obs_id}.uvfits \
+    /uvfits/${obs_id}.uvfits --quiet
 
     # Verify that the uvfits downloaded correctly
-    if [ ! -f "/uvfits/${obs_id}_cal${chan}_t${cal_min}_t${cal_max}.uvfits" ]; then
+    if [ ! -f "/uvfits/${obs_id}.uvfits" ]; then
         >&2 echo "ERROR: downloading uvfits from S3 failed"
         echo $obs_id >> /obs_fail.txt
         echo "Job Failed"
@@ -100,10 +100,10 @@ if [ ! -f "/uvfits/${obs_id}_cal${chan}_t${cal_min}_t${cal_max}.uvfits" ]; then
 fi
 
 # Check if the metafits file exists locally; if not, download it from S3
-if [ ! -f "/uvfits/${obs_id}.metafits" ]; then
+if [ ! -f "/uvfits/${obs_id:0:10}.metafits" ]; then
 
     # Check that the metafits file exists on S3
-    metafits_exists=$(aws s3 ls ${metafits_s3_loc}/${obs_id}.metafits)
+    metafits_exists=$(aws s3 ls ${metafits_s3_loc}/${obs_id:0:10}.metafits)
     if [ -z "$metafits_exists" ]; then
         >&2 echo "ERROR: metafits file not found"
         echo "Job Failed"
@@ -111,11 +111,11 @@ if [ ! -f "/uvfits/${obs_id}.metafits" ]; then
     fi
 
     # Download metafits from S3
-    sudo aws s3 cp ${metafits_s3_loc}/${obs_id}.metafits \
-    /uvfits/${obs_id}.metafits --quiet
+    sudo aws s3 cp ${metafits_s3_loc}/${obs_id:0:10}.metafits \
+    /uvfits/${obs_id:0:10}.metafits --quiet
 
     # Verify that the metafits downloaded correctly
-    if [ ! -f "/uvfits/${obs_id}.metafits" ]; then
+    if [ ! -f "/uvfits/${obs_id:0:10}.metafits" ]; then
         >&2 echo "ERROR: downloading metafits from S3 failed"
         echo "Job Failed"
         exit 1
@@ -200,8 +200,8 @@ while [ $? -ne 0 ] && [ $i -lt 10 ]; do
 done
 
 # Remove uvfits and metafits from the instance
-sudo rm /uvfits/${obs_id}_cal${chan}_t${cal_min}_t${cal_max}.uvfits
-sudo rm /uvfits/${obs_id}.metafits
+sudo rm /uvfits/${obs_id}.uvfits
+sudo rm /uvfits/${obs_id:0:10}.metafits
 
 echo "JOB END TIME" `date +"%Y-%m-%d_%H:%M:%S"`
 
