@@ -76,6 +76,7 @@ if [ ! -f "/uvfits/${obs_id}.uvfits" ]; then
     uvfits_exists=$(aws s3 ls ${uvfits_s3_loc}/${obs_id}.uvfits)
     if [ -z "$uvfits_exists" ]; then
         >&2 echo "ERROR: uvfits file not found"
+        >&2 echo $obs_id
         echo "Job Failed"
         exit 1
     fi
