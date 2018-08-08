@@ -34,7 +34,7 @@ unset version
 #######Gathering the input arguments and applying defaults if necessary
 
 #Parse flags for inputs
-while getopts ":f:s:e:o:b:v:n:r:u:p:m:i:j:c:" option
+while getopts ":f:s:e:o:b:v:n:r:u:p:m:i:j:c:a:" option
 do
    case $option in
     f) obs_file_name="$OPTARG";;	#text file of observation id's
@@ -51,11 +51,7 @@ do
     i) input_vis=$OPTARG;;              #Optional input visibilities for in situ sim
     j) input_eor=$OPTARG;;             #Optional input eor sim for in situ sim
     c) cal_s3_loc=$OPTARG;; #Path to calibration on s3
-    T) TV_min=$OPTARG;; #text file of tv min
-    V) TV_max=$OPTARG;; #text file of tv max
-    C) cal_min=$OPTARG;; #text file of cal min
-    A) cal_max=$OPTARG;; #text file of cal max
-    H) chan=$OPTARG;; #text file of chan
+    a) cal_obs_file=$OPTARG;;
 
     \?) echo "Unknown option: Accepted flags are -f (obs_file_name), -s (starting_obs), -e (ending obs), -o (output directory), "
         echo "-b (output bucket on S3), -v (version input for FHD),  -n (number of slots to use), "
@@ -170,96 +166,15 @@ do
    fi
 done < "$obs_file_name"
 
-#Find the max and min of the obs id array
-max=${obs_id_array[0]}
-min=${obs_id_array[0]}
-
-for obs_id in "${obs_id_array[@]}"
-do
-   #Update max if applicable
-   if [[ "$obs_id" -gt "$max" ]]
-   then
-	max="$obs_id"
-   fi
-
-   #Update min if applicable
-   if [[ "$obs_id" -lt "$min" ]]
-   then
-	min="$obs_id"
-   fi
-done
-
-#If minimum not specified, start at minimum of obs_file
-if [ -z ${starting_obs} ]
-then
-   echo "Starting observation not specified: Starting at minimum of $obs_file_name"
-   starting_obs=$min
-fi
-
-#If maximum not specified, end at maximum of obs_file
-if [ -z ${ending_obs} ]
-then
-   echo "Ending observation not specified: Ending at maximum of $obs_file_name"
-   ending_obs=$max
-fi
-
-#Create a list of observations using the specified range, or the full observation id file.
-unset good_obs_list
-for obs_id in "${obs_id_array[@]}"; do
-    if [ $obs_id -ge $starting_obs ] && [ $obs_id -le $ending_obs ]; then
-	good_obs_list+=($obs_id)
-    fi
-done
-
-#Read the TV_mins and put into an array, skipping blank lines if they exist
+#Read the cal obs file and put into an array, skipping blank lines if they exist
 i=0
 while read line
 do
    if [ ! -z "$line" ]; then
-      TV_min_array[$i]=$line
+      cal_obs_id_array[$i]=$line
       i=$((i + 1))
    fi
-done < "$TV_min"
-
-#Read the TV_maxs and put into an array, skipping blank lines if they exist
-i=0
-while read line
-do
-   if [ ! -z "$line" ]; then
-      TV_max_array[$i]=$line
-      i=$((i + 1))
-   fi
-done < "$TV_max"
-
-#Read the cal_mins and put into an array, skipping blank lines if they exist
-i=0
-while read line
-do
-   if [ ! -z "$line" ]; then
-      cal_min_array[$i]=$line
-      i=$((i + 1))
-   fi
-done < "$cal_min"
-
-#Read the cal_maxs and put into an array, skipping blank lines if they exist
-i=0
-while read line
-do
-   if [ ! -z "$line" ]; then
-      cal_max_array[$i]=$line
-      i=$((i + 1))
-   fi
-done < "$cal_max"
-
-#Read the chans and put into an array, skipping blank lines if they exist
-i=0
-while read line
-do
-   if [ ! -z "$line" ]; then
-      chan_array[$i]=$line
-      i=$((i + 1))
-   fi
-done < "$chan"
+done < "$cal_obs_file"
 
 #######End of gathering the input arguments and applying defaults if necessary
 
@@ -268,5 +183,5 @@ done < "$chan"
 
 for i in {0..22}
 do
-   qsub -V -b y -cwd -v nslots=${nslots},outdir=${outdir},version=${version},s3_path=${s3_path},obs_id=$obs_id_array[${i}],versions_script=$versions_script,uvfits_s3_loc=$uvfits_s3_loc,metafits_s3_loc=$metafits_s3_loc,input_vis=$input_vis,input_eor=$input_eor,cal_s3_loc=$cal_s3_loc,TV_min=${TV_min_array[${i}]},TV_max=${TV_max_array[${i}]},cal_min=${cal_min_array[${i}]},cal_max=${cal_max_array[${i}]},chan=${chan_array[${i}]} -e ${logdir} -o ${logdir} -pe smp ${nslots} -sync y ~/MWA/MJW-MWA/AWS_Shell_Scripts/TV_Split_FHD_Job_Transfer.sh &
+   qsub -V -b y -cwd -v nslots=${nslots},outdir=${outdir},version=${version},s3_path=${s3_path},obs_id=$obs_id_array[${i}],versions_script=$versions_script,uvfits_s3_loc=$uvfits_s3_loc,metafits_s3_loc=$metafits_s3_loc,input_vis=$input_vis,input_eor=$input_eor,cal_s3_loc=$cal_s3_loc,cal_obs_id=${cal_obs_id_array[${i}]} -e ${logdir} -o ${logdir} -pe smp ${nslots} -sync y ~/MWA/MJW-MWA/AWS_Shell_Scripts/TV_Split_FHD_Job_Transfer.sh &
 done

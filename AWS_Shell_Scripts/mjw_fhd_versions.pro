@@ -10,6 +10,7 @@ pro mjw_fhd_versions
   output_directory = args[1]
   version = args[2]
   if nargs gt 3 then platform = args[3] else platform = '' ;indicates if running on AWS
+  if nargs gt 4 then cal_obs_id = args[4] else cal_obs_id = '' ;let it run calibration on my funky obs names...
 
   cmd_args={version:version}
 
@@ -158,6 +159,24 @@ pro mjw_fhd_versions
 
      end
 
+     'mjw_vanilla_test_transfer': begin
+       uvfits_version = 4
+       uvfits_subversion = 1
+       bandpass_calibrate = 1
+       ;calibration_catalog_file_path = filepath('master_sgal_cat.sav',root=rootdir('FHD'),subdir='catalog_data')
+       calibration_catalog_file_path = filepath('GLEAMIDR4_181_consistent.sav',root=rootdir('FHD'),subdir='catalog_data')
+       filter_background = 1
+       diffuse_calibrate = 0
+       diffuse_model = 0
+       subtract_sidelobe_catalog = filepath('GLEAMIDR4_181_consistent.sav',root=rootdir('FHD'),subdir='catalog_data')
+       dft_threshold = 0
+       ring_radius = 0
+       debug_region_grow = 0
+       recalculate_all = 1
+       model_visibilities = 1
+
+      end
+
   endcase
 
   if ~keyword_set(vis_file_list) and keyword_set(instrument) then begin
@@ -177,6 +196,10 @@ pro mjw_fhd_versions
         STRING(uvfits_subversion) + ' -o ' + STRING(obs_id), vis_file_list
     endelse
   endif
+
+  if cal_obs_id ne '' then begin
+    transfer_calibration = '/cal/' + cal_obs_id + '_cal.sav'
+    cal_bp_transfer = '/cal/' + cal_obs_id + '_bandpass.txt'
 
   undefine, uvfits_subversion, uvfits_version
 
