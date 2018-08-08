@@ -200,6 +200,7 @@ pro mjw_fhd_versions
   if cal_obs_id ne '' then begin
     transfer_calibration = '/cal/' + cal_obs_id + '_cal.sav'
     cal_bp_transfer = '/cal/' + cal_obs_id + '_bandpass.txt'
+  endif
 
   undefine, uvfits_subversion, uvfits_version
 
