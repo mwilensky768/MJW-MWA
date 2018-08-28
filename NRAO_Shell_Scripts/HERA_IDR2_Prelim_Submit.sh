@@ -5,7 +5,7 @@ do
   day=${list:0:7}
   for i in {1..5}
   do
-    obsid=$(head -"$i" $list | tail -1)
+    obsid=$(head -"$i" /lustre/aoc/projects/hera/mwilensk/Obs_Lists/Obs_Select/$list | tail -1)
     echo $obsid
     outdir=/lustre/aoc/projects/hera/mwilensk/HERA_IDR2_Prelim_Set
     for pol in xx yy xy yx
