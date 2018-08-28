@@ -12,3 +12,6 @@ sky_sub = SS(obs=args.obs, outpath=args.outpath, inpath=args.inpath,
 
 sky_sub.INS_prepare()
 sky_sub.save_data()
+sky_sub.apply_flags(choice='original')
+sky_sub.INS_prepare()
+sky_sub.save_data()
