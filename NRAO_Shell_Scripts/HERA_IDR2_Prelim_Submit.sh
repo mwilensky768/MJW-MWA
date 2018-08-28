@@ -6,6 +6,7 @@ do
   for i in {1..5}
   do
     obsid=$(head -"$i" $list | tail -1)
+    echo $obsid
     outdir=/lustre/aoc/projects/hera/mwilensk/HERA_IDR2_Prelim_Set
     for pol in xx yy xy yx
     do
