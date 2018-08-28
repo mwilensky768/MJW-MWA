@@ -1,8 +1,8 @@
 #!/bin/bash
 
-for list in $(ls .)
+for list in $(ls /lustre/aoc/projects/hera/mwilensk/Obs_Lists/Obs_Select)
 do
-  day=${list:2:7}
+  day=${list:0:7}
   for i in {1..5}
   do
     obsid=$(head -"$i" $list | tail -1)
