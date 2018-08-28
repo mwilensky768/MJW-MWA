@@ -11,7 +11,7 @@ do
     do
       obs=${obsid}.${pol}.HH
       indir=/lustre/aoc/projects/hera/H1C_IDR2/${day}/${obs}.uv
-      python /lustre/aoc/projects/hera/mwilensk/SSINS/Scripts/Catalog_Gen.py $obs $indir $outdir
+      python /lustre/aoc/projects/hera/mwilensk/MJW-MWA/Catalog_Gen.py $obs $indir $outdir
     done
   done
 done
