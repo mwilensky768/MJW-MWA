@@ -1,4 +1,11 @@
 #!/bin/bash
+#PBS -N SSINS
+#PBS -q hera
+#PBS -j oe
+#PBS -o SSINS.out
+#PBS -V
+#PBS -m be
+#PBS -M mjw768@uw.edu
 
 for list in $(ls /lustre/aoc/projects/hera/mwilensk/Obs_Lists/Obs_Select)
 do
