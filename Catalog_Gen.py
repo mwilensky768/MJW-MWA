@@ -28,7 +28,7 @@ catalog_data_kwargs = {'INS': {},
                        'MF': {},
                        'ES': {}}
 
-catalog_plot_kwargs = {'INS': {'vmax': args.cutoff},
+catalog_plot_kwargs = {'INS': {},
                        'VDH': {'ylim': 0.01},
                        'MF': {'vmax': 0.05},
                        'ES': {}}
