@@ -1,4 +1,4 @@
-#!/bind/bash
+#!/bin/bash
 
 for list in $(ls /lustre/aoc/projects/hera/mwilensk/Obs_Lists/Obs_Select)
 do
