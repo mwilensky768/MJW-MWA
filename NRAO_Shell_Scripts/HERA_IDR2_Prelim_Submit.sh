@@ -1,12 +1,5 @@
 #!/bin/bash
 
-while getopts ":c:" option
-do
-  case $option in
-    c) cutoff=$OPTARG
-  esac
-done
-
 for list in $(ls /lustre/aoc/projects/hera/mwilensk/Obs_Lists/Obs_Select)
 do
   day=${list:0:7}
@@ -14,13 +7,13 @@ do
   do
     obsid=$(head -"$i" /lustre/aoc/projects/hera/mwilensk/Obs_Lists/Obs_Select/$list | tail -1)
     echo $obsid
-    outdir=/lustre/aoc/projects/hera/mwilensk/HERA_IDR2_Prelim_Set_$cutoff
+    outdir=/lustre/aoc/projects/hera/mwilensk/HERA_IDR2_Prelim_Set_$1
     for pol in xx yy xy yx
     do
       obs=${obsid}.${pol}.HH
       echo $obs
       indir=/lustre/aoc/projects/hera/H1C_IDR2/${day}/${obs}.uv
-      python /lustre/aoc/projects/hera/mwilensk/MJW-MWA/Catalog_Gen.py $obs $indir $outdir $cutoff
+      python /lustre/aoc/projects/hera/mwilensk/MJW-MWA/Catalog_Gen.py $obs $indir $outdir $1
     done
   done
 done
