@@ -9,7 +9,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument('obs', action='store', help='How the observation will be referred to')
 parser.add_argument('inpath', action='store', help='The path to the data file, and the file_type')
 parser.add_argument('outpath', action='store', help='The base directory for saving all outputs')
+parser.add_argument('cutoff')
 args = parser.parse_args()
+if args.cutoff is 'None':
+    args.cutoff = None
+else:
+    args.cutoff = float(args.cutoff)
 
 # Here is a dictionary for the RFI class keywords
 
@@ -19,7 +24,7 @@ data_kwargs = {'read_kwargs': {'file_type': 'miriad', 'ant_str': 'cross'},
                'outpath': args.outpath}
 
 # The type of catalog you would like made - options are 'INS', 'VDH', 'MF', and 'ES'
-catalog_types = ['VDH', ]
+catalog_types = ['INS', ]
 
 
 catalog_data_kwargs = {'INS': {},
@@ -28,12 +33,14 @@ catalog_data_kwargs = {'INS': {},
                        'MF': {},
                        'ES': {}}
 
-catalog_plot_kwargs = {'INS': {'vmax': 0.05},
+catalog_plot_kwargs = {'INS': {'vmax': args.cutoff},
                        'VDH': {'ylim': 0.01},
                        'MF': {'vmax': 0.05},
                        'ES': {}}
 
 sky_sub = SS(**data_kwargs)
+if args.cutoff is not None:
+    sky_sub.apply_flags(choice=custom, custom=(sky_sub.UV.data_array > args.cutoff))
 
 
 """
