@@ -40,7 +40,7 @@ catalog_plot_kwargs = {'INS': {'vmax': args.cutoff},
 
 sky_sub = SS(**data_kwargs)
 if args.cutoff is not None:
-    sky_sub.apply_flags(choice=custom, custom=(sky_sub.UV.data_array > args.cutoff))
+    sky_sub.apply_flags(choice='custom', custom=(sky_sub.UV.data_array > args.cutoff))
 
 
 """
