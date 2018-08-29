@@ -8,7 +8,7 @@ parser.add_argument('outpath')
 args = parser.parse_args()
 
 sky_sub = SS(obs=args.obs, outpath=args.outpath, inpath=args.inpath,
-             bad_time_indices=(0, -1, -2, -3), read_kwargs={'ant_str': 'cross'})
+             bad_time_indices=[0, -1, -2, -3], read_kwargs={'ant_str': 'cross'})
 
 sky_sub.INS_prepare()
 sky_sub.save_data()
