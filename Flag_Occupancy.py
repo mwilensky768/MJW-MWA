@@ -5,7 +5,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('obs')
 parser.add_argument('inpath')
 parser.add_argument('outpath')
-parser.parse_args()
+args = parser.parse_args()
 
 sky_sub = SS(obs=args.obs, outpath=args.outpath, inpath=args.inpath,
              bad_time_indices=(0, -1, -2, -3), read_kwargs={'ant_str': 'cross'})
