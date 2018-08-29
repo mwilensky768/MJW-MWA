@@ -9,12 +9,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('obs', action='store', help='How the observation will be referred to')
 parser.add_argument('inpath', action='store', help='The path to the data file, and the file_type')
 parser.add_argument('outpath', action='store', help='The base directory for saving all outputs')
-parser.add_argument('cutoff')
 args = parser.parse_args()
-if args.cutoff == 'None':
-    args.cutoff = None
-else:
-    args.cutoff = float(args.cutoff)
 
 # Here is a dictionary for the RFI class keywords
 
@@ -39,8 +34,6 @@ catalog_plot_kwargs = {'INS': {'vmax': args.cutoff},
                        'ES': {}}
 
 sky_sub = SS(**data_kwargs)
-if args.cutoff is not None:
-    sky_sub.apply_flags(choice='custom', custom=(sky_sub.UV.data_array > args.cutoff))
 
 
 """
