@@ -11,7 +11,7 @@ parser.add_argument('inpath', action='store', help='The path to the data file, a
 parser.add_argument('outpath', action='store', help='The base directory for saving all outputs')
 parser.add_argument('cutoff')
 args = parser.parse_args()
-if args.cutoff is 'None':
+if args.cutoff == 'None':
     args.cutoff = None
 else:
     args.cutoff = float(args.cutoff)
