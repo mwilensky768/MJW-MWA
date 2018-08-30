@@ -9,7 +9,7 @@ parser.add_argument('outpath')
 args = parser.parse_args()
 
 UV = UVData()
-UV.read(args.infile, type='uvfits', ant_str='cross')
+UV.read(args.infile, file_type='uvfits', ant_str='cross')
 UV.select(times=np.unique(time_array)[[0, -1, -2, -3]])
 edges = [0 + 16 * i for i in range(24)] + [15 + 16 * k for k in range(24)]
 UV.flag_array[:, :, edges] = 0
