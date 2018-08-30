@@ -16,5 +16,5 @@ UV.flag_array[:, :, edges] = 0
 num = UV.flag_array.sum()
 den = np.prod(UV.flag_array.shape)
 
-np.save('%s/%s_num.npy' % (args.outpath, args.obs))
-np.save('%s/%s_den.npy' % (args.outpath, args.obs))
+np.save('%s/%s_num.npy' % (args.outpath, args.obs), num)
+np.save('%s/%s_den.npy' % (args.outpath, args.obs), den)
