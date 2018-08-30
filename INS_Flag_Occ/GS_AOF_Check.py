@@ -3,9 +3,9 @@ import numpy as np
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument(obs)
-parser.add_argument(infile)
-parser.add_argument(outpath)
+parser.add_argument('obs')
+parser.add_argument('infile')
+parser.add_argument('outpath')
 
 UV = UVData()
 UV.read(args.infile, type='uvfits', ant_str='cross')
