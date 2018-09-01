@@ -19,13 +19,18 @@ data_kwargs = {'read_kwargs': {'file_type': 'miriad', 'ant_str': 'cross'},
                'outpath': args.outpath}
 
 # The type of catalog you would like made - options are 'INS', 'VDH', 'MF', and 'ES'
-catalog_types = ['INS', 'VDH']
+catalog_types = ['INS', 'VDH', 'MF']
 
 
 catalog_data_kwargs = {'INS': {},
                        'VDH': {'fit_hist': True,
                                'bins': np.logspace(-6, 3, num=1001)},
-                       'MF': {},
+                       'MF': {'sig_thresh': 4.5,
+                              'shape_dict': {'TV4': (1.74e8, 1.82e8),
+                                             'TV5': (1.82e8, 1.9e8),
+                                             'TV6': (1.9e8, 1.98e8),
+                                             'TV7': (1.98e8, 2.06e8)},
+                              'tests': ['match']},
                        'ES': {}}
 
 catalog_plot_kwargs = {'INS': {},
