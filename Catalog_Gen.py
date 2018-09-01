@@ -19,7 +19,7 @@ data_kwargs = {'read_kwargs': {'file_type': 'miriad', 'ant_str': 'cross'},
                'outpath': args.outpath}
 
 # The type of catalog you would like made - options are 'INS', 'VDH', 'MF', and 'ES'
-catalog_types = ['INS', ]
+catalog_types = ['INS', 'VDH']
 
 
 catalog_data_kwargs = {'INS': {},
@@ -34,6 +34,10 @@ catalog_plot_kwargs = {'INS': {},
                        'ES': {}}
 
 sky_sub = SS(**data_kwargs)
+custom = np.zeros(sky_sub.UV.flag_array.shape, dtype=bool)
+custom[:, :, :, :96] = 1
+custom = np.logical_or(custom, sky_sub.UV.data_array > 0.03)
+sky_sub.apply_flags(choice='custom', custom=custom)
 
 
 """
