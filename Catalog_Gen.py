@@ -41,6 +41,7 @@ catalog_plot_kwargs = {'INS': {},
 sky_sub = SS(**data_kwargs)
 custom = np.zeros(sky_sub.UV.flag_array.shape, dtype=bool)
 custom[:, :, :, :96] = 1
+custom[:, :, :, -64:] = 1
 custom = np.logical_or(custom, sky_sub.UV.data_array > 0.03)
 sky_sub.apply_flags(choice='custom', custom=custom)
 
