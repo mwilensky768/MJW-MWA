@@ -7,7 +7,7 @@ do
   do
     obsid=$(head -"$i" /lustre/aoc/projects/hera/mwilensk/Obs_Lists/Obs_Select/$list | tail -1)
     echo $obsid
-    outdir=/lustre/aoc/projects/hera/mwilensk/HERA_IDR2_Prelim_Set_FM_far_right_OR
+    outdir=/lustre/aoc/projects/hera/mwilensk/HERA_IDR2_Prelim_Set_OR
     for pol in xx yy xy yx
     do
       obs=${obsid}.${pol}.HH
