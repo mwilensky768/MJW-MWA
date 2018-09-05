@@ -23,9 +23,8 @@ catalog_types = ['INS', 'VDH', 'MF']
 
 
 catalog_data_kwargs = {'INS': {},
-                       'VDH': {'fit_hist': True,
-                               'bins': np.logspace(-6, 3, num=1001)},
-                       'MF': {'sig_thresh': 4.5,
+                       'VDH': {'fit_hist': True},
+                       'MF': {'sig_thresh': 5,
                               'shape_dict': {'TV4': (1.74e8, 1.82e8),
                                              'TV5': (1.82e8, 1.9e8),
                                              'TV6': (1.9e8, 1.98e8),
@@ -34,16 +33,11 @@ catalog_data_kwargs = {'INS': {},
                        'ES': {}}
 
 catalog_plot_kwargs = {'INS': {},
-                       'VDH': {'ylim': 0.01},
-                       'MF': {'vmax': 0.05},
+                       'VDH': {},
+                       'MF': {},
                        'ES': {}}
 
 sky_sub = SS(**data_kwargs)
-custom = np.zeros(sky_sub.UV.flag_array.shape, dtype=bool)
-custom[:, :, :, :96] = 1
-custom[:, :, :, -64:] = 1
-custom = np.logical_or(custom, sky_sub.UV.data_array > 0.03)
-sky_sub.apply_flags(choice='custom', custom=custom)
 
 
 """
