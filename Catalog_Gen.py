@@ -19,7 +19,7 @@ data_kwargs = {'read_kwargs': {'file_type': 'miriad', 'ant_str': 'cross'},
                'outpath': args.outpath}
 
 # The type of catalog you would like made - options are 'INS', 'VDH', 'MF', and 'ES'
-catalog_types = ['INS', 'VDH', 'MF']
+catalog_types = ['INS', ]
 
 
 catalog_data_kwargs = {'INS': {},
