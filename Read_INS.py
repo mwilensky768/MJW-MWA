@@ -32,6 +32,7 @@ parser.add_argument('--N_thresh', action='store', type=int,
                     help='The minimum number of samples of unflagged samples for a channel to be valid')
 parser.add_argument('--point', action='store_true', help='Specify whether single-point outliers are to be examined')
 parser.add_argument('--streak', action='store_true', help='Specify whether broadband streaks are to be examined')
+parser.add_argument('--order', type=int, help='The order of the mean-regression')
 args = parser.parse_args()
 shape_dict = {}
 if args.labels is not None:
@@ -46,7 +47,7 @@ for attr in ['sig_thresh', 'N_thresh']:
 
 ms_plot_kwargs = {'ms_vmax': args.sig_thresh,
                   'ms_vmin': -args.sig_thresh,
-                  'aspect': 1024 * 4 / (59 * 5)}
+                  'aspect': 384 / (51 * 5)}
 
 for arr in data_arrs:
     L = len('%s/arrs/' % (args.inpath))
@@ -57,13 +58,13 @@ for arr in data_arrs:
                   'pols': '%s/metadata/%s_pols.npy' % (args.inpath, obs),
                   'vis_units': '%s/metadata/%s_vis_units.npy' % (args.inpath, obs)}
     ins = INS(obs=obs, outpath=args.outpath, flag_choice=args.flag_choice, read_paths=read_paths)
-    ins.data[:, :, :82] = np.ma.masked
-    ins.data[:, :, -21:] = np.ma.masked
+    # ins.data[:, :, :82] = np.ma.masked
+    # ins.data[:, :, -21:] = np.ma.masked
     ins.data_ms = ins.mean_subtract()
     ins.counts, ins.bins, ins.sig_thresh = ins.hist_make()
     cp.INS_plot(ins, **ms_plot_kwargs)
     mf = MF(ins, shape_dict=shape_dict, point=args.point, streak=args.streak, **mf_kwargs)
     for test in args.tests:
-        getattr(mf, 'apply_%s_test' % test)()
+        getattr(mf, 'apply_%s_test' % test)(args.order)
     ins.save()
     cp.MF_plot(mf, **ms_plot_kwargs)
