@@ -16,7 +16,8 @@ args = parser.parse_args()
 data_kwargs = {'read_kwargs': {'file_type': 'miriad', 'ant_str': 'cross'},
                'obs': args.obs,
                'inpath': args.inpath,
-               'outpath': args.outpath}
+               'outpath': args.outpath,
+               'bad_time_indices': [0, -1, -2, -3]}
 
 # The type of catalog you would like made - options are 'INS', 'VDH', 'MF', and 'ES'
 catalog_types = ['INS', ]
@@ -38,6 +39,7 @@ catalog_plot_kwargs = {'INS': {},
                        'ES': {}}
 
 sky_sub = SS(**data_kwargs)
+sky_sub.apply_flags(choice='original')
 
 
 """
