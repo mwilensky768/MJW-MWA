@@ -39,7 +39,6 @@ catalog_plot_kwargs = {'INS': {},
                        'ES': {}}
 
 sky_sub = SS(**data_kwargs)
-sky_sub.apply_flags(choice='original')
 
 
 """
