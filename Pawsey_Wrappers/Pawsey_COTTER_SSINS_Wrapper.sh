@@ -23,5 +23,5 @@ module load cotter
 
 while read obs
 do
-  sbatch -nnodes=1 --ntasks=24 --time=06:00:00 --account=mwaeor --job-name=SSINS --output=SSINS_%j.out error=SSINS_%j.e --export=ALL Pawsey_Catalog_Run.sh
+  sbatch -nnodes=1 --ntasks=24 --time=06:00:00 --account=mwaeor --job-name=SSINS --output=SSINS_%j.out error=SSINS_%j.e --export=ALL /home/mwilensky/MJW-MWA/Pawsey_Wrappers/Pawsey_Catalog_Run.sh
 done < $obs_file_name
