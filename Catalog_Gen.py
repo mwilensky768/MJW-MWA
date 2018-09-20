@@ -9,6 +9,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('obs', action='store', help='How the observation will be referred to')
 parser.add_argument('inpath', action='store', help='The path to the data file, and the file_type')
 parser.add_argument('outpath', action='store', help='The base directory for saving all outputs')
+parser.add_argument('--time_range', nargs=2, help='The time range NOT to read in')
 args = parser.parse_args()
 
 # Here is a dictionary for the RFI class keywords
@@ -17,6 +18,9 @@ data_kwargs = {'read_kwargs': {'file_type': 'uvfits', 'ant_str': 'cross'},
                'obs': args.obs,
                'inpath': args.inpath,
                'outpath': args.outpath}
+if args.time_range is not None:
+    data_kwargs['bad_time_indices'] = np.arange(min(args.time_range),
+                                                max(args.time_range))
 
 # The type of catalog you would like made - options are 'INS', 'VDH', 'MF', and 'ES'
 catalog_types = ['INS', ]
