@@ -33,17 +33,23 @@ for i in range(UV.Nbls):
             title = 'MWA Single Baseline Visibility Differences'
         for label in ['Real', 'Imag']:
             fig, ax = plt.subplots(figsize=(14, 8))
-            plot_lib.image_plot(fig, ax, getattr(im_dat, label.lower()), ylabel=ylabel[k],
-                                cmap=cm.coolwarm,
-                                title='%s (%s)' % (title, label),
-                                freq_array=UV.freq_array[0], cbar_label=UV.vis_units)
-            fig.savefig('%s/%s_%i_%s_%s.png' % (args.outpath, args.obs, i, tag[k], label))
+            if getattr(im_dat, label.lower()).size:
+                plot_lib.image_plot(fig, ax, getattr(im_dat, label.lower()), ylabel=ylabel[k],
+                                    cmap=cm.coolwarm,
+                                    title='%s (%s)' % (title, label),
+                                    freq_array=UV.freq_array[0], cbar_label=UV.vis_units)
+                fig.savefig('%s/%s_%i_%s_%s.png' % (args.outpath, args.obs, i, tag[k], label))
+                plt.close(fig)
+            else:
+                print('baseline %i was empty for %s attr' % (i, label))
+        if im_dat.size:
+            fig, ax = plt.subplots(figsize=(14, 8))
+            plot_lib.image_plot(fig, ax, np.absolute(im_dat), cbar_label=UV.vis_units,
+                                title='%s (Amplitude)' % title,
+                                freq_array=UV.freq_array[0], ylabel=ylabel[k])
+            fig.savefig('%s/%s_%i_%s_amplitude.png' % (args.outpath, args.obs, i, tag[k]))
             plt.close(fig)
-        fig, ax = plt.subplots(figsize=(14, 8))
-        plot_lib.image_plot(fig, ax, np.absolute(im_dat), cbar_label=UV.vis_units,
-                            title='%s (Amplitude)' % title,
-                            freq_array=UV.freq_array[0], ylabel=ylabel[k])
-        fig.savefig('%s/%s_%i_%s_amplitude.png' % (args.outpath, args.obs, i, tag[k]))
-        plt.close(fig)
+        else:
+            print('im_dat was empty for baseline %i' i)
     UV.data_array = np.absolute(np.diff(UV.data_array, axis=0))
     im_dat = np.absolute(im_dat)
