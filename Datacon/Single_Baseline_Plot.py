@@ -35,7 +35,7 @@ for i in range(UV.Nbls):
             fig, ax = plt.subplots(figsize=(14, 8))
             if getattr(im_dat, label.lower()).size:
                 plot_lib.image_plot(fig, ax, getattr(im_dat, label.lower()), ylabel=ylabel[k],
-                                    cmap=cm.coolwarm,
+                                    cmap=cm.RdGy_r,
                                     title='%s (%s)' % (title, label),
                                     freq_array=UV.freq_array[0], cbar_label=UV.vis_units)
                 fig.savefig('%s/%s_%i_%s_%s.png' % (args.outpath, args.obs, i, tag[k], label))
@@ -50,6 +50,4 @@ for i in range(UV.Nbls):
             fig.savefig('%s/%s_%i_%s_amplitude.png' % (args.outpath, args.obs, i, tag[k]))
             plt.close(fig)
         else:
-            print('im_dat was empty for baseline %i' i)
-    UV.data_array = np.absolute(np.diff(UV.data_array, axis=0))
-    im_dat = np.absolute(im_dat)
+            print('im_dat was empty for baseline %i', i)
