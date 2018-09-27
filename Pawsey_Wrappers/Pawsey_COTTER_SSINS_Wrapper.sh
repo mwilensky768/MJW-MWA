@@ -13,5 +13,5 @@ done
 
 while read obs
 do
-  sbatch --nodes=1 --time=06:00:00 --account=mwaeor --job-name=SSINS --output=SSINS_%j.out --error=SSINS_%j.e --export=obs=$obs,outdir=$outdir /home/mwilensky/MJW-MWA/Pawsey_Wrappers/Pawsey_Catalog_Run.sh
+  sbatch --nodes=1 --mem=50000 --time=06:00:00 --account=mwaeor --job-name=SSINS --output=SSINS_%j.out --error=SSINS_%j.e --export=obs=$obs,outdir=$outdir /home/mwilensky/MJW-MWA/Pawsey_Wrappers/Pawsey_Catalog_Run.sh
 done < $obs_file_name
