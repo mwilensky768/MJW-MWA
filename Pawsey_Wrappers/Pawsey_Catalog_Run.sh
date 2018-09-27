@@ -12,6 +12,6 @@ data_dir=/astro/mwaeor/MWA/data
 
 
 gpufiles=$(ls ${data_dir}/${obs}/*gpubox*)
-cotter -o ${datadir}/${obs}_80khz_noflag.uvfits -m ${data_dir}/${obs}/${obs}_metafits_ppds.fits -timeres 0.5 -freqres 80 -norfi -noflagdcchannels -edgewidth 0 -initflag 0 $gpufiles
+cotter -o ${data_dir}/${obs}_80khz_noflag.uvfits -m ${data_dir}/${obs}/${obs}_metafits_ppds.fits -timeres 0.5 -freqres 80 -norfi -noflagdcchannels -edgewidth 0 -initflag 0 $gpufiles
 
 python /home/mwilensky/MJW-MWA/Catalog_Gen.py $obs ${data_dir}/${obs}/${obs}_80khz_noflag.uvfits ${outdir}
