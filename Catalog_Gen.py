@@ -11,6 +11,7 @@ parser.add_argument('inpath', action='store', help='The path to the data file, a
 parser.add_argument('outpath', action='store', help='The base directory for saving all outputs')
 parser.add_argument('--time_range', nargs=2, type=int, help='The time range to read in')
 parser.add_argument('--freq_range', nargs=2, type=int, help='The freq channel range to read in')
+parser.add_argument('--pols', nargs='*', type=int, help='The pols to read in')
 args = parser.parse_args()
 
 # Here is a dictionary for the RFI class keywords
