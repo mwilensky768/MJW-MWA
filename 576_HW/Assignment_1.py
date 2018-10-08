@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import argparse
 import os
 import scipy.stats
+from scipy.special import erfcinv
 
 parser = argparse.ArgumentParser()
 parser.add_argument('outdir', help='The directory to save outputs to')
@@ -36,18 +37,16 @@ fig.savefig('%s/Poisson_Semilog.png' % args.outdir)
 plt.close(fig)
 
 BG_prob = scipy.stats.poisson.sf(80, lam)
-sig_prob = scipy.stats.poisson.cdf(80, lam)
-sink_prob = scipy.stats.poisson.sf(30, lam)
-sig_prob_sig = (80 - lam) / np.sqrt(lam)
-sink_prob_sig = (30 - lam) / np.sqrt(lam)
+sink_prob = scipy.stats.poisson.cdf(30, lam)
+BG_prob_sig = scipy.stats.norm.isf(BG_prob)
+sink_prob_sig = scipy.stats.norm.isf(sink_prob)
 
 print('The probability that the background gave me at least 80 events in the interval is %f' % BG_prob)
-print('The probability that this is a signal is %f' % sig_prob)
-print('Therefore the probability of my detection given the data is %f' % sig_prob)
-print('The probability that the background gave me at least 30 counts is %f' % sink_prob)
-print('This is the same as the probability that I found the sink.')
-print('The sigma of the first detection is %f' % sig_prob_sig)
-print('The sigma of the sink detection is %f' % sink_prob_sig)
+print('That is the probability that I claim a false detection of a source.')
+print('The probability that the background gave me less than or equal to 30 counts is %f' % sink_prob)
+print('This is the probability that I claim a false detection of a sink.')
+print('The one-sided sigma of the first detection is %f' % BG_prob_sig)
+print('The two-sided sigma of the sink detection is %f' % sink_prob_sig)
 
 for sig_b in [1, 10]:
     A = np.random.normal(size=int(1e6))
@@ -60,7 +59,7 @@ for sig_b in [1, 10]:
     mag_pdf = mag_counts / (1e6 * mag_widths)
 
     fig, ax = plt.subplots(figsize=(14, 8))
-    ax.plot(mag_centers, mag_pdf)
+    ax.plot(mag_centers, mag_pdf, drawstyle='steps-mid')
     ax.set_xlabel('Amplitude')
     ax.set_ylabel('Density')
     ax.set_yscale('log', nonposy='clip')
@@ -70,13 +69,14 @@ for sig_b in [1, 10]:
 bins_x = np.arange(-50, 51)
 counts_2d, bins_x, bins_y = np.histogram2d(A, B, bins=bins_x)
 fig, ax = plt.subplots(figsize=(14, 8))
-cax = ax.imshow(counts_2d.T)
+cax = ax.imshow(np.flipud(counts_2d.T))
 cbar = fig.colorbar(cax, ax=ax)
 ax.set_xlabel('Length of A')
 ax.set_ylabel('Length of B')
 cbar.set_label('Counts')
 xticklabels = ['%.0f' % bins_x[tick] for tick in ax.get_xticks()[1:].astype(int)]
 yticklabels = ['%.0f' % bins_y[tick] for tick in ax.get_yticks()[1:].astype(int)]
+yticklabels.reverse()
 xticklabels.insert(0, '0')
 yticklabels.insert(0, '0')
 ax.set_xticklabels(xticklabels)

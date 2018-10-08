@@ -20,7 +20,7 @@ rayleigh_fit = N * (rayleigh.cdf(bins[1:], scale=r_scale) - rayleigh.cdf(bins[:-
 
 fig, ax = plt.subplots(figsize=(14, 8))
 ax.plot(centers, ss.VDH.counts[0], drawstyle='steps-mid', label='Background')
-ax.plot(centers, ss.VDH.fits[0], drawstyle='steps-mid', label='Rayleigh Mixture Fit')
+ax.errorbar(centers, ss.VDH.fits[0], yerr=3 * ss.VDH.errors[0], drawstyle='steps-mid', label='Rayleigh Mixture Fit')
 ax.plot(centers, gauss_fit, drawstyle='steps-mid', label='Gaussian Fit')
 ax.plot(centers, rayleigh_fit, drawstyle='steps-mid', label='Single Rayleigh Fit')
 ax.legend()

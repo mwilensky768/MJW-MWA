@@ -12,9 +12,7 @@ data_dir=/astro/mwaeor/MWA/data
 
 
 # gpufiles=$(ls ${data_dir}/${obs}/*gpubox*)
-# cotter -o ${data_dir}/${obs}/${obs}_80khz_noflag.uvfits -m ${data_dir}/${obs}/${obs}_metafits_ppds.fits -timeres 0.5 -freqres 80 -norfi -noflagdcchannels -edgewidth 0 -initflag 0 $gpufiles
+gpufiles=$(ls ${data_dir}/${obs}/*gpubox*${box_num}*)
+cotter -o ${data_dir}/${obs}/SSINS_uvfits/${obs}_noavg_noflag_${box_num}.uvfits -m ${data_dir}/${obs}/${obs}_metafits_ppds.fits -timeres 0.5 -freqres 40 -norfi -noflagdcchannels -edgewidth 0 -initflag 0 $gpufiles
 
-python /home/mwilensky/MJW-MWA/Catalog_Gen.py $obs ${data_dir}/${obs}/${obs}_80khz_noflag.uvfits ${outdir}_0_96_noavg --freq_range 0 96
-python /home/mwilensky/MJW-MWA/Catalog_Gen.py $obs ${data_dir}/${obs}/${obs}_80khz_noflag.uvfits ${outdir}_96_192_noavg --freq_range 96 192
-python /home/mwilensky/MJW-MWA/Catalog_Gen.py $obs ${data_dir}/${obs}/${obs}_80khz_noflag.uvfits ${outdir}_192_288_noavg --freq_range 192 288
-python /home/mwilensky/MJW-MWA/Catalog_Gen.py $obs ${data_dir}/${obs}/${obs}_80khz_noflag.uvfits ${outdir}_288_384_noavg --freq_range 288 384
+python /home/mwilensky/MJW-MWA/Catalog_Gen.py $obs ${data_dir}/${obs}/SSINS_uvfits/${obs}_noavg_noflag_${box_num}.uvfits ${outdir}_${box_num}_noavg
