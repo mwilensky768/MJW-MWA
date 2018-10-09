@@ -12,7 +12,7 @@ data_dir=/astro/mwaeor/MWA/data
 
 
 # gpufiles=$(ls ${data_dir}/${obs}/*gpubox*)
-gpufiles=$(ls ${data_dir}/${obs}/*gpubox${box_num}*)
+gpufiles=$(ls ${data_dir}/${obs}/*gpubox*${t_int}.fits)
 echo $gpufiles >> SSINS_%j.out
 cotter -o ${data_dir}/${obs}/SSINS_uvfits/${obs}_noavg_noflag_${box_num}.uvfits -m ${data_dir}/${obs}/${obs}_metafits_ppds.fits -timeres 0.5 -freqres 40 -norfi -noflagdcchannels -edgewidth 0 -initflag 0 -allowmissing $gpufiles
 
