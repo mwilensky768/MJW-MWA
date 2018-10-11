@@ -1,12 +1,12 @@
 #!/bin/bash
 
 module use /group/mwa/software/modulefiles
-module load numpy/1.15.1
-module load scipy/1.1.0
-module load matplotlib/2.2.3
 module load h5py/2.8.0
 module load six
 module load pyuvdata/master
+module load scipy
+module load matplotlib
+module load numpy/1.15.1
 module load cotter
 data_dir=/astro/mwaeor/MWA/data
 
