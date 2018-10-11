@@ -1,9 +1,9 @@
 #!/bin/bash
 
 module use /group/mwa/software/modulefiles
-module load h5py/2.8.0
 module load six
 module load pyuvdata/master
+module load h5py/2.8.0
 module load scipy
 module load matplotlib
 module load numpy/1.15.1
