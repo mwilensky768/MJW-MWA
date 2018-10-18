@@ -4,7 +4,7 @@ module use /group/mwa/software/modulefiles
 module load cotter
 data_dir=/astro/mwaeor/MWA/data
 
-if [ ! -e ${data_dir}/${obs}/${obs}_noavg_noflag.uvfits ]; then
+if [ ! -e ${data_dir}/${obs}/${obs}_noflag.uvfits ]; then
   echo $obs
   echo "Executing COTTER"
   gpufiles=$(ls ${data_dir}/${obs}/*gpubox*.fits)
