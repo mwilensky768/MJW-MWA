@@ -16,6 +16,10 @@ pro mjw_fhd_versions
 
   case version of
 
+    'mjw_default': begin
+
+    end
+
     'mjw_NB_transfer_1': begin
     uvfits_version = 4
     uvfits_subversion = 1
