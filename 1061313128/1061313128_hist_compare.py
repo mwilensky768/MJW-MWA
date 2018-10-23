@@ -12,9 +12,10 @@ for i, string in enumerate(['', '_noflag']):
     inpath = '/Users/mike_e_dubs/MWA/Data/uvfits/1061313128%s.uvfits' % string
     UV = UVData()
     UV.read(inpath, file_type='uvfits', read_data=False)
-    freqs = np.logical_and(1.79e8 < UV.freq_array[0], 1.9e8 > UV.freq_array[0])
+    freqs = np.logical_or(np.logical_and(1.79e8 < UV.freq_array[0], 1.81e8 > UV.freq_array[0]),
+                          np.logical_and(1.88e8 < UV.freq_array[0], 1.9e8 > UV.freq_array[0]))
     UV.read(inpath, file_type='uvfits', read_metadata=False, freq_chans=freqs,
-            ant_str='cross', times=np.unique(UV.time_array)[1:-3])
+            ant_str='cross', times=np.unique(UV.time_array)[19:26])
     for k in range(2):
         if k:
             ss = SS(UV=UV)
