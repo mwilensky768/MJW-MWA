@@ -6,6 +6,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('obs')
 parser.add_argument('inpath')
 parser.add_argument('outpath')
+args = parser.parse-args()
 
 UV = UVData()
 UV.read(args.inpath)
