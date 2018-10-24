@@ -8,7 +8,8 @@ parser.add_argument('inpath')
 parser.add_argument('outpath')
 args = parser.parse_args()
 
-ss = SS(obs=args.obs, outpath=args.outpath, inpath=args.inpath, flag_choice='original')
+ss = SS(obs=args.obs, outpath=args.outpath, inpath=args.inpath, flag_choice='original',
+        read_kwargs={'ant_str': 'cross'})
 ss.MF_prepare(sig_thresh=5, shape_dict={'TV6': [1.74e8, 1.81e8],
                                         'TV7': [1.81e8, 1.88e8],
                                         'TV8': [1.88e8, 1.95e8]})
