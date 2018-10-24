@@ -11,7 +11,7 @@ for i in range(1, 25):
     hdulist = fits.open(file)
     nchan = hdulist[0].header['NCHANS']
     nant = hdulist[0].header['NANTENNA']
-    ntime = hdulist[1].data['FLAGS'].shape[0] / (8256 * 32)
+    ntime = len(hdulist[1].data['FLAGS']) / (8256 * 32)
     nbl = nant * (nant + 1) / 2
     flag_arr_seq.append(hdulist[1].data['FLAGS'].reshape([ntime, nbl, nchan]))
 flag_map = np.mean(np.concatenate(flag_arr_seq, axis=2), axis=1)
