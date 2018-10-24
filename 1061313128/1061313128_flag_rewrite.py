@@ -10,7 +10,8 @@ args = parser.parse_args()
 
 UV = UVData()
 UV.read(args.inpath)
-slc = slice(-4 * UV.Nbls, -1 * UV.Nbls)
-UV.nsample_array[slc][UV.nsample_array[slc] == 0] = 8
-UV.flag_array[slc] = 1
-UV.write_uvfits('%s/1061313128_rewrite.uvfits' % args.outpath)
+UV.nsample_array[UV.nsample_array == 0] = 8
+UV.flag_array = UV.flag_array.reshape([UV.Ntimes, UV.Nbls, UV.Nspws, UV.Nfreqs, UV.Npols])
+UV.flag_array[-4:-1] = 1
+UV.flag_array = UV.flag_array.reshape([UV.Nblts, UV.Nspws, UV.Nfreqs, UV.Npols])
+UV.write_uvfits('%s/1061313128.uvfits' % args.outpath)
