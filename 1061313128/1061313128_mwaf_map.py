@@ -2,7 +2,7 @@ from astropy.io import fits
 import numpy as np
 
 flag_arr_seq = []
-for i in range(24):
+for i in range(1, 25):
     if i < 10:
         i_str = '0%i' % i
     else:
