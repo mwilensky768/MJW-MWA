@@ -8,11 +8,11 @@ for i in range(1, 25):
     else:
         i_str = str(i)
     file = '/astro/mwaeor/MWA/data/1061313128/1061313128_%s.mwaf' % i_str
-    hdu_list = fits.open(file)
+    hdulist = fits.open(file)
     nchan = hdulist[0].header['NCHANS']
     nant = hdulist[0].header['NANTENNA']
     ntime = hdulist[0].header['NSCANS']
     nbl = nant * (nant + 1) / 2
-    flag_arr_seq.append(hdu_list[1].data['FLAGS'].reshape([ntime, nbl, nchan]))
+    flag_arr_seq.append(hdulist[1].data['FLAGS'].reshape([ntime, nbl, nchan]))
 flag_map = np.mean(np.concatenate(flag_arr_seq, axis=2), axis=1)
 np.save('/group/mwaeor/mwilensky/1061313128_flag_map.npy', flag_map)
