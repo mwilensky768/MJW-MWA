@@ -1,0 +1,105 @@
+/home/ubuntu/MWA/pipeline_scripts/bash_scripts/aws/eppsilon_single_obs_job_aws.sh: line 74: /home/ubuntu/MWA/pipeline_scripts/bash_scripts/aws/eppsilon_on_aws_backup.sh: Permission denied
+IDL Version 8.2 (linux x86_64 m64). (c) 2012, Exelis Visual Information Solutions, Inc.
+Installation number: 97443-1.
+Licensed for use by: University of Washington
+
+% Compiled module: AWS_PS_SINGLE_OBS_JOB.
+% Compiled module: UNDEFINE.
+% Compiled module: PS_WRAPPER.
+% Compiled module: GET_FOLDER.
+% Compiled module: PS_FILENAMES.
+% Compiled module: TAG_EXIST.
+% Compiled module: CREATE_REFRESH_OPTIONS.
+% Compiled module: CREATE_UVF_OPTIONS.
+% Compiled module: UPDATE_OPTION_STRUCT.
+% Compiled module: CREATE_PS_OPTIONS.
+% Compiled module: CREATE_BINNING_2D_OPTIONS.
+% Compiled module: CREATE_BINNING_1D_OPTIONS.
+% Compiled module: CREATE_PLOT_OPTIONS.
+% Compiled module: CREATE_PLOT_TYPES.
+% Compiled module: CREATE_PLOT_2D_OPTIONS.
+% Compiled module: CREATE_PLOT_1D_OPTIONS.
+% Compiled module: PS_MAIN_PLOTS.
+% Compiled module: FHD_FILE_SETUP.
+% Compiled module: CGROOTNAME.
+% Compiled module: GETVAR_SAVEFILE.
+% Compiled module: ANGLE_DIFFERENCE.
+% Compiled module: UNDEFINE_FHD.
+% Compiled module: CREATE_FILE_TAGS.
+% Compiled module: NUMBER_FORMATTER.
+% Compiled module: COSMOLOGY_MEASURES.
+% Program caused arithmetic error: Floating illegal operand
+% Compiled module: FILE_VALID.
+% Compiled module: PS_POWER.
+% Compiled module: CHECK_OLD_PATH.
+% Compiled module: PS_KCUBE.
+% Compiled module: PS_REPOSITORY_DIR.
+% Compiled module: GIT.
+% Compiled module: PUSHD.
+% Compiled module: POPD.
+% Compiled module: Z_MPC.
+% Compiled module: PS_IMAGE_TO_UVF.
+% Compiled module: CHOOSE_PIX_FT.
+% Compiled module: PIX2VEC_RING.
+% Compiled module: NSIDE2NPIX.
+% Compiled module: INIT_HEALPIX.
+% Compiled module: DEFINED.
+% Compiled module: ASSERT_PIXINDEX_TYPE.
+% Compiled module: GET_ROT_MATRIX.
+% Compiled module: HEALPIX_ROT.
+% Compiled module: QUERY_DISC.
+% Compiled module: FUDGE_QUERY_RADIUS.
+% Compiled module: RING_NUM.
+% Compiled module: NINT.
+% Compiled module: RING2Z.
+% Compiled module: HPX_MINMAX.
+% Compiled module: DISCPHIRANGE_AT_Z.
+% Compiled module: UNDEFINED.
+% Compiled module: CHEAP_ISQRT.
+% Compiled module: HEALPIX_LIMITS.
+% Compiled module: AMOEBA.
+% Compiled module: VEC2ANG.
+% Compiled module: DISCRETE_FT_2D_FAST.
+% Compiled module: REAL_PART.
+% Compiled module: UVF_SLICE.
+% Compiled module: SPECTRAL_WINDOW.
+% Compiled module: WRITE_PS_FITS.
+% Compiled module: MKHDR.
+% Compiled module: SXADDPAR.
+% Compiled module: GET_DATE.
+% Compiled module: DAYCNV.
+% Compiled module: FXADDPAR.
+% Compiled module: FXPARPOS.
+% Compiled module: DETABIFY.
+% Compiled module: FXPAR.
+% Compiled module: WRITEFITS.
+% Compiled module: CHECK_FITS.
+% Compiled module: GETTOK.
+% Compiled module: VALID_NUM.
+% Compiled module: SXDELPAR.
+% Compiled module: SXPAR.
+% Compiled module: MRD_HREAD.
+% Compiled module: MAKE_2D_FILES.
+% Compiled module: KSPACE_REBINNING_2D.
+% Compiled module: SAVE_1D_TEXT.
+% Compiled module: STRN.
+% Compiled module: KPOWER_SLICE.
+% Compiled module: KSPACE_REBINNING_1D.
+% Program caused arithmetic error: Floating divide by 0
+% Program caused arithmetic error: Floating illegal operand
+% Compiled module: MINMAX.
+% KSPACE_REBINNING_1D: All voxels have been excluded (max of bin_arr_3d is
+                        zero)
+% Execution halted at: KSPACE_REBINNING_1D  277
+   /home/ubuntu/MWA/eppsilon/ps_core/kspace_rebinning_1d.pro
+%                      PS_POWER          443
+   /home/ubuntu/MWA/eppsilon/ps_core/ps_power.pro
+%                      PS_MAIN_PLOTS     829
+   /home/ubuntu/MWA/eppsilon/ps_core/ps_main_plots.pro
+%                      PS_WRAPPER        228
+   /home/ubuntu/MWA/eppsilon/ps_wrappers/ps_wrapper.pro
+%                      AWS_PS_SINGLE_OBS_JOB   24
+   /home/ubuntu/MWA/pipeline_scripts/eppsilon_IDL_wrappers/aws_ps_single_obs_
+  job.pro
+%                      $MAIN$          
+/home/ubuntu/MWA/pipeline_scripts/bash_scripts/aws/eppsilon_single_obs_job_aws.sh: line 89: kill: (18045) - No such process

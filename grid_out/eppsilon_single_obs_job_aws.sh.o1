@@ -1,0 +1,33 @@
+JOBID 1
+TASKID undefined
+OBSID 1061313128
+JOB START TIME 2018-10-25_04:49:51
+PUBLIC IP 54.209.198.231
+datafile = /epps_out_COTTER/fhd_mjw_default/ps/1061313128_cubeXX__even_odd_joint_info.idlsave
+file setup time: 0.15746403
+n_vis difference between even & odd cubes: 0
+n_vis % difference between even & odd cubes: 0
+number of visibilities in n_vis and nf_vis do not match!
+difference between n_vis and sum(nf_vis): 4
+nf_vis difference between even & odd cubes: 0
+nf_vis % difference between even & odd cubes: 0
+n_obs:            1           1
+window integral:    2.2572408e+09   2.2572408e+09
+ian: ~29.44
+Tsys range:  57.618223 77.330625
+Tsys mean: 63.31696
+kcube hash: v1.0-1134-g7f1dbcb
+Encountered problem fixing landscape PostScript file. Proceeding...
+Output file located here: /epps_out_COTTER/fhd_mjw_default/ps/plots/2d_binning/fhd_mjw_default_1061313128_averemove_swbh_dencorr_2dkpower.png
+Output file located here: /epps_out_COTTER/fhd_mjw_default/ps/plots/2d_binning/fhd_mjw_default_1061313128_averemove_swbh_dencorr_2derror.png
+Encountered problem fixing landscape PostScript file. Proceeding...
+Output file located here: /epps_out_COTTER/fhd_mjw_default/ps/plots/2d_binning/fhd_mjw_default_1061313128_averemove_swbh_dencorr_2dsnr.png
+Encountered problem fixing landscape PostScript file. Proceeding...
+Output file located here: /epps_out_COTTER/fhd_mjw_default/ps/plots/2d_binning/fhd_mjw_default_1061313128_averemove_swbh_dencorr_2dnoise.png
+Encountered problem fixing landscape PostScript file. Proceeding...
+Output file located here: /epps_out_COTTER/fhd_mjw_default/ps/plots/2d_binning/fhd_mjw_default_1061313128_averemove_swbh_dencorr_2dnnr.png
+Output file located here: /epps_out_COTTER/fhd_mjw_default/ps/plots/1d_binning/fhd_mjw_default_1061313128_averemove_swbh_kperplambda10-50_1dkpower.png
+Output file located here: /epps_out_COTTER/fhd_mjw_default/ps/plots/1d_binning/fhd_mjw_default_1061313128_averemove_swbh_no_fov_wedge_kperplambda10-50_1dkpower.png
+Output file located here: /epps_out_COTTER/fhd_mjw_default/ps/plots/1d_binning/fhd_mjw_default_1061313128_averemove_swbh_no_horizon_wedge_kperplambda10-50_1dkpower.png
+Eppsilon Job Finished
+JOB END TIME 2018-10-25_04:52:04

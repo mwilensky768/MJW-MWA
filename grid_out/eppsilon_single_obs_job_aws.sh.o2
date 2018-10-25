@@ -1,0 +1,126 @@
+JOBID 2
+TASKID undefined
+OBSID 1061313128
+JOB START TIME 2018-10-25_04:52:21
+PUBLIC IP 54.209.198.231
+datafile = /epps_out_SSINS/fhd_mjw_default/Healpix/1061313128_even_cubeXX.sav
+datafile = /epps_out_SSINS/fhd_mjw_default/Healpix/1061313128_even_cubeYY.sav
+datafile = /epps_out_SSINS/fhd_mjw_default/Healpix/1061313128_odd_cubeXX.sav
+datafile = /epps_out_SSINS/fhd_mjw_default/Healpix/1061313128_odd_cubeYY.sav
+file setup time: 0.58342004
+n_vis difference between even & odd cubes: 0
+n_vis % difference between even & odd cubes: 0
+n_obs:            1           1
+WARNING: environment variable HEALPIX not found. 
+WARNING: environment variable HEALPIX not found. 
+WARNING: environment variable HEALPIX not found. 
+WARNING: environment variable HEALPIX not found. 
+calculating DFT for ra/dec values
+Beginning discrete 2D FT
+pre-loop time: 1.4044881
+progress: on step 0 of 1 (~ 0% done)
+discrete 2D FT time: 3.63 sec
+Beginning discrete 2D FT
+pre-loop time: 1.3599291
+progress: on step 0 of 1 (~ 0% done)
+discrete 2D FT time: 3.57 sec
+calculating DFT for DIRTY_CUBE in /epps_out_SSINS/fhd_mjw_default/Healpix/1061313128_even_cubeXX.sav
+Beginning discrete 2D FT
+pre-loop time: 1.3914781
+progress: on step 0 of 192 (~ 0% done)
+progress: on step 3 of 192 (~ 2% done)
+peak memory used: 1.1 GB; ave step time: 3.29; approx. time remaining: 10.37 min
+progress: on step 38 of 192 (~ 20% done)
+peak memory used: 1.1 GB; ave step time: 3.31; approx. time remaining: 8.5 min
+progress: on step 77 of 192 (~ 40% done)
+peak memory used: 1.1 GB; ave step time: 3.3; approx. time remaining: 6.33 min
+progress: on step 115 of 192 (~ 60% done)
+peak memory used: 1.1 GB; ave step time: 3.3; approx. time remaining: 4.23 min
+progress: on step 154 of 192 (~ 80% done)
+peak memory used: 1.1 GB; ave step time: 3.3; approx. time remaining: 2.09 min
+discrete 2D FT time: 10.6 min
+calculating DFT for WEIGHTS_CUBE in /epps_out_SSINS/fhd_mjw_default/Healpix/1061313128_even_cubeXX.sav
+Beginning discrete 2D FT
+pre-loop time: 1.4295452
+progress: on step 0 of 192 (~ 0% done)
+progress: on step 3 of 192 (~ 2% done)
+peak memory used: 1.1 GB; ave step time: 3.34; approx. time remaining: 10.52 min
+progress: on step 38 of 192 (~ 20% done)
+peak memory used: 1.1 GB; ave step time: 3.31; approx. time remaining: 8.5 min
+progress: on step 77 of 192 (~ 40% done)
+peak memory used: 1.1 GB; ave step time: 3.31; approx. time remaining: 6.35 min
+progress: on step 115 of 192 (~ 60% done)
+peak memory used: 1.1 GB; ave step time: 3.3; approx. time remaining: 4.24 min
+progress: on step 154 of 192 (~ 80% done)
+peak memory used: 1.1 GB; ave step time: 3.31; approx. time remaining: 2.09 min
+discrete 2D FT time: 10.6 min
+calculating DFT for VARIANCE_CUBE in /epps_out_SSINS/fhd_mjw_default/Healpix/1061313128_even_cubeXX.sav
+Beginning discrete 2D FT
+pre-loop time: 1.4173400
+progress: on step 0 of 192 (~ 0% done)
+progress: on step 3 of 192 (~ 2% done)
+peak memory used: 1.2 GB; ave step time: 3.29; approx. time remaining: 10.36 min
+progress: on step 38 of 192 (~ 20% done)
+peak memory used: 1.2 GB; ave step time: 3.29; approx. time remaining: 8.45 min
+progress: on step 77 of 192 (~ 40% done)
+peak memory used: 1.2 GB; ave step time: 3.3; approx. time remaining: 6.33 min
+progress: on step 115 of 192 (~ 60% done)
+peak memory used: 1.2 GB; ave step time: 3.31; approx. time remaining: 4.25 min
+progress: on step 154 of 192 (~ 80% done)
+peak memory used: 1.2 GB; ave step time: 3.31; approx. time remaining: 2.09 min
+discrete 2D FT time: 10.59 min
+calculating DFT for DIRTY_CUBE in /epps_out_SSINS/fhd_mjw_default/Healpix/1061313128_odd_cubeXX.sav
+Beginning discrete 2D FT
+pre-loop time: 1.4363019
+progress: on step 0 of 192 (~ 0% done)
+progress: on step 3 of 192 (~ 2% done)
+peak memory used: 1.1 GB; ave step time: 3.35; approx. time remaining: 10.54 min
+progress: on step 38 of 192 (~ 20% done)
+peak memory used: 1.1 GB; ave step time: 3.31; approx. time remaining: 8.49 min
+progress: on step 77 of 192 (~ 40% done)
+peak memory used: 1.1 GB; ave step time: 3.31; approx. time remaining: 6.35 min
+progress: on step 115 of 192 (~ 60% done)
+peak memory used: 1.1 GB; ave step time: 3.31; approx. time remaining: 4.25 min
+progress: on step 154 of 192 (~ 80% done)
+peak memory used: 1.1 GB; ave step time: 3.31; approx. time remaining: 2.09 min
+discrete 2D FT time: 10.59 min
+calculating DFT for WEIGHTS_CUBE in /epps_out_SSINS/fhd_mjw_default/Healpix/1061313128_odd_cubeXX.sav
+Beginning discrete 2D FT
+pre-loop time: 1.3680768
+progress: on step 0 of 192 (~ 0% done)
+progress: on step 3 of 192 (~ 2% done)
+peak memory used: 1.1 GB; ave step time: 3.33; approx. time remaining: 10.48 min
+progress: on step 38 of 192 (~ 20% done)
+peak memory used: 1.1 GB; ave step time: 3.3; approx. time remaining: 8.47 min
+progress: on step 77 of 192 (~ 40% done)
+peak memory used: 1.1 GB; ave step time: 3.31; approx. time remaining: 6.35 min
+progress: on step 115 of 192 (~ 60% done)
+peak memory used: 1.1 GB; ave step time: 3.31; approx. time remaining: 4.25 min
+progress: on step 154 of 192 (~ 80% done)
+peak memory used: 1.1 GB; ave step time: 3.31; approx. time remaining: 2.1 min
+discrete 2D FT time: 10.61 min
+calculating DFT for VARIANCE_CUBE in /epps_out_SSINS/fhd_mjw_default/Healpix/1061313128_odd_cubeXX.sav
+Beginning discrete 2D FT
+pre-loop time: 1.3678160
+progress: on step 0 of 192 (~ 0% done)
+progress: on step 3 of 192 (~ 2% done)
+peak memory used: 1.2 GB; ave step time: 3.32; approx. time remaining: 10.46 min
+progress: on step 38 of 192 (~ 20% done)
+peak memory used: 1.2 GB; ave step time: 3.29; approx. time remaining: 8.45 min
+progress: on step 77 of 192 (~ 40% done)
+peak memory used: 1.2 GB; ave step time: 3.3; approx. time remaining: 6.32 min
+progress: on step 115 of 192 (~ 60% done)
+peak memory used: 1.2 GB; ave step time: 3.3; approx. time remaining: 4.24 min
+progress: on step 154 of 192 (~ 80% done)
+peak memory used: 1.2 GB; ave step time: 3.3; approx. time remaining: 2.09 min
+discrete 2D FT time: 10.6 min
+window integral from variances: 1.3909e+9
+window integral from beam cube: 1.804e+9
+window integral from obs.primary_beam_sq_area: 2.2539e+9
+Using FFT for evenly spaced frequencies
+power integral:   5.5175815e+20
+Binning to 2D power spectrum
+saving kpar=0 power to /epps_out_SSINS/fhd_mjw_default/ps/data/1d_binning/1061313128_cubeXX__even_odd_joint_dirty_xx_averemove_swbh_dencorr_k0power.txt
+Binning to 1D power spectrum
+Eppsilon Job Finished
+JOB END TIME 2018-10-25_05:57:32
