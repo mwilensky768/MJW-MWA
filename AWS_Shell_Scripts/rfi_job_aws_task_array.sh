@@ -31,6 +31,9 @@ echo Using output directory: $outdir
 s3_path=${s3_path%/}
 echo Using output S3 location: $s3_path
 
+uvfits_s3_loc=${uvfits_s3_loc%/}
+echo Using uvfits_s3_loc: $uvfits_s3_loc
+
 #create output directory with full permissions
 if [ -d "$outdir" ]; then
     sudo chmod -R 777 $outdir
@@ -52,7 +55,7 @@ if [ ! -f "/uvfits/${obs_id}.uvfits" ]; then
     uvfits_exists=$(aws s3 ls ${uvfits_s3_loc}/${obs_id}.uvfits)
     if [ -z "$uvfits_exists" ]; then
         >&2 echo "ERROR: uvfits file not found"
-        echo $obs_id >> ./Obs_Lists/obs_fail.txt
+        echo $obs_id >> /home/ubuntu/MWA/MJW-MWA/Obs_Lists/obs_fail.txt
         echo "Job Failed"
         exit 1
     fi
@@ -64,7 +67,7 @@ if [ ! -f "/uvfits/${obs_id}.uvfits" ]; then
     # Verify that the uvfits downloaded correctly
     if [ ! -f "/uvfits/${obs_id}.uvfits" ]; then
         >&2 echo "ERROR: downloading uvfits from S3 failed"
-        echo $obs_id >> ./Obs_Lists/obs_fail.txt
+        echo $obs_id >> /home/ubuntu/MWA/MJW-MWA/Obs_Lists/obs_fail.txt
         echo "Job Failed"
         exit 1
     fi

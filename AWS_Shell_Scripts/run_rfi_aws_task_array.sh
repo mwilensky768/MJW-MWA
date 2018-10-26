@@ -7,7 +7,7 @@ do
     o) outdir=$OPTARG;;
     b) s3_path=$OPTARG;;
     n) nslots=$OPTARG;;
-    p) uvfits_loc=$OPTARG;;
+    p) uvfits_s3_loc=$OPTARG;;
     q) script=$OPTARG;;
     r) script_args=$OPTARG;;
     \?) echo "Unknown option: Accepted flags are -f (obs_file_name), -o (output directory), "
