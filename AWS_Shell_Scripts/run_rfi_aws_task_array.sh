@@ -1,6 +1,6 @@
 #!/bin/bash
 
-while getopts ":f:o:b:n:p:q:r:"
+while getopts ":f:o:b:n:p:q:r:" option
 do
   case $option in
     f) obs_file_name="$OPTARG";;
