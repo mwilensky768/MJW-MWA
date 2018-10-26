@@ -70,4 +70,4 @@ echo Output located at ${outdir}
 
 N_obs=$(wc -l < $obs_file_name)
 
-qsub -V -b y -cwd -v obs_file_name=${obs_file_name},nslots=${nslots},outdir=${outdir},s3_path=${s3_path},uvfits_s3_loc=$uvfits_s3_loc,script=$script,script_args=$script_args -e ${logdir} -o ${logdir} -pe smp ${nslots} -sync y -t 1-${N} ~/MWA/MJW-MWA/rfi_job_aws_task_array.sh &
+qsub -V -b y -cwd -v obs_file_name=${obs_file_name},nslots=${nslots},outdir=${outdir},s3_path=${s3_path},uvfits_s3_loc=$uvfits_s3_loc,script=$script,script_args=$script_args -e ${logdir} -o ${logdir} -pe smp ${nslots} -sync y -t 1:${N} ~/MWA/MJW-MWA/rfi_job_aws_task_array.sh &
