@@ -1,0 +1,112 @@
+/home/ubuntu/MWA/pipeline_scripts/bash_scripts/aws/eppsilon_single_obs_job_aws.sh: line 74: /home/ubuntu/MWA/pipeline_scripts/bash_scripts/aws/eppsilon_on_aws_backup.sh: Permission denied
+IDL Version 8.2 (linux x86_64 m64). (c) 2012, Exelis Visual Information Solutions, Inc.
+Installation number: 97443-1.
+Licensed for use by: University of Washington
+
+% Compiled module: AWS_PS_SINGLE_OBS_JOB.
+% Compiled module: UNDEFINE.
+% Compiled module: PS_WRAPPER.
+% Compiled module: GET_FOLDER.
+% Compiled module: PS_FILENAMES.
+% Compiled module: TAG_EXIST.
+% Compiled module: CREATE_REFRESH_OPTIONS.
+% Compiled module: CREATE_UVF_OPTIONS.
+% Compiled module: UPDATE_OPTION_STRUCT.
+% Compiled module: CREATE_PS_OPTIONS.
+% Compiled module: CREATE_BINNING_2D_OPTIONS.
+% Compiled module: CREATE_BINNING_1D_OPTIONS.
+% Compiled module: CREATE_PLOT_OPTIONS.
+% Compiled module: CREATE_PLOT_TYPES.
+% Compiled module: CREATE_PLOT_2D_OPTIONS.
+% Compiled module: CREATE_PLOT_1D_OPTIONS.
+% Compiled module: PS_MAIN_PLOTS.
+% Compiled module: FHD_FILE_SETUP.
+% Compiled module: CREATE_FILE_TAGS.
+% Compiled module: CGROOTNAME.
+% Compiled module: NUMBER_FORMATTER.
+% Compiled module: COSMOLOGY_MEASURES.
+% Compiled module: FILE_VALID.
+% Compiled module: GETVAR_SAVEFILE.
+% Compiled module: MINMAX.
+% Compiled module: MAKE_STD_PLOTS.
+% Compiled module: KPOWER_2D_PLOTS.
+% Compiled module: TEXTOIDL.
+% Compiled module: TEXTABLE.
+% Compiled module: STRTRANS.
+% Compiled module: TRANSLATE_SUB_SUPER.
+% Compiled module: NEXTTOK.
+% Compiled module: STR_TOKEN.
+% Compiled module: MATCHDELIM.
+% Compiled module: LOG_COLOR_CALC.
+% Compiled module: CGLOADCT.
+% Compiled module: CGSOURCEDIR.
+% Compiled module: LOGLEVELS.
+% Compiled module: CGPSWINDOW.
+% Compiled module: CGPS_OPEN.
+% Compiled module: CGPS_SETUP__DEFINE.
+% Program caused arithmetic error: Floating illegal operand
+% Compiled module: CGHASIMAGEMAGICK.
+% Compiled module: CGWINDOW_GETDEFS.
+% Compiled module: CGWINDOW_SETDEFS.
+% Compiled module: SETDEFAULTVALUE.
+% Compiled module: CGPS_CONFIG.
+% Compiled module: FSC_PSCONFIG__DEFINE.
+% Compiled module: CGDEFCHARSIZE.
+% Compiled module: REPSTR.
+% Compiled module: CGIMAGE.
+% Compiled module: IMAGE_DIMENSIONS.
+% Compiled module: CGDEFAULTCOLOR.
+% Compiled module: CGGETCOLORSTATE.
+% Compiled module: CGCHECKFORSYMBOLS.
+% Compiled module: CGPLOT.
+% Compiled module: CGSETCOLORSTATE.
+% Compiled module: CGBITGET.
+% Compiled module: CONVERT_TO_TYPE.
+% Compiled module: COLORSAREIDENTICAL.
+% Compiled module: CGCOLOR.
+% Compiled module: CGCOLOR24.
+% Compiled module: CGAXIS.
+% Compiled module: EXPONENT.
+% Compiled module: CGTEXT.
+% Compiled module: CGCOLORBAR.
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Compiled module: CGPS_CLOSE.
+% Compiled module: CGFIXPS.
+% Compiled module: CGPS2RASTER.
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating illegal operand
+% Compiled module: KPOWER_1D_PLOTS.
+% Program caused arithmetic error: Floating divide by 0
+% Program caused arithmetic error: Floating illegal operand
+% Compiled module: PS_BACKGROUND.
+% Compiled module: CGSYMCAT.
+% Compiled module: AL_LEGEND.
+% Program caused arithmetic error: Floating divide by 0
+% Program caused arithmetic error: Floating illegal operand
+% Program caused arithmetic error: Floating divide by 0
+% Program caused arithmetic error: Floating illegal operand
+/home/ubuntu/MWA/pipeline_scripts/bash_scripts/aws/eppsilon_single_obs_job_aws.sh: line 89: kill: (5086) - No such process
