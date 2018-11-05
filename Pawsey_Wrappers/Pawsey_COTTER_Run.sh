@@ -33,5 +33,5 @@ if [ ! -e ${data_dir}/${obs}/${obs}_noflag.uvfits ]; then
   echo $obs
   echo "Executing COTTER"
   gpufiles=$(ls ${data_dir}/${obs}/*gpubox*.fits)
-  cotter -o ${data_dir}/${obs}/${obs}_noflag.uvfits -m ${data_dir}/${obs}/${obs}_metafits_ppds.fits -timeres $timeres -freqres $freqres -norfi -noflagdcchannels -edgewidth $edgewidth -initflag $initflag -endflag $endflag -allowmissing $gpufiles
+  cotter -o ${data_dir}/${obs}/${obs}_noflag.uvfits -m ${data_dir}/${obs}/${obs}_metafits_ppds.fits -timeres $timeres -freqres $freqres -norfi -edgewidth $edgewidth -initflag $initflag -endflag $endflag -allowmissing $gpufiles
 fi
