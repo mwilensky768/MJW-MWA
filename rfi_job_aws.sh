@@ -79,6 +79,8 @@ if [ ! -f "/uvfits/${obs_id}.uvfits" ]; then
     else
         echo "We got the uvfits file"
     fi
+else
+    echo "The file exists locally."
 fi
 
 # Run python catalog script
