@@ -17,7 +17,7 @@ sys.stdout.write("Finished reading in observation at %s" % time.strftime("%H:%M:
 
 sys.stdout.write("Beginning flagging at %s" % time.strftime("%H:%M:%S"))
 
-auto_bls = ss.UV.ant_1_array[:Nbls] == ss.UV.ant_2_array[:Nbls]
+auto_bls = ss.UV.ant_1_array[:ss.UV.Nbls] == ss.UV.ant_2_array[:ss.UV.Nbls]
 custom = np.copy(ss.UV.flag_array)
 custom[:, auto_bls] = 1
 custom[-4:-1] = 1
