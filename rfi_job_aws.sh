@@ -62,6 +62,8 @@ if [ ! -f "/uvfits/${obs_id}.uvfits" ]; then
         echo $obs_id >> ./Obs_Lists/obs_fail.txt
         echo "Job Failed"
         exit 1
+    else
+        echo "uvfits file found"
     fi
 
     # Download uvfits from S3
@@ -74,12 +76,15 @@ if [ ! -f "/uvfits/${obs_id}.uvfits" ]; then
         echo $obs_id >> ./Obs_Lists/obs_fail.txt
         echo "Job Failed"
         exit 1
+    else
+        echo "We got the uvfits file"
     fi
 fi
 
 # Run python catalog script
 echo "Executing python script"
 python $script ${obs_id} /uvfits/${obs_id}.uvfits $outdir
+echo "Done executing python script"
 
 # Move rfi outputs to S3
 i=1  #initialize counter
