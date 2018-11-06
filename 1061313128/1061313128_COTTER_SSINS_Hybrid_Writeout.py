@@ -35,6 +35,6 @@ sys.stdout.write("Done with flagging at %s" % time.strftime("%H:%M:%S"))
 
 sys.stdout.write("Beginning writing at %s" % time.strftime("%H:%M:%S"))
 
-ss.write('%s/1061313128.uvfits' % args.outpath, 'uvfits', inpath=args.inpath, nsample_default=8)
+ss.write('%s/%s.uvfits' % (args.outpath, args.obs), 'uvfits', inpath=args.inpath, nsample_default=8)
 
 sys.stdout.write("Done with writing at %s" % time.strftime("%H:%M:%S"))
