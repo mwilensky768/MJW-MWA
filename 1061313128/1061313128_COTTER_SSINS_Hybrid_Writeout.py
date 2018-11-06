@@ -2,6 +2,7 @@ import argparse
 from SSINS import SS
 import sys
 import time
+import numpy as np
 
 parser = argparse.ArgumentParser()
 parser.add_argument('obs')
