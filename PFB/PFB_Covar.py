@@ -1,6 +1,7 @@
 import numpy as np
 from SSINS import plot_lib
 import matplotlib.pyplot as plt
+import time
 
 n = 512
 M = 128
@@ -19,10 +20,17 @@ w = 2 * np.pi * np.arange(n * M) / (n * M)
 var = np.arange(n * M)
 var[0] = var[1]
 var = var**(-2.2)
-covar_freq = np.diag(var)
-FT = np.matrix(np.exp(1.0j * np.outer(w, np.arange(n * M))))
-covar_time = np.matmul(FT.H, covar_freq)
-covar_time = np.matmul(covar_time, FT) / (n * M)
+covar_time = np.zeros([len(var), len(var)], dtype=complex)
+print('I initialized the cov matrix')
+for i in np.arange(n * M):
+    if not i % 1000:
+        print('%i at %s' % (i, time.strftime('%H:%M:%S')))
+    for k in np.arange(i + 1):
+        F_L = np.exp(1.0j * w * i)
+        F_R = np.exp(1.0j * w * k)
+        vec = F_L * var * F_R
+        covar_time[i, k] = np.mean(vec, dtype=complex)
+        covar_time[k, i] = covar_time[i, k]
 fig, ax = plt.subplots(figsize=(14, 8))
 plot_lib.image_plot(fig, ax, covar_time, ylabel='Time Index', xlabel='Time Index',
                     cbar_label='Variance')
