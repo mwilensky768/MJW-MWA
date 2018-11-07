@@ -9,7 +9,7 @@ NT2 = 12
 w_k = 2 * np.pi * np.arange(n) / n
 w_l = 2 * np.pi * np.arange(M) / (M * n)
 beta = 5
-W_2_coeff = '/Users/mikewilensky/MJW-MWA/Useful_Information/pfb2coeff.csv'
+W_2_coeff = '/Users/mikewilensky/Repos/MJW-MWA/Useful_Information/pfb2coeff.csv'
 W_1 = np.kaiser(n * NT1, beta)
 W_2 = np.genfromtxt(W_2_coeff, delimiter=',')
 W_2 /= W_2.max()
