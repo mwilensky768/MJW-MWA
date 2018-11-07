@@ -24,7 +24,7 @@ covar_time = np.zeros([len(var), len(var)], dtype=complex)
 print('I initialized the cov matrix')
 for i in np.arange(n * M):
     F_L = np.exp(1.0j * w * i)
-    if not i % 1000:
+    if not i % 100:
         print('%i at %s' % (i, time.strftime('%H:%M:%S')))
     for k in np.arange(i + 1):
         F_R = np.exp(1.0j * w * k)
