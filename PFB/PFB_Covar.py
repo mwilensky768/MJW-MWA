@@ -23,10 +23,10 @@ var = var**(-2.2)
 covar_time = np.zeros([len(var), len(var)], dtype=complex)
 print('I initialized the cov matrix')
 for i in np.arange(n * M):
+    F_L = np.exp(1.0j * w * i)
     if not i % 1000:
         print('%i at %s' % (i, time.strftime('%H:%M:%S')))
     for k in np.arange(i + 1):
-        F_L = np.exp(1.0j * w * i)
         F_R = np.exp(1.0j * w * k)
         vec = F_L * var * F_R
         covar_time[i, k] = np.mean(vec, dtype=complex)
