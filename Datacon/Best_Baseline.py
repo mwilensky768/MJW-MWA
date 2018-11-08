@@ -1,7 +1,10 @@
 from pyuvdata import UVData
 import numpy as np
+from SSINS import plot_lib
+from matplotlib import cm
+import matplotlib.pyplot as plt
 
-inpath = '/Users/mike_e_dubs/MWA/Data/uvfits/1066742016.uvfits'
+inpath = '/Volumes/Faramir/uvfits/1066742016.uvfits'
 
 
 def dist(A, B):
@@ -25,3 +28,6 @@ for i in range(UV.Nbls):
         i_min = i
         d_min = d
 print(i_min)
+fig, ax = plt.subplots(figsize=(8, 9))
+plot_lib.image_plot(fig, ax, UV.data_array[:, 0, :, 0], cmap=cm.cm.RdGy_r,
+                    freq_array=UV.freq_array[0], aspect=data.shape[1] / (data.shape[0] * 10))
