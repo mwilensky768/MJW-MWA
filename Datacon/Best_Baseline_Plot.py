@@ -1,3 +1,5 @@
+from __future__ import divide
+
 import numpy as np
 from pyuvdata import UVData
 from SSINS import plot_lib
