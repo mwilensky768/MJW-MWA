@@ -29,5 +29,5 @@ for i in range(UV.Nbls):
         d_min = d
 print(i_min)
 fig, ax = plt.subplots(figsize=(8, 9))
-plot_lib.image_plot(fig, ax, UV.data_array[:, 0, :, 0], cmap=cm.cm.RdGy_r,
+plot_lib.image_plot(fig, ax, UV.data_array[:, 0, :, 0], cmap=cm.RdGy_r,
                     freq_array=UV.freq_array[0], aspect=data.shape[1] / (data.shape[0] * 10))
