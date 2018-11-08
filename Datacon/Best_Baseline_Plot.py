@@ -20,7 +20,7 @@ else:
     UV.read(inpath, file_type='uvfits', polarizations=-5)
     UV.select(ant_str='cross', times=np.unique(UV.time_array)[1:-3])
     UV.data_array = UV.data_array.reshape([UV.Ntimes, UV.Nbls, UV.Nspws, UV.Nfreqs, UV.Npols])
-    data = UV.data_array([:, i, 0, :, 0])
+    data = UV.data_array[:, i, 0, :, 0]
 
 data_diff = np.absolute(np.diff(data, axis=0))
 fig, ax = plt.subplots(figsize=(8, 9))
