@@ -27,6 +27,7 @@ fig, ax = plt.subplots(figsize=(8, 9))
 fig_diff, ax_diff = plt.subplots(figsize=(8, 9))
 np.save('%s/Best_Baseline.npy' % outpath, data)
 print(data.shape[1] / (data.shape[0] * 10))
+print(data.shape)
 plot_lib.image_plot(fig, ax, data.real, cmap=cm.RdGy_r, freq_array=freq_array,
                     cbar_label='Amplitude (UNCALIB)', aspect=data.shape[1] / (data.shape[0] * 10))
 plot_lib.image_plot(fig, ax, data_diff, freq_array=freq_array,
