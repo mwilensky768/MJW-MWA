@@ -8,7 +8,7 @@ import os
 inpath = '/Volumes/Faramir/uvfits/1066742016.uvfits'
 outpath = '/Users/mikewilensky/General'
 i = 7380
-freq_array = np.load('/Users/mikewilensky/MJW-MWA/Useful_Information/MWA_Highband_Freq_Array.npy')
+freq_array = np.load('/Users/mikewilensky/Repos/MJW-MWA/Useful_Information/MWA_Highband_Freq_Array.npy')
 
 if not os.path.exists(outpath):
     os.makedirs(outpath)
