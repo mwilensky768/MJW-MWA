@@ -31,8 +31,8 @@ np.save('%s/Best_Baseline.npy' % outpath, data)
 print(data.shape[1] / (data.shape[0] * 10))
 print(data.shape)
 plot_lib.image_plot(fig, ax, data.real, cmap=cm.RdGy_r, freq_array=freq_array,
-                    cbar_label='Amplitude (UNCALIB)', aspect=data.shape[1] / (data.shape[0] * 2.5))
+                    cbar_label='Amplitude (UNCALIB)', aspect=data.shape[1] / (data.shape[0]))
 plot_lib.image_plot(fig_diff, ax_diff, data_diff, freq_array=freq_array,
-                    cbar_label='Amplitude (UNCALIB)', aspect=data.shape[1] / (data.shape[0] * 2.5))
+                    cbar_label='Amplitude (UNCALIB)', aspect=data.shape[1] / (data.shape[0]))
 fig.savefig('%s/Best_Baseline.png' % outpath)
 fig_diff.savefig('%s/Best_Baseline_Diff.png' % outpath)
