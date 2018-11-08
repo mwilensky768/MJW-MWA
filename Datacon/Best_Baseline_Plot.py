@@ -1,4 +1,4 @@
-from __future__ import divide
+from __future__ import division
 
 import numpy as np
 from pyuvdata import UVData
