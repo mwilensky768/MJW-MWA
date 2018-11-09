@@ -3,7 +3,7 @@ from SSINS import Catalog_Plot as cp
 
 inpath = '/Volumes/Faramir/uvfits'
 obslist = ['1061313128', '1061312640']
-outpath = '/Users/mikewilensky/General'
+outpath = '/Users/mikewilensky/General/Hist_Compare_Big_Legend'
 read_kwargs = {'ant_str': 'cross',
                'bad_time_indices': [0, -1, -2, -3]}
 
