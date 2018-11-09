@@ -1,0 +1,6 @@
+from SSINS import INS, plot_lib, util
+import matplotlib.pyplot as plt
+import numpy as np
+
+obs = '1066742016'
+indir = ''

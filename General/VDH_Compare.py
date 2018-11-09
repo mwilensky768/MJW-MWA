@@ -11,5 +11,6 @@ for obs in obslist:
     ss = SS(inpath='%s/%s.uvfits' % (inpath, obs), obs=obs, outpath=outpath,
             read_kwargs=read_kwargs, bad_time_indices=[0, -1, -2, -3])
     ss.VDH_prepare(fit_hist=True, bins='auto')
+    ss.VDH.errors[0] *= 4
     cp.VDH_plot(ss.VDH, leg_size='xx-large', xscale='linear', ylim=[0.1, 10 * np.amax(ss.VDH.counts[0])])
     del ss
