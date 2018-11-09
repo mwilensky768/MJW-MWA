@@ -9,6 +9,6 @@ read_kwargs = {'ant_str': 'cross'}
 for obs in obslist:
     ss = SS(inpath='%s/%s.uvfits' % (inpath, obs), obs=obs, outpath=outpath,
             read_kwargs=read_kwargs, bad_time_indices=[0, -1, -2, -3])
-    ss.VDH_prepare()
-    cp.VDH_plot(ss.VDH, leg_size='xx-large')
+    ss.VDH_prepare(fit_hist=True, bins='auto')
+    cp.VDH_plot(ss.VDH, leg_size='xx-large', xscale='linear')
     del ss
