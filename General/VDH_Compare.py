@@ -1,5 +1,6 @@
 from SSINS import SS
 from SSINS import Catalog_Plot as cp
+import numpy as np
 
 inpath = '/Volumes/Faramir/uvfits'
 obslist = ['1061313128', '1061312640', '1066742016']
