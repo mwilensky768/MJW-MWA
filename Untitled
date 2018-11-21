@@ -1,0 +1,10 @@
+from SSINS import INS, plot_lib, util
+from matplotlib import cm
+import matplotlib.pyplot as plt
+
+obs = 'zen.2458098.17026.yy.HH'
+indir = '/Users/mike_e_dubs/HERA/INS/IDR2_Prelim_Nocut/HERA_IDR2_Prelim_Set_nocut'
+outpath = '/Users/mike_e_dubs/General/obs'
+read_paths = util.read_paths_construct(indir, None, obs, 'INS')
+
+ins = INS(read_paths=read_paths, obs=obs, outpath=outpath)

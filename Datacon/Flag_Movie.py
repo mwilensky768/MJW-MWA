@@ -40,7 +40,7 @@ for i in range(2):
         vmin = None
         vmax = None
     pl.image_plot(fig, ax, getattr(ins, 'data%s' % labels[i])[:, 0, :, 0],
-                  xlabel='Frequency (Mhz)', ylabel='Time Pair',
+                  xlabel='Frequency (Mhz)',
                   title='MWA Incoherent Noise Spectrum %s' % titles[i],
                   freq_array=ins.freq_array[0], cbar_label=cbar_labels[i],
                   cmap=cmaps[i], aspect=ins.data_ms.shape[2] / ins.data_ms.shape[0])
@@ -52,7 +52,7 @@ for i, event in enumerate(ins.match_events):
     ins.data_ms = ins.mean_subtract(order=order)
     fig, ax = plt.subplots(figsize=(16, 9))
     pl.image_plot(fig, ax, ins.data_ms[:, 0, :, 0],
-                  xlabel='Frequency (Mhz)', ylabel='Time Pair',
+                  xlabel='Frequency (Mhz)',
                   title='MWA Incoherent Noise Spectrum (Mean-Subtracted)',
                   freq_array=ins.freq_array[0], cbar_label=cbar_labels[1],
                   cmap=cm.coolwarm, mask_color='black',

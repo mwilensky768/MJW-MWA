@@ -6,8 +6,8 @@ import numpy as np
 import os
 from matplotlib import cm
 
-obs = '1061313128'
-indir = '/Users/mikewile/MWA/INS/Long_Run/All'
+obs = '1066742016'
+indir = '/Users/mike_e_dubs/MWA/INS/Long_Run/All'
 outpath = '/Users/mike_e_dubs/General/1066742016'
 if not os.path.exists(outpath):
     os.makedirs(outpath)
