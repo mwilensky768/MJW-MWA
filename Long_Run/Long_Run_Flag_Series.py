@@ -10,7 +10,7 @@ parser.add_argument('outpath')
 args = parser.parse_args()
 
 ss = SS(inpath=args.inpath, outpath=args.outpath, obs=args.obs, flag_choice='original',
-        bad_time_indices=[0, -1, -2, -3], read_kwargs={'ant_str': 'cross'})
+        bad_time_indices=[0, -1, -2, -3, -4, -5], read_kwargs={'ant_str': 'cross'})
 ss.INS_prepare()
 ss.INS.save()
 cp.INS_plot(ss.INS)
