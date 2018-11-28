@@ -14,8 +14,8 @@ if not os.path.exists(outpath):
 
 read_paths = util.read_paths_construct(indir, None, obs, 'INS')
 ins = INS(read_paths=read_paths, outpath=outpath, obs=obs)
-fig, ax = plt.subplots(figsize=(8 / 3, 3))
-fig_diff, ax_diff = plt.subplots(figsize=(8 / 3, 3))
+fig, ax = plt.subplots(figsize=(4, 4.5))
+fig_diff, ax_diff = plt.subplots(figsize=(4, 4.5))
 
 plot_lib.image_plot(fig, ax, ins.data[:, 0, :, 0], freq_array=ins.freq_array[0],
                     aspect=ins.data.shape[2] / ins.data.shape[0], cbar_label='Amplitude (arbs)',)
