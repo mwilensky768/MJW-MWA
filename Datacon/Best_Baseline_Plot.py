@@ -25,8 +25,8 @@ else:
     data = UV.data_array[:, i, 0, :, 0]
 
 data_diff = np.absolute(np.diff(data, axis=0))
-fig, ax = plt.subplots(figsize=(8/3, 3))
-fig_diff, ax_diff = plt.subplots(figsize=(8/3, 3))
+fig, ax = plt.subplots(figsize=(4, 4.5))
+fig_diff, ax_diff = plt.subplots(figsize=(4, 4.5))
 np.save('%s/Best_Baseline.npy' % outpath, data)
 print(data.shape[1] / (data.shape[0] * 10))
 print(data.shape)

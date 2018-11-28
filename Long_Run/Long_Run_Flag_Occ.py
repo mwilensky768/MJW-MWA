@@ -54,4 +54,4 @@ for obs in obslist:
             del ins
             del mf
 
-picke.dump(occ_dict, open('%s/long_run_original_occ_dict.pik' % outdir, 'wb'))
+pickle.dump(occ_dict, open('%s/long_run_original_occ_dict.pik' % outdir, 'wb'))
