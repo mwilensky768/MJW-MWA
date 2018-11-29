@@ -44,7 +44,7 @@ ss.INS.save()
 ss.INS.data[:, 0, :82] = np.ma.masked
 ss.INS.data[:, 0, -21:] = np.ma.masked
 ss.INS.data_ms = ss.INS.mean_subtract(order=1)
-ss.MF_prepare(ss.INS, sig_thresh=5, N_thresh=15, shape_dict=shape_dict)
+ss.MF_prepare(sig_thresh=5, N_thresh=15, shape_dict=shape_dict)
 ss.MF.apply_match_test(apply_N_thresh=True, order=1)
 ss.INS.data_ms = ss.INS.mean_subtract(order=0)
 ss.MF.save()
