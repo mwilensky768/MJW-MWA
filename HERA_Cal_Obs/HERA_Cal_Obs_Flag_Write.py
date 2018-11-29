@@ -41,6 +41,9 @@ shape_dict = {'TV4': [1.74e8, 1.82e8],
 
 ss.INS_prepare()
 ss.INS.save()
+
+cp.INS_plot(ss.INS, ms_vmin=-5, ms_vmax=5, vmin=0, vmax=0.03, aspect=ss.UV.Nfreqs / ss.UV.Ntimes)
+
 ss.INS.data[:, 0, :82] = np.ma.masked
 ss.INS.data[:, 0, -21:] = np.ma.masked
 ss.INS.data_ms = ss.INS.mean_subtract(order=1)
