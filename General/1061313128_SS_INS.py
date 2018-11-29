@@ -22,13 +22,13 @@ else:
     read_paths = util.read_paths_construct(outpath, None, obs, 'INS')
     ins = INS(read_paths=read_paths, obs=obs, outpath=outpath)
 
-fig, ax = plt.subplots(figsize=(8, 9))
+fig, ax = plt.subplots(figsize=(4, 4.5))
 plot_lib.image_plot(fig, ax, ins.data[:, 0, :, 0], aspect=ins.data.shape[2] / ins.data.shape[0],
-                    freq_array=ins.freq_array[0], cbar_label='Amplitude (UNCALIB)')
+                    freq_array=ins.freq_array[0], cbar_label='Amplitude (arbs)')
 fig.savefig('%s/%s_INS.png' % (outpath, obs))
 plt.close(fig)
-fig, ax = plt.subplots(figsize=(8, 9))
+fig, ax = plt.subplots(figsize=(4, 4.5))
 plot_lib.image_plot(fig, ax, ins.data_ms[:, 0, :, 0], aspect=ins.data.shape[2] / ins.data.shape[0],
-                    freq_array=ins.freq_array[0], cbar_label='Amplitude (UNCALIB)',
+                    freq_array=ins.freq_array[0], cbar_label='Deviation $(\hat{\sigma})$',
                     cmap=cm.coolwarm)
 fig.savefig('%s/%s_INS_ms.png' % (outpath, obs))
