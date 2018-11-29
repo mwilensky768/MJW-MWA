@@ -23,7 +23,7 @@ UV2.read('%s/%s.yy.HH.uv' % (args.basedir, args.obs), file_type='miriad')
 
 UV = UV1 + UV2
 
-ss = SS(UV=UV, obs=args.obs, outdir=args.outdir)
+ss = SS(UV=UV, obs=args.obs, outpath=args.outdir)
 
 auto_bls = UV.ant_1_array[:UV.Nbls] == UV.ant_2_array[:UV.Nbls]
 custom = np.zeros_like(ss.UV.flag_array)
