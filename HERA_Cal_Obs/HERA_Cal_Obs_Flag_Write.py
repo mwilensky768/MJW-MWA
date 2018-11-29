@@ -41,8 +41,12 @@ shape_dict = {'TV4': [1.74e8, 1.82e8],
 
 ss.INS_prepare()
 ss.INS.save()
-ss.MF_prepare(sig_thresh=5, N_thresh=15, shape_dict=shape_dict)
-ss.MF.apply_match_test(apply_N_thresh=True)
+ss.INS.data[:, 0, :82] = np.ma.masked
+ss.INS.data[:, 0, -21:] = np.ma.masked
+ss.INS.data_ms = ss.INS.mean_subtract(order=1)
+ss.MF_prepare(ss.INS, sig_thresh=5, N_thresh=15, shape_dict=shape_dict)
+ss.MF.apply_match_test(apply_N_thresh=True, order=1)
+ss.INS.data_ms = ss.INS.mean_subtract(order=0)
 ss.MF.save()
 
 cp.MF_plot(ss.MF, ms_vmin=-5, ms_vmax=5, vmin=0, vmax=0.03, aspect=ss.UV.Nfreqs / ss.UV.Ntimes)
