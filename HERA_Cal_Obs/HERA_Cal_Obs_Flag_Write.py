@@ -57,4 +57,5 @@ cp.MF_plot(ss.MF, ms_vmin=-5, ms_vmax=5, vmin=0, vmax=0.03, aspect=ss.UV.Nfreqs 
 ss.apply_flags(choice='INS', INS=ss.INS)
 ss.UV.data_array.mask[:, auto_bls] = True
 
-ss.write('%s/%s.HH.uvfits' % (args.outdir, args.obs), 'uvfits', UV=UV1 + UV2)
+ss.write('%s/%s.HH.uvfits' % (args.outdir, args.obs), 'uvfits', UV=UV1 + UV2,
+         write_kwargs={'force_phase': True, 'spoof_nonessential': True})
