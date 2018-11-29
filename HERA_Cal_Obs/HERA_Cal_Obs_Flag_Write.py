@@ -5,6 +5,7 @@ import argparse
 from SSINS import SS
 from SSINS import Catalog_Plot as cp
 import os
+import numpy as np
 
 parser = argparse.ArgumentParser()
 parser.add_argument('obs')
