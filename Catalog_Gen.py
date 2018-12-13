@@ -20,6 +20,7 @@ data_kwargs = {'read_kwargs': {'file_type': 'uvfits', 'ant_str': 'cross'},
                'obs': args.obs,
                'inpath': args.inpath,
                'outpath': args.outpath,
+               'flag_choice': 'original',
                'bad_time_indices': [0, -1, -2, -3]}
 if args.time_range is not None:
     data_kwargs['bad_time_indices'] = [t for t in np.arange(224) if t not in np.arange(args.time_range[0], args.time_range[1])]

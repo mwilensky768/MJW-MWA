@@ -23,5 +23,5 @@ else:
 fig, ax = plt.subplots(figsize=(8, 9))
 plot_lib.image_plot(fig, ax, ins.data_ms[:, 0, :, 0], cmap=cm.coolwarm,
                     cbar_label='Deviation ($\hat{\sigma}$)', aspect=ins.data.shape[2] / ins.data.shape[0],
-                    freq_array=ins.freq_array[0])
+                    freq_array=ins.freq_array[0], mask_color='black')
 fig.savefig('%s/1061313128_AOFlagger_INS_ms.png' % outpath)

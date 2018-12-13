@@ -22,13 +22,9 @@ shape_dict = {'TV6': [1.74e8, 1.81e8],
               'broad6': [1.72e8, 1.83e8],
               'broad7': [1.79e8, 1.9e8],
               'broad8': [1.86e8, 1.97e8]}
-shapes = ['TV6', 'TV7', 'TV8', 'broad6', 'broad7', 'broad8', 'streak', 'point']
+shapes = ['TV6', 'TV7', 'TV8', 'broad6', 'broad7', 'broad8', 'streak', 'point', 'total']
 occ_dict = {sig: {shape: {} for shape in shapes} for sig in sig_list}
 
-
-edges = [0 + 16 * k for k in range(24)] + [15 + 16 * k for k in range(24)]
-good_freqs = np.ones(384)
-good_freqs[edges] = 0
 for obs in obslist:
     flist = glob.glob('%s/metadata/%s*' % (basedir, obs))
     if len(flist):
@@ -38,20 +34,16 @@ for obs in obslist:
                       flag_choice='original')
             mf = MF(ins, sig_thresh=sig_thresh, N_thresh=15, shape_dict=shape_dict)
             mf.apply_match_test(apply_N_thresh=True)
-            occ_dict[sig_thresh]['point'][obs] = np.mean(ins.data.mask[:, 0, :, 0], axis=0)
+            occ_dict[sig_thresh]['total'][obs] = np.mean(ins.data.mask[:, 0, :, 0], axis=0)
             if len(ins.match_events):
-                event_frac = util.event_fraction(ins.match_events, 384, ins.data.shape[0])
+                event_frac = util.event_fraction(ins.match_events, ins.data.shape[0], shapes, 384)
                 for shape in shapes[:-1]:
-                    if mf.slice_dict[shape].indices(384)[:-1] in event_frac:
-                        occ_dict[sig_thresh][shape][obs] = event_frac[mf.slice_dict[shape].indices(384)[:-1]]
-                    else:
-                        occ_dict[sig_thresh][shape][obs] = 0
-            else:
-                for shape in shapes[:-1]:
-                    occ_dict[sig_thresh][shape][obs] = 0
+                    occ_dict[sig_thresh][shape][obs] = event_frac[shape]
             if obs == '1061312152' and sig_thresh is 5:
                 pickle.dump(mf.slice_dict, open('%s/long_run_shape_dict.pik' % outdir, 'wb'))
             del ins
             del mf
+
+print(occ_dict)
 
 pickle.dump(occ_dict, open('%s/long_run_original_occ_dict.pik' % outdir, 'wb'))
