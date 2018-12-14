@@ -17,5 +17,6 @@ for obs in obslist:
     for chunk in range(6):
         times = np.unique(UV.time_array)[10 * chunk: 10 * (chunk + 1)]
         UV1 = UV.select(times=times, inplace=False)
-        UV1.write('%s/%s_%i.uvfits' % (args.outdir, obs, chunk + 1))
+        UV1.write_uvfits('%s/%s_%i.uvfits' % (args.outdir, obs, chunk + 1))
         del UV1
+    del UV
