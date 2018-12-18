@@ -2,9 +2,11 @@ from SSINS import SS, plot_lib
 import numpy as np
 import matplotlib.pyplot as plt
 
+freq_chans = np.load('/Volumes/Faramir/uvfits/freq_chans.npy')
 ss = SS(obs='1066742016', inpath='/Volumes/Faramir/uvfits/1066742016.uvfits',
         outpath='/Users/mikewilensky/576/1066742016', read_kwargs={'file_type': 'uvfits',
-                                                                   'ant_str': 'cross'})
+                                                                   'ant_str': 'cross',
+                                                                   'freq_chans': freq_chans})
 
 freq_chans = np.load('/Volumes/Faramir/uvfits/freq_chans.npy')
 counts_1, bins_1 = np.histogram(ss.UV.data_array[:21, :, 0, freq_chans], bins='auto')
