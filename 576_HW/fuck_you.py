@@ -9,8 +9,8 @@ ss = SS(obs='1066742016', inpath='/Volumes/Faramir/uvfits/1066742016.uvfits',
                                                                    'freq_chans': freq_chans})
 
 freq_chans = np.load('/Volumes/Faramir/uvfits/freq_chans.npy')
-counts_1, bins_1 = np.histogram(ss.UV.data_array[:21, :, 0, freq_chans], bins='auto')
-counts_2, bins_2 = np.histogram(ss.UV.data_array[21:, :, 0, freq_chans], bins='auto')
+counts_1, bins_1 = np.histogram(ss.UV.data_array[2:21, :, 0, freq_chans], bins='auto')
+counts_2, bins_2 = np.histogram(ss.UV.data_array[21:-4, :, 0, freq_chans], bins='auto')
 
 counts_1 = np.append(counts_1, 0)
 counts_2 = np.append(counts_2, 0)
