@@ -27,6 +27,7 @@ shape_dict = {'TV6': [1.74e8, 1.81e8],
 
 sky_sub = SS(obs=args.obs, UV=UV, outpath=args.outpath, flag_choice='original')
 sky_sub.INS_prepare()
+sky_sub.INS.save()
 Catalog_Plot.INS_plot(sky_sub.INS)
 sky_sub.MF_prepare(sig_thresh=5, shape_dict=shape_dict, N_thresh=15)
 sky_sub.MF.apply_match_test(apply_N_thresh=True)
