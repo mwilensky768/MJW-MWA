@@ -15,7 +15,7 @@ UV.read(args.inpath, file_type='uvfits')
 JD = np.unique(UV.time_array)[-2]
 where = np.where(UV.time_array == JD)
 UV.flag_array[where] = 1
-auto_bl = np.where(ant_1_array == ant_2_array)
+auto_bl = np.where(UV.ant_1_array == UV.ant_2_array)
 UV.flag_array[auto_bl] = 1
 
 shape_dict = {'TV6': [1.74e8, 1.81e8],
