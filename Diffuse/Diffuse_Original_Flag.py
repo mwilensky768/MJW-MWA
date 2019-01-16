@@ -11,7 +11,7 @@ parser.add_argument('--times', type=int, nargs='*', help='The time indices to fl
 args = parser.parse_args()
 
 UV = UVData()
-UV.read('%s/%s.uvfits' % (args.inpath, args.obs), file_type='uvfits')
+UV.read(args.inpath, file_type='uvfits')
 for time in args.times:
     JD = np.unique(UV.time_array)[time]
     where = np.where(UV.time_array == JD)
