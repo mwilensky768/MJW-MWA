@@ -12,11 +12,12 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('shape')
+parser.add_argument('threshold', type=float)
 args = parser.parse_args()
 
-occ_dict_path = '/Users/mike_e_dubs/MWA/INS/Long_Run/Original_Jackknife/long_run_original_occ_dict.pik'
+occ_dict_path = '/Users/mike_e_dubs/MWA/INS/Long_Run/Original_Jackknife_Revamp_Complete/occ_dict.pik'
 ins_plots = '/Users/mike_e_dubs/MWA/INS/Long_Run/Original/figs'
-outdir = '/Users/mike_e_dubs/MWA/INS/Long_Run/Original_Jackknife/2_sig_figs_%s' % args.shape
+outdir = '/Users/mike_e_dubs/MWA/INS/Long_Run/Original_Jackknife_Revamp_Complete'
 if not os.path.exists(outdir):
     os.makedirs(outdir)
 occ_dict = pickle.load(open(occ_dict_path, 'rb'))
@@ -36,7 +37,7 @@ for obs in subdict:
     else:
         total_occ = subdict[obs]
     occlist.append(total_occ)
-    if total_occ > 0.5:
+    if (total_occ > args.threshold):
         obslist.append(obs)
         shutil.copy('%s/%s_original_INS_data.png' % (ins_plots, obs), outdir)
 counts, bins = np.histogram(occlist, bins=bins)
@@ -44,6 +45,5 @@ cdf = np.cumsum(counts)
 cdf = cdf / cdf[-1]
 inds = np.array([np.where(cdf > erf(k / np.sqrt(2)))[0][0] for k in range(1, 4)])
 bin_edges = bins[inds + 1]
-print('The 1 sigma, 2 sigma, and 3 sigma occupations are %s' % bin_edges)
 print(obslist)
-util.make_obsfile(obslist, '%s/2_sig_obs.txt' % outdir)
+util.make_obsfile(obslist, '%s/total_occ_gt_%s_obs.txt' % (outdir, args.threshold))

@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 
-obs = 'zen.2458098.37904.xx.HH'
-indir = '/Users/mike_e_dubs/General/%s' % obs
+obs = 'zen.2458101.52817.xx.HH'
+indir = '/Users/mike_e_dubs/HERA/INS/IDR2_Prelim_Nocut/HERA_IDR2_Prelim_Set_nocut'
 indir2 = '/Users/mike_e_dubs/HERA/INS/IDR2_OR/HERA_IDR2_Prelim_Set_OR_original'
 outpath = '/Users/mike_e_dubs/General/%s' % obs
 hist_shit = False

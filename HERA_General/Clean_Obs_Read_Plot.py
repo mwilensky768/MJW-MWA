@@ -5,7 +5,7 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 import numpy as np
 
-obs = 'zen.2458098.54309.yy.HH'
+obs = 'zen.2458098.37904.xx.HH'
 indir = '/Users/mike_e_dubs/HERA/INS/IDR2_Prelim_Nocut/HERA_IDR2_Prelim_Set_nocut'
 outpath = '/Users/mike_e_dubs/General/%s' % obs
 read_paths = util.read_paths_construct(indir, None, obs, 'INS')
@@ -19,28 +19,31 @@ aspect = ins.data.shape[2] / ins.data.shape[0]
 
 fig, ax = plt.subplots(figsize=(16, 9), ncols=2)
 
-plot_lib.image_plot(fig, ax[0], ins.data[:, 0, :, 0], freq_array=ins.freq_array[0],
-                    cbar_label='Amplitude (UNCALIB)', aspect=aspect, vmax=0.03,
-                    ylabel='Time (10s)')
-plot_lib.image_plot(fig, ax[1], ins.data_ms[:, 0, :, 0], freq_array=ins.freq_array[0],
+#plot_lib.image_plot(fig, ax[0], ins.data[:, 0, :, 0], freq_array=ins.freq_array[0],
+                    #cbar_label='Amplitude (UNCALIB)', aspect=aspect, vmax=0.03,
+                    #ylabel='Time (10 s)')
+plot_lib.image_plot(fig, ax[0], ins.data_ms[:, 0, :, 0], freq_array=ins.freq_array[0],
                     cmap=cm.coolwarm, aspect=aspect, cbar_label='Deviation ($\hat{\sigma}$)',
-                    vmin=-5, vmax=5, ylabel='Time (10s)')
-fig.savefig('%s/%s_INS.png' % (outpath, obs))
+                    vmin=-5, vmax=5, ylabel='Time (10 s)')
+
 
 fig_mf, ax_mf = plt.subplots(figsize=(16, 9), ncols=2)
 ins.data.mask[:, 0, :82, 0] = True
 ins.data.mask[:, 0, -21:, 0] = True
-ins.data_ms = ins.mean_subtract(order=0)
-mf = MF(ins, sig_thresh=5, N_thresh=0)
-mf.apply_match_test(apply_N_thresh=False, order=0)
+ins.data_ms = ins.mean_subtract(order=1)
+mf = MF(ins, sig_thresh=5, N_thresh=0, shape_dict={'TV4': [1.74e8, 1.82e8],
+                                                   'TV5': [1.82e8, 1.9e8],
+                                                   'TV6': [1.9e8, 1.98e8]})
+mf.apply_match_test(apply_N_thresh=False, order=1)
 
 plot_lib.image_plot(fig_mf, ax_mf[0], ins.data[:, 0, :, 0], freq_array=ins.freq_array[0],
                     cbar_label='Amplitude (UNCALIB)', aspect=aspect, vmin=0, vmax=0.03, cmap=cm.viridis,
-                    mask_color='white', ylabel='Time (10s)')
-plot_lib.image_plot(fig_mf, ax_mf[1], ins2.data_ms[:, 0, :, 0], freq_array=ins.freq_array[0],
+                    mask_color='white', ylabel='Time (10 s)')
+plot_lib.image_plot(fig_mf, ax[1], ins.data_ms[:, 0, :, 0], freq_array=ins.freq_array[0],
                     cbar_label='Deviation ($\hat{\sigma}$)', aspect=aspect, vmin=-5, vmax=5, cmap=cm.coolwarm,
-                    mask_color='black', ylabel='Time (10s)')
+                    mask_color='black', ylabel='Time (10 s)')
 fig_mf.savefig('%s/%s_INS_MF.png' % (outpath, obs))
+fig.savefig('%s/%s_INS.png' % (outpath, obs))
 
 
 ins.counts, ins.bins = np.histogram(ins.data_ms[np.logical_not(ins.data.mask)], bins='auto')
