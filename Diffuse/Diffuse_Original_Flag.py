@@ -12,10 +12,9 @@ args = parser.parse_args()
 
 UV = UVData()
 UV.read(args.inpath, file_type='uvfits')
-for time in args.times:
-    JD = np.unique(UV.time_array)[time]
-    where = np.where(UV.time_array == JD)
-    UV.flag_array[where] = 1
+JD = np.unique(UV.time_array)[-2]
+where = np.where(UV.time_array == JD)
+UV.flag_array[where] = 1
 auto_bl = np.where(ant_1_array == ant_2_array)
 UV.flag_array[auto_bl] = 1
 
