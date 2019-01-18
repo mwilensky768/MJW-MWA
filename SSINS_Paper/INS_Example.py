@@ -18,7 +18,7 @@ for obs in obslist:
                         freq_array=UV.freq_array[0], ylabel='Time (2 s)',
                         xlabel='Frequency (Mhz)')
     fig_ms, ax_ms = plt.subplots(figsize=(16, 9))
-    plot_lib.image_plot(fig, ax, ss.INS.data_ms[:, 0, :, 0], aspect='auto',
+    plot_lib.image_plot(fig_ms, ax_ms, ss.INS.data_ms[:, 0, :, 0], aspect='auto',
                         freq_array=UV.freq_array[0], ylabel='Time (2 s)',
                         xlabel='Frequency (Mhz)', cmap=cm.coolwarm)
     fig.savefig('%s/%s_INS_data.pdf' % (ss.outpath, obs))
