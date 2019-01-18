@@ -1,4 +1,6 @@
 from SSINS import SS, plot_lib
+from pyuvdata import UVData
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
