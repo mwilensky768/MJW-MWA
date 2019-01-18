@@ -11,7 +11,7 @@ for obs in obslist:
     UV = UVData()
     UV.read('%s/%s.uvfits' % (indir, obs), file_type='uvfits', polarizations=-5)
     UV.select(times=np.unique(UV.time_array)[1:-3], ant_str='cross')
-    ss = SS(UV=UV, outpath='/Users/mikewilensky/SSINS_Paper', , obs=obs)
+    ss = SS(UV=UV, outpath='/Users/mikewilensky/SSINS_Paper', obs=obs)
     ss.INS_prepare()
     fig, ax = plt.subplots(figsize=(16, 9))
     plot_lib.image_plot(fig, ax, ss.INS.data[:, 0, :, 0], aspect='auto',
