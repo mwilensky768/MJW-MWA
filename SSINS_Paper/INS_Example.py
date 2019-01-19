@@ -16,11 +16,12 @@ for obs in obslist:
     fig, ax = plt.subplots(figsize=(16, 9))
     plot_lib.image_plot(fig, ax, ss.INS.data[:, 0, :, 0], aspect='auto',
                         freq_array=UV.freq_array[0], ylabel='Time (2 s)',
-                        xlabel='Frequency (Mhz)')
+                        xlabel='Frequency (Mhz)', cbar_label='Amplitude (UNCALIB)')
     fig_ms, ax_ms = plt.subplots(figsize=(16, 9))
     plot_lib.image_plot(fig_ms, ax_ms, ss.INS.data_ms[:, 0, :, 0], aspect='auto',
                         freq_array=UV.freq_array[0], ylabel='Time (2 s)',
-                        xlabel='Frequency (Mhz)', cmap=cm.coolwarm)
+                        xlabel='Frequency (Mhz)', cmap=cm.coolwarm
+                        cbar_label='Deviation ($\hat{\sigma}$)')
     fig.savefig('%s/%s_INS_data.pdf' % (ss.outpath, obs))
     fig_ms.savefig('%s/%s_INS_data_ms.pdf' % (ss.outpath, obs))
     plt.close(fig)
