@@ -35,11 +35,11 @@ for obs in obslist:
     plot_lib.error_plot(fig_hist, ax_hist, bins, counts,
                         xlabel='Deviation ($\hat{\sigma}$)', ylabel='Counts',
                         yscale='log', drawstyle='steps-post',
-                        ylim=[0.5, 1e3],
+                        ylim=[0.5, 10**(int(np.log10(np.amax(exp_counts))) + 1)],
                         label='Measurements', legend=True)
     plot_lib.error_plot(fig_hist, ax_hist, bins, exp_counts, yerr=np.sqrt(exp_var),
                         xlabel='Deviation ($\hat{\sigma}$)', ylabel='Counts',
-                        yscale='log', drawstyle='steps-post', ylim=[0.5, 1e3],
+                        yscale='log', drawstyle='steps-post', ylim=[0.5, 10**(int(np.log10(np.amax(exp_counts))) + 1)],
                         label='Model', legend=True)
     fig_hist.savefig('%s/%s_INS_data_ms_hist.pdf' % (ss.outpath, obs))
     plt.close(fig)
