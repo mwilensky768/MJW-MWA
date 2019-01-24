@@ -1,4 +1,4 @@
-from SSINS import SS, plot_lib
+from SSINS import SS, plot_lib, util
 from pyuvdata import UVData
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,6 +6,8 @@ from matplotlib import cm
 
 indir = '/Volumes/Faramir/uvfits'
 obslist = ['1061312640', '1066742016']
+bins = np.linspace(-14, 14, num=113)
+
 
 for obs in obslist:
     UV = UVData()
@@ -24,6 +26,20 @@ for obs in obslist:
                         cbar_label='Deviation ($\hat{\sigma}$)')
     fig.savefig('%s/%s_INS_data.pdf' % (ss.outpath, obs))
     fig_ms.savefig('%s/%s_INS_data_ms.pdf' % (ss.outpath, obs))
+    fig_hist, ax_hist = plt.subplots(figsize=(16, 9))
+    counts, bins = np.histogram(ss.INS.data_ms[:, 0, :, 0], bins=bins)
+    exp_counts, exp_var = util.hist_fit(counts, bins)
+    counts = np.append(counts, 0)
+    exp_counts = np.append(exp_counts, 0)
+    exp_var = np.append(exp_var, 0)
+    plot_lib.error_plot(fig_hist, ax_hist, bins, counts,
+                        xlabel='Deviation ($\hat{\sigma}$)', ylabel='Counts',
+                        yscale='log', drawstyle='steps-post')
+    plot_lib.error_plot(fig_hist, ax_hist, bins, exp_counts, yerr=np.sqrt(exp_var),
+                        xlabel='Deviation ($\hat{\sigma}$)', ylabel='Counts',
+                        yscale='log', drawstyle='steps-post')
+    fig_hist.savefig('%s/%s_INS_data_ms_hist.pdf' % (ss.outpath, obs))
     plt.close(fig)
     plt.close(fig_ms)
+    plt.close(fig_hist)
     del ss
