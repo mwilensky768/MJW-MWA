@@ -39,7 +39,7 @@ for obs in obslist:
     plot_lib.error_plot(fig_hist, ax_hist, bins, exp_counts, yerr=np.sqrt(exp_var),
                         xlabel='Deviation ($\hat{\sigma}$)', ylabel='Counts',
                         yscale='log', drawstyle='steps-post', ylim=[0.5, 1e2],
-                        'Model', legend=True)
+                        label='Model', legend=True)
     fig_hist.savefig('%s/%s_INS_data_ms_hist.pdf' % (ss.outpath, obs))
     plt.close(fig)
     plt.close(fig_ms)
