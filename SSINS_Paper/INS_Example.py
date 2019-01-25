@@ -45,29 +45,29 @@ for obs in obslist:
                         label='Model', legend=True)
 
     fig_hist.savefig('%s/%s_INS_data_ms_hist.pdf' % (ss.outpath, obs))
-    ss.MF_prepare(streak=False)
+    ss.MF_prepare(sig_thresh=5, streak=False)
     ss.MF.apply_match_test()
 
     fig_ms_of, ax_ms_of = plt.subplots(figsize=(16, 9))
     plot_lib.image_plot(fig_ms_of, ax_ms_of, ss.INS.data_ms[:, 0, :, 0], aspect='auto',
                         freq_array=UV.freq_array[0], ylabel='Time (2 s)',
                         xlabel='Frequency (Mhz)', cmap=cm.coolwarm,
-                        cbar_label='Deviation ($\hat{\sigma}$)')
+                        cbar_label='Deviation ($\hat{\sigma}$)', mask_color='black')
     fig_ms_of.savefig('%s/%s_INS_data_ms_of.pdf' % (ss.outpath, obs))
 
     ss.INS.data.mask[:] = 0
     ss.INS.data_ms = ss.INS.mean_subtract()
 
     del ss.MF
-    ss.MF_prepare(shape_dict={'TV6': [1.74e8, 1.81e8],
-                              'TV7': [1.81e8, 1.88e8],
-                              'TV8': [1.88e8, 1.95e8]})
+    ss.MF_prepare(sig_thresh=5, shape_dict={'TV6': [1.74e8, 1.81e8],
+                                            'TV7': [1.81e8, 1.88e8],
+                                            'TV8': [1.88e8, 1.95e8]})
     ss.MF.apply_match_test()
     fig_ms_mf, ax_ms_mf = plt.subplots(figsize=(16, 9))
     plot_lib.image_plot(fig_ms_mf, ax_ms_mf, ss.INS.data_ms[:, 0, :, 0], aspect='auto',
                         freq_array=UV.freq_array[0], ylabel='Time (2 s)',
                         xlabel='Frequency (Mhz)', cmap=cm.coolwarm,
-                        cbar_label='Deviation ($\hat{\sigma}$)')
+                        cbar_label='Deviation ($\hat{\sigma}$)', mask_colo='black')
     fig_ms_mf.savefig('%s/%s_INS_data_ms_mf.pdf' % (ss.outpath, obs))
     plt.close(fig_ms_mf)
     plt.close(fig_ms_of)
