@@ -69,6 +69,7 @@ for obs in obslist:
                         xlabel='Frequency (Mhz)', cmap=cm.coolwarm,
                         cbar_label='Deviation ($\hat{\sigma}$)')
     fig_ms_mf.savefig('%s/%s_INS_data_ms_mf.pdf' % (ss.outpath, obs))
+    plt.close(fig_ms_mf)
     plt.close(fig_ms_of)
     plt.close(fig)
     plt.close(fig_ms)
