@@ -37,6 +37,6 @@ sky_sub.INS_prepare()
 sky_sub.MF_prepare(sig_thresh=5, shape_dict=shape_dict, N_thresh=15)
 sky_sub.MF.apply_match_test(apply_N_thresh=True)
 
-sky_sub.apply_flags(choice='INS', INS=ss.INS)
+sky_sub.apply_flags(choice='INS', INS=sky_sub.INS)
 sky_sub.write('%s/%s.uvfits' % (args.outpath, args.obs), 'uvfits',
               UV=UV_construct(args))
