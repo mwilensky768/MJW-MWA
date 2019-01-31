@@ -61,7 +61,10 @@ for obs in obslist:
     del ss.MF
     ss.MF_prepare(sig_thresh=5, shape_dict={'TV6': [1.74e8, 1.81e8],
                                             'TV7': [1.81e8, 1.88e8],
-                                            'TV8': [1.88e8, 1.95e8]})
+                                            'TV8': [1.88e8, 1.95e8],
+                                            'broad6': [1.72e8, 1.83e8],
+                                            'broad7': [1.79e8, 1.9e8],
+                                            'broad8': [1.86e8, 1.97e8]})
     ss.MF.apply_match_test()
     fig_ms_mf, ax_ms_mf = plt.subplots(figsize=(16, 9))
     plot_lib.image_plot(fig_ms_mf, ax_ms_mf, ss.INS.data_ms[:, 0, :, 0], aspect='auto',
