@@ -13,7 +13,7 @@ for obs in obslist:
     UV = UVData()
     UV.read('%s/%s.uvfits' % (indir, obs), file_type='uvfits', polarizations=-5)
     UV.select(times=np.unique(UV.time_array)[1:-3], ant_str='cross')
-    ss = SS(UV=UV, outpath='/Users/mikewilensky/SSINS_Paper', obs=obs)
+    ss = SS(UV=UV, outpath='/Users/mikewilensky/SSINS_Paper', obs=obs, flag_choice='original')
     ss.INS_prepare()
     fig, ax = plt.subplots(figsize=(16, 9))
     plot_lib.image_plot(fig, ax, ss.INS.data[:, 0, :, 0], aspect='auto',
@@ -24,8 +24,8 @@ for obs in obslist:
                         freq_array=UV.freq_array[0], ylabel='Time (2 s)',
                         xlabel='Frequency (Mhz)', cmap=cm.coolwarm,
                         cbar_label='Deviation ($\hat{\sigma}$)')
-    fig.savefig('%s/%s_INS_data.pdf' % (ss.outpath, obs))
-    fig_ms.savefig('%s/%s_INS_data_ms.pdf' % (ss.outpath, obs))
+    fig.savefig('%s/%s_INS_original_data.pdf' % (ss.outpath, obs))
+    fig_ms.savefig('%s/%s_INS_original_data_ms.pdf' % (ss.outpath, obs))
 
     fig_hist, ax_hist = plt.subplots(figsize=(16, 9))
     counts, bins = np.histogram(ss.INS.data_ms[:, 0, :, 0], bins=bins)
@@ -44,7 +44,7 @@ for obs in obslist:
                         yscale='log', drawstyle='steps-post', ylim=[0.5, 10**(int(np.log10(np.amax(exp_counts))) + 1)],
                         label='Model', legend=True)
 
-    fig_hist.savefig('%s/%s_INS_data_ms_hist.pdf' % (ss.outpath, obs))
+    fig_hist.savefig('%s/%s_INS_original_data_ms_hist.pdf' % (ss.outpath, obs))
     ss.MF_prepare(sig_thresh=5, streak=False)
     ss.MF.apply_match_test()
 
@@ -53,7 +53,7 @@ for obs in obslist:
                         freq_array=UV.freq_array[0], ylabel='Time (2 s)',
                         xlabel='Frequency (Mhz)', cmap=cm.coolwarm,
                         cbar_label='Deviation ($\hat{\sigma}$)', mask_color='black')
-    fig_ms_of.savefig('%s/%s_INS_data_ms_of.pdf' % (ss.outpath, obs))
+    fig_ms_of.savefig('%s/%s_INS_original_data_ms_of.pdf' % (ss.outpath, obs))
 
     ss.INS.data.mask[:] = 0
     ss.INS.data_ms = ss.INS.mean_subtract()
@@ -68,7 +68,7 @@ for obs in obslist:
                         freq_array=UV.freq_array[0], ylabel='Time (2 s)',
                         xlabel='Frequency (Mhz)', cmap=cm.coolwarm,
                         cbar_label='Deviation ($\hat{\sigma}$)', mask_color='black')
-    fig_ms_mf.savefig('%s/%s_INS_data_ms_mf.pdf' % (ss.outpath, obs))
+    fig_ms_mf.savefig('%s/%s_INS_original_data_ms_mf.pdf' % (ss.outpath, obs))
     plt.close(fig_ms_mf)
     plt.close(fig_ms_of)
     plt.close(fig)
