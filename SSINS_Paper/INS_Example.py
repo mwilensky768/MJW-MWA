@@ -23,7 +23,7 @@ for obs in obslist:
     plot_lib.image_plot(fig_ms, ax_ms, ss.INS.data_ms[:, 0, :, 0], aspect='auto',
                         freq_array=UV.freq_array[0], ylabel='Time (2 s)',
                         xlabel='Frequency (Mhz)', cmap=cm.coolwarm,
-                        cbar_label='Deviation ($\hat{\sigma}$)')
+                        cbar_label='Deviation ($\hat{\sigma}$)', mask_color='black')
     fig.savefig('%s/%s_INS_original_data.pdf' % (ss.outpath, obs))
     fig_ms.savefig('%s/%s_INS_original_data_ms.pdf' % (ss.outpath, obs))
 
