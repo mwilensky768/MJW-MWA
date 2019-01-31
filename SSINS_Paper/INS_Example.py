@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 
 indir = '/Volumes/Faramir/uvfits'
-obslist = ['1061312640', '1066742016']
+obslist = ['1061312640', '1066742016', '1061313128']
 bins = np.linspace(-14, 14, num=113)
 
 
