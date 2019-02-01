@@ -3,16 +3,20 @@ from pyuvdata import UVData
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('obslist', nargs='*')
+args = parser.parse_args()
 
 indir = '/Volumes/Faramir/uvfits'
-obslist = ['1061312032']
 bins = np.linspace(-14, 14, num=113)
 
 edges = [16 * i for i in range(24)] + [15 + 16 * i for i in range(24)]
 bool_ind = np.ones(384, dtype=bool)
 bool_ind[edges] = 0
 
-for obs in obslist:
+for obs in args.obslist:
     UV = UVData()
     UV.read('%s/%s.uvfits' % (indir, obs), file_type='uvfits', polarizations=-5)
     UV.select(times=np.unique(UV.time_array)[1:-3], ant_str='cross')
