@@ -18,6 +18,7 @@ for obs in obslist:
     UV.select(times=np.unique(UV.time_array)[1:-3], ant_str='cross')
     if np.any(UV.flag_array[:, 0, bool_ind]):
         print('COTTER found RFI in %s' % obs)
+        print(np.where(UV.flag_array[:, 0, bool_ind]))
     ss = SS(UV=UV, outpath='/Users/mikewilensky/SSINS_Paper', obs=obs, flag_choice='original')
     ss.INS_prepare()
     fig, ax = plt.subplots(figsize=(16, 9))
