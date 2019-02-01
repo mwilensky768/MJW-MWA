@@ -8,11 +8,16 @@ indir = '/Volumes/Faramir/uvfits'
 obslist = ['1061312640', '1066742016', '1061313128', '1067259120']
 bins = np.linspace(-14, 14, num=113)
 
+edges = [16 * i for i in range(24)] + [15 + 16 * i for i in range(24)]
+bool_ind = np.ones(384)
+bool_ind[edges] = 0
 
 for obs in obslist:
     UV = UVData()
     UV.read('%s/%s.uvfits' % (indir, obs), file_type='uvfits', polarizations=-5)
     UV.select(times=np.unique(UV.time_array)[1:-3], ant_str='cross')
+    if np.any(UV.flag_array[:, 0, bool_ind]):
+        print('COTTER found RFI in %s' % obs)
     ss = SS(UV=UV, outpath='/Users/mikewilensky/SSINS_Paper', obs=obs, flag_choice='original')
     ss.INS_prepare()
     fig, ax = plt.subplots(figsize=(16, 9))
