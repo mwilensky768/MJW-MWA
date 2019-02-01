@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 
 indir = '/Volumes/Faramir/uvfits'
-obslist = ['1061312640', '1066742016', '1061313128', '1061312032']
+obslist = ['1061312032']
 bins = np.linspace(-14, 14, num=113)
 
 edges = [16 * i for i in range(24)] + [15 + 16 * i for i in range(24)]
-bool_ind = np.ones(384)
+bool_ind = np.ones(384, dtype=bool)
 bool_ind[edges] = 0
 
 for obs in obslist:
