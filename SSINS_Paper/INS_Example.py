@@ -58,9 +58,9 @@ for obs in args.obslist:
     fig_ms_of, ax_ms_of = plt.subplots(figsize=(16, 9))
     plot_lib.image_plot(fig_ms_of, ax_ms_of, ss.INS.data[:, 0, :, 0], aspect='auto',
                         freq_array=UV.freq_array[0], ylabel='Time (2 s)',
-                        xlabel='Frequency (Mhz)', cmap=cm.coolwarm,
+                        xlabel='Frequency (Mhz)', cmap=cm.viridis,
                         cbar_label='Deviation ($\hat{\sigma}$)', mask_color='black')
-    fig_ms_of.savefig('%s/%s_INS_original_data_ms_of.pdf' % (ss.outpath, obs))
+    fig_ms_of.savefig('%s/%s_INS_original_data_of.pdf' % (ss.outpath, obs))
 
     ss.INS.data.mask[:] = 0
     ss.INS.data_ms = ss.INS.mean_subtract()
@@ -76,9 +76,9 @@ for obs in args.obslist:
     fig_ms_mf, ax_ms_mf = plt.subplots(figsize=(16, 9))
     plot_lib.image_plot(fig_ms_mf, ax_ms_mf, ss.INS.data[:, 0, :, 0], aspect='auto',
                         freq_array=UV.freq_array[0], ylabel='Time (2 s)',
-                        xlabel='Frequency (Mhz)', cmap=cm.coolwarm,
+                        xlabel='Frequency (Mhz)', cmap=cm.viridis,
                         cbar_label='Deviation ($\hat{\sigma}$)', mask_color='black')
-    fig_ms_mf.savefig('%s/%s_INS_original_data_ms_mf.pdf' % (ss.outpath, obs))
+    fig_ms_mf.savefig('%s/%s_INS_original_data_mf.pdf' % (ss.outpath, obs))
     plt.close(fig_ms_mf)
     plt.close(fig_ms_of)
     plt.close(fig)
