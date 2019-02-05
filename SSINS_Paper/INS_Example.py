@@ -63,6 +63,7 @@ for obs in args.obslist:
     fig_ms_of.savefig('%s/%s_INS_original_data_of.pdf' % (ss.outpath, obs))
 
     ss.INS.data.mask[:] = 0
+    ss.INS.data.mask[:, 0, edges] = 1
     ss.INS.data_ms = ss.INS.mean_subtract()
 
     del ss.MF
