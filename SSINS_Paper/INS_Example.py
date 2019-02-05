@@ -23,6 +23,7 @@ for obs in args.obslist:
     if np.any(UV.flag_array[:, 0, bool_ind]):
         print('COTTER found RFI in %s' % obs)
         print(np.count_nonzero(UV.flag_array[:, 0, bool_ind]))
+        plt.imshow(np.count_nonzero(UV.flag_array[:, 0, bool_ind, 0], axis=))
     ss = SS(UV=UV, outpath='/Users/mikewilensky/SSINS_Paper', obs=obs, flag_choice='original')
     ss.INS_prepare()
     fig, ax = plt.subplots(figsize=(16, 9))
@@ -59,7 +60,7 @@ for obs in args.obslist:
     ss.MF.apply_match_test()
 
     fig_ms_of, ax_ms_of = plt.subplots(figsize=(16, 9))
-    plot_lib.image_plot(fig_ms_of, ax_ms_of, ss.INS.data_ms[:, 0, :, 0], aspect='auto',
+    plot_lib.image_plot(fig_ms_of, ax_ms_of, ss.INS.data[:, 0, :, 0], aspect='auto',
                         freq_array=UV.freq_array[0], ylabel='Time (2 s)',
                         xlabel='Frequency (Mhz)', cmap=cm.coolwarm,
                         cbar_label='Deviation ($\hat{\sigma}$)', mask_color='black')
@@ -77,7 +78,7 @@ for obs in args.obslist:
                                             'broad8': [1.86e8, 1.97e8]})
     ss.MF.apply_match_test()
     fig_ms_mf, ax_ms_mf = plt.subplots(figsize=(16, 9))
-    plot_lib.image_plot(fig_ms_mf, ax_ms_mf, ss.INS.data_ms[:, 0, :, 0], aspect='auto',
+    plot_lib.image_plot(fig_ms_mf, ax_ms_mf, ss.INS.data[:, 0, :, 0], aspect='auto',
                         freq_array=UV.freq_array[0], ylabel='Time (2 s)',
                         xlabel='Frequency (Mhz)', cmap=cm.coolwarm,
                         cbar_label='Deviation ($\hat{\sigma}$)', mask_color='black')
