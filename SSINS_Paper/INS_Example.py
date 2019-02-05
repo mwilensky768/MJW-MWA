@@ -20,10 +20,6 @@ for obs in args.obslist:
     UV = UVData()
     UV.read('%s/%s.uvfits' % (indir, obs), file_type='uvfits', polarizations=-5)
     UV.select(times=np.unique(UV.time_array)[1:-3], ant_str='cross')
-    if np.any(UV.flag_array[:, 0, bool_ind]):
-        print('COTTER found RFI in %s' % obs)
-        print(np.count_nonzero(UV.flag_array[:, 0, bool_ind]))
-        plt.imshow(np.count_nonzero(UV.flag_array[:, 0, bool_ind, 0], axis=))
     ss = SS(UV=UV, outpath='/Users/mikewilensky/SSINS_Paper', obs=obs, flag_choice='original')
     ss.INS_prepare()
     fig, ax = plt.subplots(figsize=(16, 9))
