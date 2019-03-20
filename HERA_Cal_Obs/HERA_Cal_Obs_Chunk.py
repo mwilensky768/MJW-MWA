@@ -1,7 +1,7 @@
 from pyuvdata import UVData
 import numpy as np
-import argparse
 from SSINS import util as u
+import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('obsfile')
