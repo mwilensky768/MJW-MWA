@@ -1,7 +1,12 @@
 from pyuvdata import UVData
 import numpy as np
+from SSINS import plot_lib
+from matplotlib import cm
+import matplotlib.pyplot as plt
+import os
 
-inpath = '/Users/mike_e_dubs/MWA/Data/uvfits/1066742016.uvfits'
+inpath = '/Volumes/Faramir/uvfits/1066742016.uvfits'
+outpath = '/Users/mikewilensky/General'
 
 
 def dist(A, B):
