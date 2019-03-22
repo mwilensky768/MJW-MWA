@@ -11,7 +11,7 @@ fi
 
 # Set default freqres
 if [ -z ${freqres} ]; then
-  freqres=40
+  freqres=80
 fi
 
 # Set default edgewidth
