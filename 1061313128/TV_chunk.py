@@ -8,7 +8,7 @@ parser.add_argument('outpath')
 args = parser.parse_args()
 
 chan_min = 174
-chan_max = 162
+chan_max = 262
 
 
 for time in np.arange(11, 27):
