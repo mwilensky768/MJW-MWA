@@ -19,4 +19,4 @@ for time in np.arange(11, 27):
     UV.nsample_array[UV.nsample_array == 0] = 1
     UV.flag_array[:] = 1
     UV.flag_array[:, :, chan_min:chan_max] = 0
-    UV.write('%s/1061313128_t%i.uvfits' % (args.outpath, time))
+    UV.write_uvfits('%s/1061313128_t%i.uvfits' % (args.outpath, time))
