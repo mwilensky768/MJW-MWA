@@ -1,17 +1,16 @@
 #!/bin/bash
 
-while getopts ":f:o:q:r:i:" option
+while getopts ":f:d:o:q:r:i:" option
 do
   case $option in
+    # A text file where each line is an obsid
     f) obs_file_name="$OPTARG";;
     o) outdir=$OPTARG;;
     q) script=$OPTARG;;
     r) script_args=$OPTARG;;
     i) indir=$OPTARG;;
     \?) echo "Unknown option: Accepted flags are -f (obs_file_name), -o (output directory), "
-        echo "-b (output bucket on S3),  -n (number of slots to use), "
-        echo "-p (path to uvfits files on S3), -q (python script to execute),"
-        echo "-r (options for python script)."
+        echo "-q (python script to execute), -r (options for python script)."
         exit 1;;
     :) echo "Missing option argument for input flag"
        exit 1;;

@@ -9,9 +9,11 @@ obs_id=$(sed "${PBS_ARRAYID}q;d" ${obs_file_name})
 
 echo "Processing $obs_id"
 
-#strip the last / if present in output directory filepath
-outdir=${outdir%/}
-echo Using output directory: $outdir
+source /users/iware/.bashrc
 
-# Run python catalog script
-python $script ${obs_id} ${indir}/${obs_id}.uvh5 $outdir $script_args
+conda activate hera
+which python
+
+python /lustre/aoc/projects/hera/iware/CHAMP/ElCap_Desktop/RFI_project/SSINS_code_IW.py -d $obs_id
+
+echo "JOB END TIME" `date +"%Y-%m-%d_%H:%M:%S"`
