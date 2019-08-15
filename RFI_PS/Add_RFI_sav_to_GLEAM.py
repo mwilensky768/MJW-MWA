@@ -9,7 +9,7 @@ parser.add_argument('GLEAM_filepath', help='Filepath to GLEAM FHD dir')
 parser.add_argument('obsid', help="The obsid of the dummy obs file")
 parser.add_argument('outdir', help="output directory")
 parser.add_argument('name', help="The name of the file")
-args. parser.parse_args()
+args = parser.parse_args()
 
 RFI_uv = UVData()
 GLEAM_uv = UVData()
