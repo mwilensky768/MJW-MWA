@@ -33,4 +33,5 @@ RFI_uv.data_array += GLEAM_uv.data_array
 
 RFI_uv.nsample_array[RFI_uv.nsample_array == 0] = np.amax(RFI_uv.nsample_array)
 
-RFI_uv.write_uvfits('%s/%s_nsamplemax_RFI_plus_gleam_%s.uvfits' % (args.outdir, args.obsid, args.name))
+RFI_uv.write_uvfits('%s/%s_nsamplemax_RFI_plus_gleam_%s.uvfits' % (args.outdir, args.obsid, args.name),
+                    spoof_nonessential=True)
