@@ -1,6 +1,7 @@
 import argparse
 from pyuvdata import UVData
 import glob
+import numpy as np
 
 parser = argparse.ArgumentParser()
 parser.add_argument('RFI_filepath', help='Filepath to RFI FHD dir')
@@ -14,12 +15,12 @@ RFI_uv = UVData()
 GLEAM_uv = UVData()
 
 RFI_filelist = glob.glob('%s/vis_data/*' % args.RFI_filepath)
-RFI_filelist.append('%s/metadata/%s_settings.txt' % (args.RFI_filepath, obsid))
-RFI_filelist.append('%s/metadata/%s_params.sav' % (args.RFI_filepath, obsid))
+RFI_filelist.append('%s/metadata/%s_settings.txt' % (args.RFI_filepath, args.obsid))
+RFI_filelist.append('%s/metadata/%s_params.sav' % (args.RFI_filepath, args.obsid))
 
 GLEAM_filelist = glob.glob('%s/vis_data/*' % args.GLEAM_filepath)
-GLEAM_filelist.append('%s/metadata/%s_settings.txt' % (args.GLEAM_filepath, obsid))
-GLEAM_filelist.append('%s/metadata/%s_params.sav' % (args.GLEAM_filepath, obsid))
+GLEAM_filelist.append('%s/metadata/%s_settings.txt' % (args.GLEAM_filepath, args.obsid))
+GLEAM_filelist.append('%s/metadata/%s_params.sav' % (args.GLEAM_filepath, args.obsid))
 
 RFI_uv.read_fhd(filelist=RFI_filelist, use_model=True)
 GLEAM_uv.read_fhd(filelist=GLEAM_filelist, use_model=True)
