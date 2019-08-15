@@ -19,8 +19,8 @@ RFI_filelist.append('%s/metadata/%s_settings.txt' % (args.RFI_filepath, args.obs
 RFI_filelist.append('%s/metadata/%s_params.sav' % (args.RFI_filepath, args.obsid))
 
 GLEAM_filelist = glob.glob('%s/vis_data/*' % args.GLEAM_filepath)
-GLEAM_filelist.append('%s/metadata/%s_settings.txt' % (args.GLEAM_filepath, args.obsid))
-GLEAM_filelist.append('%s/metadata/%s_params.sav' % (args.GLEAM_filepath, args.obsid))
+GLEAM_filelist.append('%s/metadata/%s_nsamplemax_gleam_settings.txt' % (args.GLEAM_filepath, args.obsid))
+GLEAM_filelist.append('%s/metadata/%s_nsamplemax_params.sav' % (args.GLEAM_filepath, args.obsid))
 
 RFI_uv.read_fhd(filelist=RFI_filelist, use_model=True)
 GLEAM_uv.read_fhd(filelist=GLEAM_filelist, use_model=True)
