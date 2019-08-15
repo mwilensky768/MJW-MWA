@@ -25,6 +25,10 @@ GLEAM_filelist.append('%s/metadata/%s_params.sav' % (args.GLEAM_filepath, args.o
 RFI_uv.read_fhd(filelist=RFI_filelist, use_model=True)
 GLEAM_uv.read_fhd(filelist=GLEAM_filelist, use_model=True)
 
+low_chan = np.argmin(np.abs(RFI_uv.freq_array[0] - 1.81e8))
+high_chan = np.argmin(np.abs(RFI_uv.freq_array[0] - 1.88e8))
+RFI_uv.data_array[:, :, :low_chan] = 0
+RFI_uv.data_array[:, :, high_chan:] = 0
 RFI_uv.data_array += GLEAM_uv.data_array
 
 RFI_uv.nsample_array[RFI_uv.nsample_array == 0] = np.amax(RFI_uv.nsample_array)
