@@ -2,7 +2,7 @@ import argparse
 import numpy as np
 from SSINS import INS, MF
 from SSINS.util import make_obslist
-from pyuvdata import UVData
+from pyuvdata import UVData, UVFlag
 import yaml
 
 parser = argparse.ArgumentParser()
@@ -31,11 +31,9 @@ for event in ins.match_events:
         ins.metric_array[event[:2]] = np.ma.masked
 
 ins_flags = ins.mask_to_flags()
-auto_uvf = ins.copy()
-cross_uvf = ins.copy()
-for uvf, uvd in zip([auto_uvf, cross_uvf], [auto_uv, uv]):
-    uvf.flag_array = ins_flags()
-    uvf.to_flag()
+for uvf, uvd in [auto_uv, uv]:
+    uvf = UVFlag(uvd, mode='flag', type='waterfall')
+    uvf.flag_array = ins_flags
     uvf.to_baseline(uvd)
     uvd.flag_array = uvf.flag_array
 
