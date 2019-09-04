@@ -14,4 +14,4 @@ outdir=${outdir%/}
 echo Using output directory: $outdir
 
 # Run python catalog script
-python $script ${obs_id} ${indir}/${obs_id}.uvh5 $outdir $script_args
+python $script $script_args
