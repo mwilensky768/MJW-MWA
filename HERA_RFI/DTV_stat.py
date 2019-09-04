@@ -31,10 +31,13 @@ for event in ins.match_events:
         ins.metric_array[event[:2]] = np.ma.masked
 
 ins_flags = ins.mask_to_flags()
-cross_vis_flags = np.repeat(ins_flags[:, np.newaxis, np.newaxis, :, :], uv.Nbls, axis=1)
-auto_vis_flags = np.repeat(ins_flags[:, np.newaxis, np.newaxis, :, :], auto_uv.Nbls, axis=1)
-uv.flag_array = cross_vis_flags.reshape([uv.Nblts, 1, uv.Nfreqs, uv.Npols])
-auto_uv.flag_array = auto_vis_flags.reshape([auto_uv.Nblts, 1, auto_uv.Nfreqs, auto_uv.Npols])
+auto_uvf = ins.copy()
+cross_uvf = ins.copy()
+for uvf, uvd in zip([auto_uvf, cross_uvf], [auto_uv, uv]):
+    uvf.flag_array = ins_flags()
+    uvf.to_flag()
+    uvf.to_baseline(uvd)
+    uvd.flag_array = uvf.flag_array
 
 stat_dict = {'TV4': {'occ': 0, 'autopow': 0, 'crosspow': 0},
              'TV5': {'occ': 0, 'autopow': 0, 'crosspow': 0},
