@@ -6,7 +6,6 @@ from SSINS.util import make_obslist
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--yml_file_list', help='The yml files to operate on')
-parser.add_argument('--obs_list', help="The list of obsids")
 parser.add_argument('--outdir', help="The output directory")
 args = parser.parse_args()
 
@@ -17,7 +16,7 @@ inner_keys = ['occ', 'autopow', 'crosspow']
 chan_keys = ['TV%i' % chan for chan in [4, 5, 6]]
 list_dict = {'%s' % chan_key for chan_key in chan_keys: {'%s': [] % key for key in inner_keys}}
 
-for yml, obs in zip(yml_list, obslist):
+for yml in yml_list:
     with open(yml, 'r') as yml_file:
         obsdict = yaml.load(yml_file, Loader=yaml.Loader)
     for chan in chan_keys:
