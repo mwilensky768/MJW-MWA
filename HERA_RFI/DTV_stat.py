@@ -31,8 +31,8 @@ for event in ins.match_events:
         ins.metric_array[event[:2]] = np.ma.masked
 
 ins_flags = ins.mask_to_flags()
-for uvf, uvd in [auto_uv, uv]:
-    uvf = UVFlag(uvd, mode='flag', type='waterfall')
+for uvd in [auto_uv, uv]:
+    uvf = UVFlag(uvd, mode='flag', waterfall=True)
     uvf.flag_array = ins_flags
     uvf.to_baseline(uvd)
     uvd.flag_array = uvf.flag_array
@@ -42,9 +42,16 @@ stat_dict = {'TV4': {'occ': 0, 'autopow': 0, 'crosspow': 0},
              'TV6': {'occ': 0, 'autopow': 0, 'crosspow': 0}}
 
 for shape in shapes:
-    stat_dict[shape]['occ'] = np.count_nonzero(np.any(flags[:, mf.slice_dict[shape]], axis=(1, 2)))
-    stat_dict[shape]['autopow'] = np.mean(np.abs(auto_uv.data_array[auto_uv.flag_array[:, :, mf.slice_dict[shape]]]))
-    stat_dict[shape]['crosspow'] = np.mean(np.abs(uv.data_array[uv.flag_array[:, :, mf.slice_dict[shape]]]))
+    stat_dict[shape]['occ'] = np.count_nonzero(np.any(ins_flags[:, mf.slice_dict[shape]], axis=(1, 2))) / float(ins_flags.shape[0])
+    if stat_dict[shape]['occ'] > 0:
+    	inds = (slice(None), slice(None), mf.slice_dict[shape])
+    	stat_dict[shape]['autopow'] = np.mean(np.abs(auto_uv.data_array[inds][auto_uv.flag_array[inds]]))
+    	stat_dict[shape]['crosspow'] = np.mean(np.abs(uv.data_array[inds][uv.flag_array[inds]]))
+    else:
+        stat_dict[shape]['autopow'] = 0
+        stat_dict[shape]['crosspow'] = 0
 
+
+print(stat_dict)
 with open(args.outfile, 'w') as file:
-    yaml.safe_dump(stat_dict, file, default_flow_style=False)
+    yaml.dump(stat_dict, file, default_flow_style=False)
