@@ -35,3 +35,4 @@ for key, title in zip(inner_keys, Titles):
     for channel, color in zip(chan_keys, colors):
         plt.axvline(x=np.mean(list_dict[channel][key]), color=color)
     plt.savefig('%s/HERA_DTV_%s_hist.pdf' % (args.outdir, key))
+    plt.close()
