@@ -1,6 +1,8 @@
 import numpy as np
 import yaml
 import argparse
+from matplotlib import use
+use('Agg')
 import matplotlib.pyplot as plt
 from SSINS.util import make_obslist
 
