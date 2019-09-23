@@ -9,7 +9,6 @@ parser.add_argument('--yml_file_list', help='The yml files to operate on')
 parser.add_argument('--outdir', help="The output directory")
 args = parser.parse_args()
 
-obslist = make_obslist(args.obs_list)
 yml_list = make_obslist(args.yml_file_list)
 
 inner_keys = ['occ', 'autopow', 'crosspow']
