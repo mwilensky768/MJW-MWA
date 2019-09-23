@@ -25,7 +25,7 @@ for yml in yml_list:
             list_dict[chan][key].append(obsdict[chan][key])
 
 Titles = ['Occupancy per Obs', 'Average Flagged Autocorrelation Per Obs', 'Average Flagged Cross-Correlation Per Obs']
-colors = ['organge', 'green', 'blue']
+colors = ['orange', 'green', 'blue']
 
 for key, title in zip(inner_keys, Titles):
     plt.hist([list_dict[chan][key] for chan in chan_keys], bins='auto', title=title,
