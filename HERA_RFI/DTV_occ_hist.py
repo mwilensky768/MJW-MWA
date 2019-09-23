@@ -14,7 +14,7 @@ yml_list = make_obslist(args.yml_file_list)
 
 inner_keys = ['occ', 'autopow', 'crosspow']
 chan_keys = ['TV%i' % chan for chan in [4, 5, 6]]
-list_dict = {'%s' % chan_key for chan_key in chan_keys: {'%s': [] % key for key in inner_keys}}
+list_dict = {chan_key: {'%s' % key: [] for key in inner_keys} for chan_key in chan_keys}
 
 for yml in yml_list:
     with open(yml, 'r') as yml_file:
