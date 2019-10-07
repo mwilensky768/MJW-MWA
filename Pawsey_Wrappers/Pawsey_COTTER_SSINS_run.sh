@@ -4,10 +4,10 @@ module use /group/mwa/software/modulefiles
 module load cotter
 module load six
 module load pyuvdata/master
-module load h5py/2.8.0
+module load h5py
 module load scipy
 module load matplotlib
-module load numpy/1.15.1
+module load numpy
 
 data_dir=/astro/mwaeor/MWA/data
 
