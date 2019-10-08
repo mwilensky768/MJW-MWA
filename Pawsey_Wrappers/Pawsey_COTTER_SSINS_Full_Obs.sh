@@ -3,11 +3,12 @@
 module use /group/mwa/software/modulefiles
 module load cotter
 module load six
-module load pyuvdata/master
+module load pyuvdata
 module load h5py
 module load scipy
 module load matplotlib
 module load numpy
+module load pyyaml
 
 data_dir=/astro/mwaeor/MWA/data
 
@@ -23,13 +24,15 @@ then
   mkdir $uvfits_dir
 fi
 
-if [ ! -e ${data_dir}/${obs}/${obs}_noflag.uvfits ]; then
+echo $timeres
+
+if [ ! -e ${uvfits_dir}/${obs}_noflag.uvfits ]; then
   echo $obs
   echo "Executing COTTER"
   gpufiles=$(ls ${data_dir}/${obs}/*gpubox*.fits)
-  cotter -o ${data_dir}/${obs}/${obs}_noflag.uvfits -m ${data_dir}/${obs}/${obs}_metafits_ppds.fits -timeres $timeres -freqres $freqres -norfi -noflagautos -allowmissing -flagdcchannels -sbpassband -edgewidth $edgewidth -initflag $initflag -endflag $endflag -allowmissing $gpufiles
+  cotter -o ${uvfits_dir}/${obs}_noflag.uvfits -m ${data_dir}/${obs}/${obs}_metafits_ppds.fits -timeres $timeres -freqres $freqres -norfi -noflagautos -allowmissing -flagdcchannels -edgewidth $edgewidth -initflag $initflag -endflag $endflag -allowmissing $gpufiles
 fi
 
 echo "Executing python script for ${obs}"
-python /home/mwilensky/MJW-MWA/Catalog_Gen.py $obs ${uvfits_dir}/${obs}_noflag.uvfits ${outdir}
+python /home/mwilensky/MJW-MWA/Pawsey_Wrappers/SSINS_Gen.py $obs ${uvfits_dir}/${obs}_noflag.uvfits ${outdir}
 rm -f ${uvfits_dir}/${obs}_noflag.uvfits
