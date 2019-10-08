@@ -12,19 +12,23 @@ module load pyyaml
 
 data_dir=/astro/mwaeor/MWA/data
 
+echo JOBID $SLURM_ARRAY_JOB_ID
+echo TASKID $SLURM_ARRAY_TASK_ID
+
+obs=$(sed "${SLURM_ARRAY_TASK_ID}q;d" ${obs_file_name})
+echo OBSID $obs
+
 gpufiles=$(ls ${data_dir}/${obs}/*gpubox*.fits)
 N_gpufiles=$(ls ${data_dir}/${obs}/*gpubox*.fits | wc -l)
 mod=$((N_gpufiles % 24))
 uvfits_dir=${data_dir}/${obs}/SSINS_uvfits
 
-echo $obs
+
 
 if [ ! -d $uvfits_dir ]
 then
   mkdir $uvfits_dir
 fi
-
-echo $timeres
 
 if [ ! -e ${uvfits_dir}/${obs}_noflag.uvfits ]; then
   echo $obs
