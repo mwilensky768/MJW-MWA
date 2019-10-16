@@ -14,6 +14,9 @@ filelist2 = glob.glob('%s/vis_data/*' % args.dir2) + glob.glob('%s/metadata/*' %
 uv1 = UVData()
 uv2 = UVData()
 
+print(filelist1)
+print(filelist2)
+
 uv1.read_fhd(filelist=filelist1, use_model=True)
 uv2.read_fhd(filelist=filelist2, use_model=True)
 
