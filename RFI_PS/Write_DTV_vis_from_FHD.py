@@ -32,7 +32,7 @@ chan_low, chan_high = find_freq_lims(DTV7_low, DTV7_high, uv_rfi.freq_array)
 uv_rfi.data_array[:, :, :chan_low] = 0
 uv_rfi.data_array[:, :, chan_high:] = 0
 
-uv_rfi.nsample_array[uv_rfi.nsample_array == 0] = 1
+uv_rfi.nsample_array[uv_rfi.nsample_array == 0] = np.amax(uv_rfi.nsample_array)
 uv_rfi.flag_array[:] = False
 
 uv_rfi.write_uvfits(args.filepath_out)
