@@ -8,13 +8,10 @@ parser.add_argument('fhd_output_dir')
 parser.add_argument('filepath_out')
 args = parser.parse_args()
 
-uv_fhd = UVData()
-uv_rfi = UVData()
+uv = UVData()
 
 filelist = glob.glob('%s/vis_data/*' % args.fhd_output_dir) + glob.glob('%s/metadata/*' % args.fhd_output_dir)
-uv_fhd.read_fhd(filelist=filelist, use_model=True)
-
-uv_rfi = uv_fhd.copy()
+uv.read_fhd(filelist=filelist, use_model=True)
 
 
 def find_freq_lims(freq_low, freq_high, freq_array):
@@ -29,10 +26,10 @@ DTV7_low = 1.81e8
 DTV7_high = 1.88e8
 chan_low, chan_high = find_freq_lims(DTV7_low, DTV7_high, uv_rfi.freq_array)
 
-uv_rfi.data_array[:, :, :chan_low] = 0
-uv_rfi.data_array[:, :, chan_high:] = 0
+uv.data_array[:, :, :chan_low] = 0
+uv.data_array[:, :, chan_high:] = 0
 
-uv_rfi.nsample_array[uv_rfi.nsample_array == 0] = np.amax(uv_rfi.nsample_array)
-uv_rfi.flag_array[:] = False
+uv.nsample_array[uv_rfi.nsample_array == 0] = np.amax(uv_rfi.nsample_array)
+uv.flag_array[:] = False
 
-uv_rfi.write_uvfits(args.filepath_out)
+uv.write_uvfits(args.filepath_out)
