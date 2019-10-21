@@ -21,4 +21,4 @@ done
 
 N_obs=$(wc -l < $obs_file_name)
 
-sbatch --array=1-${N_obs} --nodes=1 --mem=$mem --time=$wall --account=mwaeor --job-name=SSINS --output=SSINS_%j.out --error=SSINS_%j.e --export=ALL,obs_file_name=${obs_file_name},outdir=${outdir},timeres=${timeres},freqres=${freqres},edgewidth=${edgewidth},initflag=${initflag},endflag=${endflag} $script
+sbatch --array=1-$N_obs --nodes=1 --mem=$mem --time=$wall --account=mwaeor --job-name=SSINS --output=SSINS_%j.out --error=SSINS_%j.e --export=ALL,obs_file_name=${obs_file_name},outdir=${outdir},timeres=${timeres},freqres=${freqres},edgewidth=${edgewidth},initflag=${initflag},endflag=${endflag} $script
