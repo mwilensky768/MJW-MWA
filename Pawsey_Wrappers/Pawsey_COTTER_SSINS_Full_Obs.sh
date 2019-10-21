@@ -30,13 +30,17 @@ then
   mkdir $uvfits_dir
 fi
 
-if [ ! -e ${uvfits_dir}/${obs}_noflag.uvfits ]; then
-  echo $obs
-  echo "Executing COTTER"
-  gpufiles=$(ls ${data_dir}/${obs}/*gpubox*.fits)
-  cotter -o ${uvfits_dir}/${obs}_noflag.uvfits -m ${data_dir}/${obs}/${obs}_metafits_ppds.fits -timeres $timeres -freqres $freqres -norfi -noflagautos -allowmissing -flagdcchannels -edgewidth $edgewidth -initflag $initflag -endflag $endflag -allowmissing $gpufiles
-fi
+# Only do things if the outputs don't already exist
+if [ ! -e ${outdir}/${obs}_SSINS_data.h5 ]; then
 
-echo "Executing python script for ${obs}"
-python /home/mwilensky/MJW-MWA/Pawsey_Wrappers/SSINS_Gen.py $obs ${uvfits_dir}/${obs}_noflag.uvfits ${outdir}
-rm -f ${uvfits_dir}/${obs}_noflag.uvfits
+  if [ ! -e ${uvfits_dir}/${obs}_noflag.uvfits ]; then
+    echo $obs
+    echo "Executing COTTER"
+    gpufiles=$(ls ${data_dir}/${obs}/*gpubox*.fits)
+    cotter -o ${uvfits_dir}/${obs}_noflag.uvfits -m ${data_dir}/${obs}/${obs}_metafits_ppds.fits -timeres $timeres -freqres $freqres -norfi -noflagautos -allowmissing -flagdcchannels -edgewidth $edgewidth -initflag $initflag -endflag $endflag -allowmissing $gpufiles
+  fi
+
+  echo "Executing python script for ${obs}"
+  python /home/mwilensky/MJW-MWA/Pawsey_Wrappers/SSINS_Gen.py $obs ${uvfits_dir}/${obs}_noflag.uvfits ${outdir}
+  rm -f ${uvfits_dir}/${obs}_noflag.uvfits
+fi
