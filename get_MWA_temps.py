@@ -1,8 +1,8 @@
 import urllib.request
 import json
 import argparse
-from SSINS.util import make_obsfile
 import yaml
+import time
 
 # Append the service name to this base URL, e.g. 'con', 'obs', etc.
 BASEURL = 'http://ws.mwatelescope.org/'
@@ -71,9 +71,14 @@ args = parser.parse_args()
 
 obslist = make_obslist(args.obsfile)
 temp_dict = {}
-for obs in obslist:
+for ind, obs in enumerate(obslist):
     params = {"obsid": obs, "dictformat": 1}
-    temp_dict[obs] = getmeta(params=params)
+    server_dict = getmeta(params=params)
+    first_key = [key for key in server_dict][0]
+    temp_dict[obs] = server_dict[first_key]
+    if ind % 100 == 0:
+        print(f"sleeping on ind {ind}")
+        time.sleep(10)
 
 outpath = f"{args.outfile}_temp_dict.yml"
 with open(outpath, 'w') as outfile:
